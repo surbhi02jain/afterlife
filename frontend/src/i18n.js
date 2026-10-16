@@ -152,7 +152,7 @@ const en = {
   privacyTitle: "Your privacy",
   privacyPoints: [
     "Your documents are read by Google Gemini to find accounts and policies. They are not used for anything else.",
-    "Uploaded files are deleted automatically within 24 hours on our cloud storage. The case notes stay until you delete them.",
+    "On our cloud storage, uploaded files are set to delete themselves 24 hours after upload. The case notes stay until you delete them.",
     "We only ever show the last 4 digits of account and policy numbers.",
     "Saath will never ask for passwords, PINs, OTPs or card numbers.",
   ],
@@ -307,7 +307,7 @@ const hi = {
   privacyTitle: "आपकी गोपनीयता",
   privacyPoints: [
     "खाते और पॉलिसी खोजने के लिए आपके दस्तावेज़ Google Gemini पढ़ता है। इनका किसी और काम में उपयोग नहीं होता।",
-    "अपलोड की गई फ़ाइलें हमारे क्लाउड स्टोरेज से 24 घंटे में अपने आप हट जाती हैं। मामले के नोट्स तब तक रहते हैं जब तक आप उन्हें न हटाएँ।",
+    "हमारे क्लाउड स्टोरेज पर अपलोड की गई फ़ाइलें अपलोड के 24 घंटे बाद अपने आप हटने के लिए सेट हैं। मामले के नोट्स तब तक रहते हैं जब तक आप उन्हें न हटाएँ।",
     "हम खाते और पॉलिसी नंबर के केवल आख़िरी 4 अंक दिखाते हैं।",
     "साथ कभी पासवर्ड, PIN, OTP या कार्ड नंबर नहीं माँगेगा।",
   ],

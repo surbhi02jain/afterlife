@@ -3,6 +3,8 @@
 Uploads are also auto-deleted by a 24h bucket lifecycle rule (see scripts/deploy.sh).
 """
 
+import threading
+from collections import defaultdict
 from typing import Callable
 
 from google.cloud import firestore, storage as gcs
@@ -19,6 +21,14 @@ class GcpStorage(Storage):
             raise ValueError("GCS_BUCKET must be set when STORAGE_BACKEND=gcp")
         self.db = firestore.Client(project=project or None, database=database)
         self.bucket = gcs.Client(project=project or None).bucket(bucket)
+        # Writers to the same case inside this instance queue up instead of fighting over the transaction;
+        # Firestore's own retries then only have to handle the rare clash between instances.
+        self._case_locks: dict[str, threading.Lock] = defaultdict(threading.Lock)
+        self._locks_guard = threading.Lock()
+
+    def _lock_for(self, case_id: str) -> threading.Lock:
+        with self._locks_guard:
+            return self._case_locks[case_id]
 
     def _ref(self, case_id: str):
         return self.db.collection(COLLECTION).document(case_id)
@@ -51,7 +61,8 @@ class GcpStorage(Storage):
             transaction.set(ref, self._to_dict(case))
             return case
 
-        return run(self.db.transaction())
+        with self._lock_for(case_id):
+            return run(self.db.transaction(max_attempts=10))
 
     def find_by_share_token(self, token: str) -> Case | None:
         if not token:

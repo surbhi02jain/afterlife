@@ -61,12 +61,15 @@ Dockerfile, README.md, DEMO.md, CLAUDE.md
 
 ## Commands (run from repo root)
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt   # setup
+python3 -m venv .venv && .venv/bin/pip install -r backend/requirements-dev.txt   # setup
 cp .env.example .env    # then put your GEMINI_API_KEY in .env
 
 .venv/bin/pytest backend                                   # tests (no network)
 (cd frontend && npm install && npm run build)              # build UI into frontend/dist (served by FastAPI)
 (cd frontend && npm run dev)                               # UI dev server on :5173, proxies /api to :8000
+docker build -t saath . && docker run -p 8080:8080 -e STORAGE_BACKEND=local -e LOCAL_DATA_DIR=/tmp/data saath
+GEMINI_API_KEY=... ./scripts/deploy.sh                     # Cloud Run deploy (user runs it after gcloud auth)
+# GcpStorage against emulators: see the docstring in backend/tests/test_gcp_storage.py
 .venv/bin/uvicorn app.main:app --app-dir backend --reload  # API on http://localhost:8000
 .venv/bin/python scripts/make_demo_docs.py                 # regenerate demo/docs/*.png
 .venv/bin/python scripts/run_extraction.py                 # live extraction on demo docs (needs key)

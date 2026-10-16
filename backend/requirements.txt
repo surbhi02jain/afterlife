@@ -1,3 +1,4 @@
+# Runtime dependencies (what the container installs)
 fastapi==0.143.2
 uvicorn[standard]==0.54.0
 pydantic==2.14.1
@@ -6,8 +7,5 @@ google-genai==2.31.0
 google-cloud-firestore==2.34.1
 google-cloud-storage==3.17.1
 python-dotenv==1.2.4
-pillow==12.3.0
 fpdf2==2.8.9
 uharfbuzz==0.56.3
-pytest==9.1.1
-httpx==0.28.1
