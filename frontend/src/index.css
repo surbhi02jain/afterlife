@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/* Calm, warm palette. Text colours meet WCAG AA (most AAA) on the sand background. */
+@theme {
+  --color-sand-50: #faf7f2;
+  --color-sand-100: #f3ede3;
+  --color-sand-200: #e7dfd2;
+  --color-sand-300: #d3c6b3;
+  --color-ink: #2b2a28;
+  --color-ink-soft: #57524b;
+  --color-brand: #2f5d62;
+  --color-brand-dark: #244a4e;
+  --color-brand-soft: #e4eeec;
+  --color-amber-soft: #fff5e1;
+  --color-amber-line: #d9a94a;
+  --color-amber-ink: #6b4a07;
+  --color-sage-soft: #e8f1e8;
+  --color-sage-ink: #2e5b34;
+  --color-rose-soft: #fbedec;
+  --color-rose-ink: #8f2d2d;
+  --font-sans: "Noto Sans", "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-serif: "Noto Serif", Georgia, serif;
+}
+
+/* 1rem = 18px, so all body text is at least 18px. */
+html {
+  font-size: 18px;
+}
+
+body {
+  background: var(--color-sand-50);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+:lang(hi) body,
+:lang(hi) {
+  font-family: "Noto Sans Devanagari", "Noto Sans", system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fade-in 0.4s ease-out both;
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

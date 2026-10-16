@@ -204,3 +204,16 @@ def test_plan_puts_the_soonest_auto_debit_first():
     plan = build_plan(full_case(), TODAY)
     assert [t.institution for t in plan.tasks[:3]] == ["Griha Setu Housing Finance", "KAVACH LIFE INS",
                                                        "NAVODAYA MUTUAL FUND"]
+
+
+def test_probable_items_are_always_asked_about_even_if_the_model_skips_them():
+    from tools.questions import confirm_drafts_first
+
+    case = full_case()
+    gaps = find_gaps(case)
+    model_drafts = [QuestionDraft(gap_id=g.id, text=f"About {g.target}", why="w")
+                    for g in gaps if g.target in ("death_certificate", "claimant_name", "claimant_address")]
+    created = add_questions(case, gaps, confirm_drafts_first(case, gaps, model_drafts))
+    assert [q.target for q in created][:2] == ["confirm_item", "confirm_item"]
+    assert len(created) == 4
+    assert created[0].text.startswith("Did Demo Person have a")

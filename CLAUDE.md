@@ -65,6 +65,8 @@ python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt   # s
 cp .env.example .env    # then put your GEMINI_API_KEY in .env
 
 .venv/bin/pytest backend                                   # tests (no network)
+(cd frontend && npm install && npm run build)              # build UI into frontend/dist (served by FastAPI)
+(cd frontend && npm run dev)                               # UI dev server on :5173, proxies /api to :8000
 .venv/bin/uvicorn app.main:app --app-dir backend --reload  # API on http://localhost:8000
 .venv/bin/python scripts/make_demo_docs.py                 # regenerate demo/docs/*.png
 .venv/bin/python scripts/run_extraction.py                 # live extraction on demo docs (needs key)
@@ -89,6 +91,10 @@ cp .env.example .env    # then put your GEMINI_API_KEY in .env
   code: credential requests are refused before any model call; legal topics get "guidance, not legal advice".
 - Plan (`tools/plan.py`), letters (`tools/letters.py`) and procedure lookup (`kb/`) are deterministic. Procedural
   text comes only from `backend/kb/procedures.json` (all `verified: false` placeholders for now).
+- Frontend (`frontend/src`): React + Tailwind v4, hash routes `#/case/<id>/<screen>` and `#/share/<token>`, every
+  string in `i18n.js` (en + hi), 18px base font, one primary action per screen (`PrimaryBar`). The API returns
+  `case_view()` (no raw extractions or storage keys). If the npm cache errors with EACCES, set `npm_config_cache`
+  to a writable folder.
 - Demo cases replay the REAL recorded extraction for byte-identical demo docs (`app/demo.py`,
   `DEMO_REPLAY_EXTRACTION`), logged as a "saved reading". Real uploads always go live.
 - Evidence descriptions mask any 6+ digit run to the last 4 (`Evidence.mask_numbers`).

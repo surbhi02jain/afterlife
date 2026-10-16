@@ -18,7 +18,8 @@ from tools.i18n import label
 from tools.inference import InferenceError, apply_proposals, collect_transactions, propose
 from tools.letters import draft_letter
 from tools.plan import build_plan
-from tools.questions import QuestionError, add_questions, apply_answer, draft_questions, find_gaps
+from tools.questions import (QuestionError, add_questions, apply_answer, confirm_drafts_first, draft_questions,
+                             find_gaps)
 
 
 def log(case: Case, tool: str, en: str, hi: str, *, ok: bool = True, run_id: str | None = None, **detail) -> None:
@@ -138,6 +139,15 @@ def run_inference(storage: Storage, case_id: str, *, client=None, run_id: str | 
     return runs[-1]
 
 
+def refresh_letters(c: Case) -> None:
+    """Redraft letters the family hasn't edited, so new answers and confirmations show up in them."""
+    for n, letter in enumerate(c.letters):
+        if not letter.edited and c.get_item(letter.item_id):
+            fresh = draft_letter(c, letter.item_id)
+            fresh.id, fresh.created_at = letter.id, letter.created_at
+            c.letters[n] = fresh
+
+
 def set_item_status(storage: Storage, case_id: str, item_id: str, status: ItemStatus) -> Case:
     def mutate(c: Case):
         item = c.get_item(item_id)
@@ -148,6 +158,7 @@ def set_item_status(storage: Storage, case_id: str, item_id: str, status: ItemSt
         refresh_recurring(c, date.today())
         if c.plan:
             c.plan = build_plan(c)
+        refresh_letters(c)
 
     return storage.update_case(case_id, mutate)
 
@@ -195,7 +206,8 @@ def _save_questions(storage: Storage, case_id: str, drafts, run_id: str | None) 
     created = []
 
     def mutate(c: Case):
-        created.extend(add_questions(c, find_gaps(c), drafts))
+        gaps = find_gaps(c)
+        created.extend(add_questions(c, gaps, confirm_drafts_first(c, gaps, drafts)))
         n = len(created)
         log(c, "ask_user", f"Prepared {n} question{'s' if n != 1 else ''} for the family",
             f"परिवार के लिए {n} प्रश्न तैयार किए", run_id=run_id, questions=n)
@@ -230,6 +242,7 @@ def answer_question(storage: Storage, case_id: str, question_id: str, answer: st
         refresh_recurring(c, date.today())
         if c.plan:
             c.plan = build_plan(c)
+        refresh_letters(c)
 
     return storage.update_case(case_id, mutate)
 

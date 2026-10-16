@@ -113,9 +113,11 @@ def item_type_for(doc: Document) -> str | None:
     return "other_asset"
 
 
-def as_of_date(doc: Document) -> str | None:
+def as_of_date(doc: Document, today: date | None = None) -> str | None:
+    """Latest date on the document that isn't in the future (maturity / next-due dates are not "as of")."""
     e = doc.extraction
-    dates = [d.date for d in e.dates] + [t.date for t in e.transactions if t.date]
+    limit = (today or date.today()).isoformat()
+    dates = [d for d in [*(x.date for x in e.dates), *(t.date for t in e.transactions)] if d and d <= limit]
     return max(dates) if dates else None
 
 

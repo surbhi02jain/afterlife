@@ -196,3 +196,22 @@ def test_infer_with_no_transactions_is_a_clear_error(api):
     case = make_case(api)
     response = api.post(f"/api/cases/{case['id']}/infer")
     assert response.status_code == 502 and "no transactions" in response.json()["detail"]
+
+
+def test_answers_flow_into_unedited_letters_but_never_overwrite_edits(api, storage, monkeypatch, fake_client):
+    from tools.questions import QuestionDraft, find_gaps
+
+    case = extracted_case(api, monkeypatch, fake_client)
+    item_id = api.get(f"/api/cases/{case['id']}/asset-map").json()["assets"]["confirmed"][0]["id"]
+    letter = api.post(f"/api/cases/{case['id']}/letters", json={"item_id": item_id}).json()
+    assert "[Your full name]" in letter["body"]
+
+    gap = next(g for g in find_gaps(storage.get_case(case["id"])) if g.target == "claimant_name")
+    services.ask_questions(storage, case["id"], [QuestionDraft(gap_id=gap.id, text="Your name?", why="letters")])
+    question = storage.get_case(case["id"]).questions[0]
+    body = api.post(f"/api/cases/{case['id']}/questions/{question.id}/answer", json={"answer": "Arjun Rao"}).json()
+    assert "Arjun Rao" in body["letters"][0]["body"]
+
+    api.put(f"/api/cases/{case['id']}/letters/{letter['id']}", json={"body": "My own words."})
+    api.post(f"/api/cases/{case['id']}/items/{item_id}/status", json={"status": "confirmed"})
+    assert api.get(f"/api/cases/{case['id']}").json()["letters"][0]["body"] == "My own words."

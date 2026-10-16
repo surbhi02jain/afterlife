@@ -163,3 +163,26 @@ def apply_answer(case: Case, question_id: str, answer: str) -> Question:
 
     q.answer, q.status, q.answered_at = answer, "answered", utc_now()
     return q
+
+
+def confirm_drafts_first(case: Case, gaps: list[Gap], drafts: list[QuestionDraft]) -> list[QuestionDraft]:
+    """Guardrail: every probable item gets asked about, whatever the model chose. Missing ones get a templated
+    question, and all confirm questions go first (add_questions then applies the cap)."""
+    lang = case.language
+    covered = {d.gap_id for d in drafts}
+    templated = []
+    for gap in gaps:
+        if gap.target != "confirm_item" or gap.id in covered:
+            continue
+        item = case.get_item(gap.item_id)
+        kind = label(item.type, lang)
+        templated.append(QuestionDraft(
+            gap_id=gap.id,
+            text=pick(lang, f"Did {case.deceased_name} have a {kind} with {item.institution}?",
+                      f"क्या {item.institution} में {case.deceased_name} के नाम पर कोई {kind} है?"),
+            why=pick(lang, "We noticed payments that point to it, but found no document.",
+                     "हमें इससे जुड़े भुगतान दिखे, पर कोई दस्तावेज़ नहीं मिला।")))
+    confirm_ids = {g.id for g in gaps if g.target == "confirm_item"}
+    model_confirm = [d for d in drafts if d.gap_id in confirm_ids]
+    others = [d for d in drafts if d.gap_id not in confirm_ids]
+    return [*model_confirm, *templated, *others]

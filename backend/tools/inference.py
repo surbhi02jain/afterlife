@@ -51,6 +51,10 @@ Rules:
 """
 
 
+# Transactions that by themselves prove part of the case for an inferred type; added to the model's citations.
+SUPPORTING_EVIDENCE = {"demat_account": re.compile(r"\bDIV(IDEND)?\b", re.I)}
+
+
 class InferenceError(RuntimeError):
     """Inference could not produce a valid result. Message is safe to show the user."""
 
@@ -140,6 +144,9 @@ def apply_proposals(case: Case, result: InferenceResult, refs: list[TxnRef], mod
         label = f"{p.type} at {p.institution}"
         cited = list(dict.fromkeys(p.evidence_transaction_ids))  # dedupe, keep order
         valid = [by_id[i] for i in cited if i in by_id]
+        if valid and p.type in SUPPORTING_EVIDENCE:  # deterministic: e.g. every dividend credit backs a demat account
+            pattern = SUPPORTING_EVIDENCE[p.type]
+            valid += [r for r in refs if r not in valid and r.direction == "credit" and pattern.search(r.description)]
         if not valid:
             run.discarded.append(f"{label}: no valid transaction evidence (cited {cited})")
             continue

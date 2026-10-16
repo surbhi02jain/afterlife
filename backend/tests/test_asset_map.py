@@ -219,3 +219,22 @@ def test_inferred_identifier_is_never_marked_valid():
     proposal = {**kavach(txn_ids(refs, "KAVACH")), "identifier_hint": "784512000"}
     run = apply_proposals(case, proposals(proposal), refs, "m", today=TODAY)
     assert case.get_item(run.added[0]).identifier_check == "unchecked"
+
+
+def test_demat_proposal_always_carries_the_dividend_credits():
+    case, _, _ = statement_case()
+    refs = collect_transactions(case)
+    only_dp_charge = txn_ids(refs, "DP AMC")
+    run = apply_proposals(case, proposals({
+        "kind": "asset", "type": "demat_account", "institution": "ANAND STOCKBROKING", "identifier_hint": None,
+        "reason": "DP charges.", "evidence_transaction_ids": only_dp_charge, "confidence": "medium"}), refs, "m",
+        today=TODAY)
+    demat = case.get_item(run.added[0])
+    assert sorted(e.amount for e in demat.evidence if e.direction == "credit") == [350, 612, 1840]
+
+
+def test_as_of_ignores_future_dates():
+    from tools.asset_map import as_of_date
+    case = new_case()
+    doc = add_doc(case, recorded("04_fd_advice"))
+    assert as_of_date(doc, TODAY) == "2026-03-15"  # deposit date, not the 2027 maturity date

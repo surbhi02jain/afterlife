@@ -105,8 +105,8 @@ def build_plan(case: Case, today: date | None = None) -> ActionPlan:
         if needs_confirmation:
             confirm = pick(lang, f"Ask {institution} to confirm whether {case.deceased_name} had a {type_names} with "
                                  "them. A letter is ready for this.",
-                           f"{institution} से पूछें कि क्या {case.deceased_name} का उनके पास {type_names} था। इसके लिए "
-                           "पत्र तैयार है।")
+                           f"{institution} से पूछें कि क्या उनके यहाँ {case.deceased_name} के नाम पर {type_names} है। "
+                           "इसके लिए पत्र तैयार है।")
             steps = [confirm, *steps]
 
         task = PlanTask(

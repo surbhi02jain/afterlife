@@ -1,0 +1,373 @@
+// All UI text in English and Hindi. Keep sentences short and gentle.
+
+const en = {
+  appName: "Saath",
+  tagline: "Gentle help with a loved one's money matters",
+  sampleBanner: "Sample family. Every name, number and document here is made up.",
+  language: "हिन्दी",
+  languageLabel: "Switch to Hindi",
+  readAloud: "Read aloud",
+  stopReading: "Stop reading",
+  activity: "What Saath did",
+  close: "Close",
+  loading: "Getting things ready…",
+  errorTitle: "Something didn't work",
+  errorBody: "Your information is safe. Please try again in a moment.",
+  tryAgain: "Try again",
+
+  nav_upload: "Documents",
+  nav_map: "What we found",
+  nav_questions: "Questions",
+  nav_plan: "Plan",
+  nav_letters: "Letters",
+  nav_board: "Family board",
+  nav_privacy: "Privacy",
+
+  // start
+  startTitle: "We are sorry for your loss.",
+  startBody:
+    "Saath helps you find the accounts, policies and investments your loved one had, and what to do about each one. We go one gentle step at a time.",
+  theirName: "Their name",
+  dateOfDeath: "Date they passed away",
+  yourRelationship: "You are their",
+  rel_spouse: "Wife or husband",
+  rel_son: "Son",
+  rel_daughter: "Daughter",
+  rel_parent: "Parent",
+  rel_sibling: "Brother or sister",
+  rel_other: "Other family member",
+  preferredLanguage: "Language for letters and steps",
+  begin: "Begin",
+  tryDemo: "Try with a demo family",
+  demoHint: "See how Saath works with a made-up family. No real data.",
+  continueCase: "Continue where you left off",
+  deletedNotice: "Everything has been deleted.",
+
+  // upload
+  uploadTitle: "Add whatever documents you have",
+  uploadBody:
+    "Photos of statements or passbooks, policy receipts, SMS or UPI screenshots. It's fine if things are incomplete; we'll help find what's missing.",
+  dropHere: "Drop photos or PDFs here",
+  chooseFiles: "Choose photos or PDFs",
+  fileTypes: "Photos (JPG, PNG) or PDF, up to 15 MB each",
+  st_uploaded: "Waiting to be read",
+  st_extracting: "Reading…",
+  st_extracted: "Read",
+  st_failed: "Couldn't read this",
+  savedReading: "sample reading",
+  retry: "Try again",
+  readDocs: "Read {n} documents",
+  reading: "Reading your documents…",
+  analyse: "Find what might be missing",
+  analysing: "Saath is looking through everything…",
+  analysingBody: "This usually takes under a minute. You can watch what's happening below.",
+  seeFound: "See what we found",
+  noDocsYet: "No documents yet.",
+
+  // asset map
+  mapTitle: "What we found",
+  fromSaath: "From Saath",
+  discoveryTitle: "We may have found {n} more things",
+  discoveryBody: "These had no document of their own. They are not confirmed. Please check each one.",
+  confirmedTotal: "Confirmed so far",
+  probableNotCounted: "Things we're not sure about are not counted.",
+  owed: "Loans and dues",
+  confirmed: "Confirmed",
+  probable: "Probably exists, please check",
+  liabilities: "Loans and dues",
+  notApplicable: "Not applicable",
+  undo: "Undo",
+  probablyA: "Probably a {type} with {institution}",
+  conf_high: "We're fairly sure",
+  conf_medium: "Somewhat sure",
+  conf_low: "Not very sure",
+  whatWeNoticed: "What we noticed",
+  yesConfirm: "Yes, this is right",
+  markNA: "Not applicable",
+  nominee: "Nominee",
+  nomineeUnknown: "Nominee not known",
+  nextDebit: "Next auto-debit expected on {date}",
+  asOf: "as of {date}",
+  nothingFound: "Nothing found yet. Add documents and Saath will look through them.",
+  nextQuestions: "Next: a few questions",
+
+  // questions
+  questionsTitle: "A few gentle questions",
+  questionsBody: "Your answers help us fill the gaps. Skip anything you don't know.",
+  typeAnswer: "Type your answer",
+  save: "Save",
+  answered: "Thank you, we've noted these",
+  noQuestions: "No questions waiting.",
+  askMe: "Ask me a few questions",
+  seePlan: "See your plan",
+
+  // plan
+  planTitle: "Your plan, in a sensible order",
+  planBody: "Start at the top. Each step says why it comes where it does.",
+  makePlan: "Prepare my plan",
+  firstForEveryone: "Before anything else",
+  firstStep: "First step",
+  whyOrder: "Why this order",
+  timeSensitive: "Time-sensitive",
+  needsChecking: "Needs checking",
+  allSteps: "All steps and documents",
+  steps: "Steps",
+  documents: "Documents to keep ready",
+  timeline: "Usually takes",
+  source: "Source",
+  unverified: "Unverified guidance",
+  prepareLetter: "Prepare letter",
+  seeLetters: "See letters",
+
+  // letters
+  lettersTitle: "Letters, ready to send",
+  lettersBody: "Read each letter and fill in anything in [brackets]. You can change any word.",
+  noLetters: "No letters yet. Prepare one from your plan.",
+  letterFor: "Letter for",
+  makeLetterFor: "Make a letter for…",
+  saveChanges: "Save changes",
+  saved: "Saved",
+  downloadPdf: "Download PDF",
+
+  // board
+  boardTitle: "Family board",
+  boardBody: "Keep track together. Move each step as it happens.",
+  col_todo: "To do",
+  col_in_progress: "In progress",
+  col_done: "Done",
+  start: "Start",
+  markDone: "Mark done",
+  moveBack: "Move back",
+  shareTitle: "Share with family",
+  shareBody: "A read-only link shows this board. It never shows documents, letters or full numbers.",
+  createLink: "Create read-only link",
+  copy: "Copy link",
+  copied: "Copied",
+  noPlanYet: "Prepare your plan first, then it appears here.",
+  sharedView: "Read-only view shared by your family",
+  forName: "For {name}",
+  linkInvalid: "This link is not valid any more.",
+
+  // privacy
+  privacyTitle: "Your privacy",
+  privacyPoints: [
+    "Your documents are read by Google Gemini to find accounts and policies. They are not used for anything else.",
+    "Uploaded files are deleted automatically within 24 hours on our cloud storage. The case notes stay until you delete them.",
+    "We only ever show the last 4 digits of account and policy numbers.",
+    "Saath will never ask for passwords, PINs, OTPs or card numbers.",
+  ],
+  deleteData: "Delete my data",
+  deleteConfirm: "This deletes the case, every uploaded file and all letters. It cannot be undone.",
+  deleteYes: "Yes, delete everything",
+  cancel: "Cancel",
+  disclaimerShort: "Saath gives guidance, not legal or financial advice.",
+};
+
+const hi = {
+  appName: "साथ",
+  tagline: "प्रियजन के पैसों के कामों में सहज मदद",
+  sampleBanner: "नमूना परिवार। यहाँ हर नाम, नंबर और दस्तावेज़ काल्पनिक है।",
+  language: "English",
+  languageLabel: "Switch to English",
+  readAloud: "सुनें",
+  stopReading: "रोकें",
+  activity: "साथ ने क्या किया",
+  close: "बंद करें",
+  loading: "तैयारी हो रही है…",
+  errorTitle: "कुछ ठीक से नहीं हुआ",
+  errorBody: "आपकी जानकारी सुरक्षित है। कृपया थोड़ी देर में फिर कोशिश करें।",
+  tryAgain: "फिर कोशिश करें",
+
+  nav_upload: "दस्तावेज़",
+  nav_map: "क्या मिला",
+  nav_questions: "प्रश्न",
+  nav_plan: "योजना",
+  nav_letters: "पत्र",
+  nav_board: "परिवार बोर्ड",
+  nav_privacy: "गोपनीयता",
+
+  startTitle: "आपके दुःख में हम आपके साथ हैं।",
+  startBody:
+    "साथ आपके प्रियजन के खाते, पॉलिसी और निवेश खोजने में मदद करता है, और बताता है कि हर एक के लिए क्या करना है। हम एक-एक कदम आराम से चलेंगे।",
+  theirName: "उनका नाम",
+  dateOfDeath: "उनके निधन की तारीख़",
+  yourRelationship: "आप उनके हैं",
+  rel_spouse: "पत्नी या पति",
+  rel_son: "बेटा",
+  rel_daughter: "बेटी",
+  rel_parent: "माता या पिता",
+  rel_sibling: "भाई या बहन",
+  rel_other: "परिवार के अन्य सदस्य",
+  preferredLanguage: "पत्रों और कदमों की भाषा",
+  begin: "शुरू करें",
+  tryDemo: "नमूना परिवार के साथ देखें",
+  demoHint: "एक काल्पनिक परिवार के साथ देखें कि साथ कैसे काम करता है। कोई असली जानकारी नहीं।",
+  continueCase: "जहाँ छोड़ा था वहीं से जारी रखें",
+  deletedNotice: "सब कुछ हटा दिया गया है।",
+
+  uploadTitle: "जो भी दस्तावेज़ हैं, जोड़ें",
+  uploadBody:
+    "स्टेटमेंट या पासबुक की फ़ोटो, पॉलिसी रसीद, SMS या UPI स्क्रीनशॉट। अधूरा हो तो भी ठीक है; जो छूट गया है, उसे खोजने में हम मदद करेंगे।",
+  dropHere: "फ़ोटो या PDF यहाँ छोड़ें",
+  chooseFiles: "फ़ोटो या PDF चुनें",
+  fileTypes: "फ़ोटो (JPG, PNG) या PDF, हर एक 15 MB तक",
+  st_uploaded: "पढ़े जाने की प्रतीक्षा में",
+  st_extracting: "पढ़ा जा रहा है…",
+  st_extracted: "पढ़ लिया",
+  st_failed: "यह पढ़ा नहीं जा सका",
+  savedReading: "नमूना पठन",
+  retry: "फिर कोशिश करें",
+  readDocs: "{n} दस्तावेज़ पढ़ें",
+  reading: "आपके दस्तावेज़ पढ़े जा रहे हैं…",
+  analyse: "देखें कि क्या छूट गया हो सकता है",
+  analysing: "साथ सब कुछ देख रहा है…",
+  analysingBody: "इसमें आमतौर पर एक मिनट से कम लगता है। नीचे देख सकते हैं कि क्या हो रहा है।",
+  seeFound: "देखें क्या मिला",
+  noDocsYet: "अभी कोई दस्तावेज़ नहीं।",
+
+  mapTitle: "क्या मिला",
+  fromSaath: "साथ की ओर से",
+  discoveryTitle: "शायद {n} और चीज़ें मिली हैं",
+  discoveryBody: "इनका अपना कोई दस्तावेज़ नहीं था। ये पक्की नहीं हैं। कृपया हर एक की जाँच करें।",
+  confirmedTotal: "अब तक पक्का",
+  probableNotCounted: "जिन चीज़ों पर पक्का नहीं है, उन्हें नहीं जोड़ा गया।",
+  owed: "लोन और बकाया",
+  confirmed: "पक्का",
+  probable: "शायद मौजूद है, कृपया जाँचें",
+  liabilities: "लोन और बकाया",
+  notApplicable: "लागू नहीं",
+  undo: "वापस करें",
+  probablyA: "शायद {institution} में {type}",
+  conf_high: "हमें काफ़ी भरोसा है",
+  conf_medium: "कुछ भरोसा है",
+  conf_low: "ज़्यादा भरोसा नहीं",
+  whatWeNoticed: "हमने क्या देखा",
+  yesConfirm: "हाँ, यह सही है",
+  markNA: "लागू नहीं",
+  nominee: "नॉमिनी",
+  nomineeUnknown: "नॉमिनी ज्ञात नहीं",
+  nextDebit: "अगला ऑटो-डेबिट {date} को अपेक्षित",
+  asOf: "{date} तक",
+  nothingFound: "अभी कुछ नहीं मिला। दस्तावेज़ जोड़ें, साथ उन्हें देखेगा।",
+  nextQuestions: "आगे: कुछ प्रश्न",
+
+  questionsTitle: "कुछ सहज प्रश्न",
+  questionsBody: "आपके उत्तर कमियाँ भरने में मदद करते हैं। जो नहीं पता, उसे छोड़ दें।",
+  typeAnswer: "अपना उत्तर लिखें",
+  save: "सहेजें",
+  answered: "धन्यवाद, हमने ये नोट कर लिए हैं",
+  noQuestions: "कोई प्रश्न बाकी नहीं।",
+  askMe: "मुझसे कुछ प्रश्न पूछें",
+  seePlan: "अपनी योजना देखें",
+
+  planTitle: "आपकी योजना, सही क्रम में",
+  planBody: "ऊपर से शुरू करें। हर कदम बताता है कि वह वहाँ क्यों है।",
+  makePlan: "मेरी योजना तैयार करें",
+  firstForEveryone: "सबसे पहले",
+  firstStep: "पहला कदम",
+  whyOrder: "यह क्रम क्यों",
+  timeSensitive: "समय पर ध्यान दें",
+  needsChecking: "जाँच ज़रूरी",
+  allSteps: "सभी कदम और दस्तावेज़",
+  steps: "कदम",
+  documents: "तैयार रखें ये दस्तावेज़",
+  timeline: "आमतौर पर लगता है",
+  source: "स्रोत",
+  unverified: "असत्यापित मार्गदर्शन",
+  prepareLetter: "पत्र तैयार करें",
+  seeLetters: "पत्र देखें",
+
+  lettersTitle: "भेजने के लिए तैयार पत्र",
+  lettersBody: "हर पत्र पढ़ें और [कोष्ठक] में जो है उसे भरें। आप कोई भी शब्द बदल सकते हैं।",
+  noLetters: "अभी कोई पत्र नहीं। अपनी योजना से एक तैयार करें।",
+  letterFor: "पत्र",
+  makeLetterFor: "इसके लिए पत्र बनाएँ…",
+  saveChanges: "बदलाव सहेजें",
+  saved: "सहेजा गया",
+  downloadPdf: "PDF डाउनलोड करें",
+
+  boardTitle: "परिवार बोर्ड",
+  boardBody: "साथ मिलकर ध्यान रखें। हर कदम होने पर उसे आगे बढ़ाएँ।",
+  col_todo: "करना है",
+  col_in_progress: "चल रहा है",
+  col_done: "हो गया",
+  start: "शुरू करें",
+  markDone: "हो गया",
+  moveBack: "वापस ले जाएँ",
+  shareTitle: "परिवार के साथ साझा करें",
+  shareBody: "केवल-देखने वाला लिंक यह बोर्ड दिखाता है। इसमें कभी दस्तावेज़, पत्र या पूरे नंबर नहीं दिखते।",
+  createLink: "केवल-देखने वाला लिंक बनाएँ",
+  copy: "लिंक कॉपी करें",
+  copied: "कॉपी हो गया",
+  noPlanYet: "पहले अपनी योजना तैयार करें, फिर यह यहाँ दिखेगी।",
+  sharedView: "आपके परिवार द्वारा साझा किया गया केवल-देखने वाला दृश्य",
+  forName: "{name} के लिए",
+  linkInvalid: "यह लिंक अब मान्य नहीं है।",
+
+  privacyTitle: "आपकी गोपनीयता",
+  privacyPoints: [
+    "खाते और पॉलिसी खोजने के लिए आपके दस्तावेज़ Google Gemini पढ़ता है। इनका किसी और काम में उपयोग नहीं होता।",
+    "अपलोड की गई फ़ाइलें हमारे क्लाउड स्टोरेज से 24 घंटे में अपने आप हट जाती हैं। मामले के नोट्स तब तक रहते हैं जब तक आप उन्हें न हटाएँ।",
+    "हम खाते और पॉलिसी नंबर के केवल आख़िरी 4 अंक दिखाते हैं।",
+    "साथ कभी पासवर्ड, PIN, OTP या कार्ड नंबर नहीं माँगेगा।",
+  ],
+  deleteData: "मेरा डेटा हटाएँ",
+  deleteConfirm: "इससे मामला, हर अपलोड की गई फ़ाइल और सभी पत्र हट जाएँगे। इसे वापस नहीं किया जा सकता।",
+  deleteYes: "हाँ, सब कुछ हटाएँ",
+  cancel: "रद्द करें",
+  disclaimerShort: "साथ मार्गदर्शन देता है, कानूनी या वित्तीय सलाह नहीं।",
+};
+
+const TYPE = {
+  en: {
+    savings_account: "savings account", fixed_deposit: "fixed deposit", life_insurance: "life insurance policy",
+    mutual_fund: "mutual fund", demat_account: "demat (shares) account", epf: "EPF account", ppf: "PPF account",
+    other_asset: "asset", home_loan: "home loan", personal_loan: "personal loan", vehicle_loan: "vehicle loan",
+    credit_card: "credit card", other_loan: "loan",
+  },
+  hi: {
+    savings_account: "बचत खाता", fixed_deposit: "फ़िक्स्ड डिपॉज़िट", life_insurance: "जीवन बीमा पॉलिसी",
+    mutual_fund: "म्यूचुअल फ़ंड", demat_account: "डीमैट (शेयर) खाता", epf: "EPF खाता", ppf: "PPF खाता",
+    other_asset: "संपत्ति", home_loan: "होम लोन", personal_loan: "पर्सनल लोन", vehicle_loan: "वाहन लोन",
+    credit_card: "क्रेडिट कार्ड", other_loan: "लोन",
+  },
+};
+
+const DOC_TYPE = {
+  en: {
+    bank_statement: "bank statement", passbook: "passbook", insurance_policy: "insurance policy",
+    premium_receipt: "premium receipt", mutual_fund_statement: "mutual fund statement",
+    demat_statement: "demat statement", epf_passbook: "EPF passbook", loan_sms: "loan SMS",
+    upi_history: "UPI history", other: "document",
+  },
+  hi: {
+    bank_statement: "बैंक स्टेटमेंट", passbook: "पासबुक", insurance_policy: "बीमा पॉलिसी",
+    premium_receipt: "प्रीमियम रसीद", mutual_fund_statement: "म्यूचुअल फ़ंड स्टेटमेंट",
+    demat_statement: "डीमैट स्टेटमेंट", epf_passbook: "EPF पासबुक", loan_sms: "लोन SMS",
+    upi_history: "UPI इतिहास", other: "दस्तावेज़",
+  },
+};
+
+const STRINGS = { en, hi };
+
+export function t(lang, key, vars = {}) {
+  let s = STRINGS[lang]?.[key] ?? en[key] ?? key;
+  if (typeof s === "string") {
+    for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, v);
+  }
+  return s;
+}
+
+export const typeLabel = (lang, type) => TYPE[lang]?.[type] ?? type.replaceAll("_", " ");
+export const docTypeLabel = (lang, type) => DOC_TYPE[lang]?.[type] ?? type;
+
+export function inr(value) {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
+}
+
+export function niceDate(iso, lang) {
+  if (!iso) return "";
+  const d = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
+  return d.toLocaleDateString(lang === "hi" ? "hi-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
