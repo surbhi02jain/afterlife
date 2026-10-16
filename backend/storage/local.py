@@ -52,6 +52,16 @@ class LocalStorage(Storage):
             self._write(case)
             return case
 
+    def find_by_share_token(self, token: str) -> Case | None:
+        if not token or not token.isalnum():
+            return None
+        with self._lock:
+            for path in self.cases_dir.glob("*.json"):
+                case = Case.model_validate_json(path.read_text())
+                if case.share_token == token:
+                    return case
+        return None
+
     def delete_case(self, case_id: str) -> None:
         with self._lock:
             path = self._case_path(case_id)

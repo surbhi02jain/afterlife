@@ -4,10 +4,11 @@ import json
 from datetime import date
 from pathlib import Path
 
+from app.demo import RECORDED_DIR
 from app.models import Case, Document, ExtractedDocument
 from tools.extraction import parse_extraction
 
-FIXTURES = Path(__file__).parent / "fixtures" / "extraction"
+FIXTURES = RECORDED_DIR
 
 
 def recorded(stem: str) -> ExtractedDocument:

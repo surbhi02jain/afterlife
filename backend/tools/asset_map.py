@@ -14,6 +14,7 @@ from app.models import Asset, Case, Confidence, Document, DocumentType, Evidence
 from tools.finance import (
     check_identifier,
     identifier_digits,
+    institution_tokens,
     mask_identifier,
     next_expected,
     parse_date,
@@ -268,12 +269,40 @@ def refresh_recurring(case: Case, today: date) -> None:
         item.next_expected_debit = nxt.isoformat() if nxt else None
 
 
+def _names_item(narration: str, item, digits: set[str]) -> bool:
+    words = set(re.findall(r"[a-z]+", narration.lower()))
+    tokens = institution_tokens(item.institution)
+    if tokens and len(tokens & words) / len(tokens) >= 0.5 and any(len(t) >= 4 for t in tokens & words):
+        return True
+    narration_digits = re.sub(r"\D", " ", narration).split()
+    return any(len(d) >= 6 and d in narration_digits for d in digits)
+
+
+def link_transactions(case: Case) -> None:
+    """Attach transactions from OTHER documents that name a documented item (e.g. EMI debits in the bank
+    statement for a loan known from an SMS). This is what lets the plan see the next auto-debit date."""
+    for item in [*case.assets, *case.liabilities]:
+        if item.origin != "document":
+            continue
+        digits = {d for d in _known_digits(case, item) if len(d) >= 6}
+        found = []
+        for doc in case.documents:
+            if doc.id in item.source_document_ids or doc.status != "extracted" or not doc.extraction:
+                continue
+            for t in doc.extraction.transactions:
+                if _names_item(t.description, item, digits):
+                    found.append(Evidence(document_id=doc.id, document_name=doc.filename, date=t.date,
+                                          description=t.description, amount=t.amount, direction=t.direction))
+        _add_evidence(item, found)
+
+
 def sync_documents(case: Case, today: date | None = None) -> None:
     """Fold every extracted document into the asset map. Safe to run repeatedly."""
     for doc in case.documents:
         cand = candidate_from_document(doc)
         if cand:
             upsert(case, cand)
+    link_transactions(case)
     refresh_recurring(case, today or date.today())
 
 

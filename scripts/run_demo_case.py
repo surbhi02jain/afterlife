@@ -2,7 +2,7 @@
 
   .venv/bin/python scripts/run_demo_case.py            # everything live (10 Gemini calls)
   .venv/bin/python scripts/run_demo_case.py --replay   # extraction replays REAL recorded Gemini replies
-                                                       # (tests/fixtures/extraction); inference is live
+                                                       # (demo/recorded/extraction); inference is live
 
 Then checks the result against demo/README.md: both planted assets must appear as PROBABLE with evidence,
 and nothing already documented may be duplicated. Exits non-zero if the check fails.
@@ -27,7 +27,7 @@ from tools.asset_map import asset_map_view  # noqa: E402
 from tools.inference import InferenceError  # noqa: E402
 
 DEMO_DIR = ROOT / "demo" / "docs"
-FIXTURE_DIR = ROOT / "backend" / "tests" / "fixtures" / "extraction"
+FIXTURE_DIR = ROOT / "demo" / "recorded" / "extraction"
 
 
 class ReplayClient:

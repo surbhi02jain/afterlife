@@ -59,15 +59,17 @@ def test_upload_and_list(api, storage):
     assert response.status_code == 201
     doc = response.json()[0]
     assert doc["status"] == "uploaded" and doc["size_bytes"] == len(PNG)
-    assert storage.read_file(doc["storage_key"]) == PNG
+    assert "storage_key" not in doc  # internals stay server-side
+    stored = storage.get_case(case["id"]).documents[0]
+    assert storage.read_file(stored.storage_key) == PNG
     assert len(api.get(f"/api/cases/{case['id']}/documents").json()) == 1
 
 
-def test_upload_guesses_type_from_extension(api):
+def test_upload_guesses_type_from_extension(api, storage):
     case = make_case(api)
     response = upload(api, case["id"], name="scan.pdf", data=b"%PDF-1.4", content_type="application/octet-stream")
     assert response.status_code == 201
-    assert response.json()[0]["content_type"] == "application/pdf"
+    assert storage.get_case(case["id"]).documents[0].content_type == "application/pdf"
 
 
 def test_upload_rejects_unsupported_type(api):
@@ -84,8 +86,8 @@ def test_extract_success(api, monkeypatch, fake_client):
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "extracted"
-    assert body["extraction"]["document_type"] == "bank_statement"
-    assert len(body["extraction"]["transactions"]) == 2
+    assert body["document_type"] == "bank_statement" and body["transactions"] == 2
+    assert "extraction" not in body
 
 
 def test_extract_failure_is_recorded_not_hidden(api, monkeypatch):
@@ -98,7 +100,7 @@ def test_extract_failure_is_recorded_not_hidden(api, monkeypatch):
     stored = api.get(f"/api/cases/{case['id']}").json()["documents"][0]
     assert stored["status"] == "failed"
     assert "did not match" in stored["error"]
-    assert stored["extraction"] is None
+    assert stored["document_type"] is None
 
 
 def test_extract_without_api_key_fails_clearly(api):
@@ -120,10 +122,11 @@ def test_extract_all_runs_every_pending_document(api, storage, fake_client):
 
 def test_delete_case_removes_uploads(api, storage):
     case = make_case(api)
-    doc = upload(api, case["id"]).json()[0]
+    upload(api, case["id"])
+    key = storage.get_case(case["id"]).documents[0].storage_key
     api.delete(f"/api/cases/{case['id']}")
     with pytest.raises(FileNotFoundError):
-        storage.read_file(doc["storage_key"])
+        storage.read_file(key)
 
 
 # --- asset map endpoints ---------------------------------------------------------------------------

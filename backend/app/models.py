@@ -151,13 +151,26 @@ ItemStatus = Literal["confirmed", "probable", "rejected"]
 IdentifierCheck = Literal["valid", "invalid", "unchecked"]
 
 
+_LONG_NUMBER = re.compile(r"\b([A-Za-z]{0,4})(\d{2,})(\d{4})\b")
+
+
+def mask_long_numbers(text: str) -> str:
+    """'POL 784512093' -> 'POL XXXX2093', 'HL0098817782' -> 'HLXXXX7782'. Only runs of 6+ digits are masked."""
+    return _LONG_NUMBER.sub(lambda m: f"{m.group(1)}XXXX{m.group(3)}", text)
+
+
 class Evidence(BaseModel):
     document_id: str
     document_name: str
     date: str | None = None
-    description: str
+    description: str = Field(description="Narration with account/policy numbers masked to the last 4 digits.")
     amount: float | None = None
     direction: Literal["credit", "debit"] | None = None
+
+    @field_validator("description")
+    @classmethod
+    def mask_numbers(cls, value: str) -> str:
+        return mask_long_numbers(value)
 
     def key(self) -> tuple:
         return (self.document_id, self.date, self.description, self.amount)
@@ -179,7 +192,7 @@ class MapItem(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
     confidence: Confidence
     reason: str | None = Field(default=None, description="Plain-language explanation, mainly for probable items.")
-    origin: Literal["document", "inference"]
+    origin: Literal["document", "inference", "family"]
     decided_by_user: bool = False
     next_expected_debit: str | None = Field(default=None, description="Next date a recurring debit is expected.")
 
@@ -222,15 +235,115 @@ class InferenceResult(BaseModel):
     items: list[InferredItem]
 
 
+# ---------------------------------------------------------------------------
+# Agent activity, follow-up questions, action plan, letters
+# ---------------------------------------------------------------------------
+
+class ActivityEntry(BaseModel):
+    at: datetime = Field(default_factory=utc_now)
+    run_id: str | None = None
+    tool: str
+    ok: bool = True
+    summary_en: str
+    summary_hi: str
+    detail: dict = Field(default_factory=dict, description="Compact args/result. Never full identifiers.")
+
+
+QuestionTarget = Literal["confirm_item", "item_nominee", "claimant_name", "claimant_address", "death_certificate"]
+
+
+class Question(BaseModel):
+    id: str = Field(default_factory=new_id)
+    text: str
+    why: str | None = None
+    target: QuestionTarget
+    item_id: str | None = None
+    options: list[str] = Field(default_factory=list, description="Choices to show; empty = free text.")
+    status: Literal["open", "answered"] = "open"
+    answer: str | None = None
+    asked_at: datetime = Field(default_factory=utc_now)
+    answered_at: datetime | None = None
+
+
+class CaseFacts(BaseModel):
+    claimant_name: str | None = None
+    claimant_address: str | None = None
+    death_certificate: Literal["yes", "no", "applied"] | None = None
+
+
+class PlanItemRef(BaseModel):
+    item_id: str
+    kind: Literal["asset", "liability"]
+    type: str
+    status: ItemStatus
+    identifier_masked: str | None = None
+    amount: float | None = None
+
+
+BoardStatus = Literal["todo", "in_progress", "done"]
+
+
+class PlanTask(BaseModel):
+    id: str = Field(description="Stable across rebuilds so the family board keeps its status.")
+    order: int
+    institution: str
+    items: list[PlanItemRef]
+    needs_confirmation: bool = Field(description="True when every item here is still probable.")
+    nominee: str | None = None
+    first_step: str
+    steps: list[str]
+    documents_required: list[str]
+    typical_timeline: str | None = None
+    time_sensitive: list[str] = Field(default_factory=list)
+    why_this_order: str
+    source_names: list[str] = Field(default_factory=list)
+    verified: bool = False
+    board_status: BoardStatus = "todo"
+
+
+class ActionPlan(BaseModel):
+    generated_at: datetime = Field(default_factory=utc_now)
+    language: Literal["en", "hi"]
+    days_since_death: int
+    general_steps: list[str]
+    tasks: list[PlanTask]
+    disclaimer: str
+
+
+class Letter(BaseModel):
+    id: str = Field(default_factory=new_id)
+    item_id: str
+    institution: str
+    kind: Literal["claim_intimation", "existence_enquiry"]
+    title: str
+    body: str
+    language: Literal["en", "hi"]
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
+    edited: bool = False
+
+
 class Case(CaseCreate):
     id: str = Field(default_factory=new_id)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
     is_demo: bool = False
+    share_token: str | None = None
     documents: list[Document] = Field(default_factory=list)
     assets: list[Asset] = Field(default_factory=list)
     liabilities: list[Liability] = Field(default_factory=list)
     inference_runs: list[InferenceRun] = Field(default_factory=list)
+    facts: CaseFacts = Field(default_factory=CaseFacts)
+    questions: list[Question] = Field(default_factory=list)
+    plan: ActionPlan | None = None
+    letters: list[Letter] = Field(default_factory=list)
+    activity: list[ActivityEntry] = Field(default_factory=list)
+
+    def get_question(self, question_id: str) -> Question | None:
+        return next((q for q in self.questions if q.id == question_id), None)
+
+    def get_letter(self, letter_id: str) -> Letter | None:
+        return next((l for l in self.letters if l.id == letter_id), None)
 
     def get_document(self, document_id: str) -> Document | None:
         return next((d for d in self.documents if d.id == document_id), None)

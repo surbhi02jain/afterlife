@@ -101,3 +101,17 @@ def test_totals_exclude_probable_and_rejected():
     assert t["confirmed_liabilities_total"] == 40000
     assert t["probable_liabilities_count"] == 1
     assert t["net_confirmed"] == 110000.5
+
+
+@pytest.mark.parametrize("text, masked", [
+    ("JEEVAN RAKSHA LIC-PREM-POL 784512093", "JEEVAN RAKSHA LIC-PREM-POL XXXX2093"),
+    ("EMI DR-GRIHA SETU HFL-HL0098817782", "EMI DR-GRIHA SETU HFL-HLXXXX7782"),
+    ("NACH DR-KAVACH LIFE INS-PREM-UMRN SNB70002315", "NACH DR-KAVACH LIFE INS-PREM-UMRN SNBXXXX2315"),
+    ("ACH DR-NAVODAYA MF-SIP-1048832", "ACH DR-NAVODAYA MF-SIP-XXXX8832"),
+    ("UPI/SHARMA GENERAL STORE/groceries", "UPI/SHARMA GENERAL STORE/groceries"),
+    ("FINAL DIVIDEND FY26 2026", "FINAL DIVIDEND FY26 2026"),   # short numbers are left alone
+])
+def test_evidence_masks_long_numbers(text, masked):
+    from app.models import Evidence
+
+    assert Evidence(document_id="d", document_name="n", description=text).description == masked

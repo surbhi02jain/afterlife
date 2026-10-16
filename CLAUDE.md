@@ -41,8 +41,8 @@ Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo pa
 - Storage: interface in `backend/storage/base.py`, chosen by `STORAGE_BACKEND=local|gcp`.
   `local` = JSON files + uploads under `LOCAL_DATA_DIR` (default `./data`); `gcp` = Firestore (cases) +
   Cloud Storage (uploads, auto-deleted after 24h by a bucket lifecycle rule).
-- Tests: pytest. **Tests never call the live Gemini API.** They use recorded responses in
-  `backend/tests/fixtures/` or a fake client.
+- Tests: pytest. **Tests never call the live Gemini API.** They use real Gemini replies recorded in
+  `demo/recorded/` or a fake client.
 
 ## Repo layout
 ```
@@ -52,10 +52,10 @@ backend/
   agent/      Gemini function-calling agent loop (Phase 3)
   kb/         procedures.json knowledge base (Phase 3)
   storage/    base.py interface, local.py, gcp.py
-  tests/      pytest; fixtures/ holds recorded Gemini responses
+  tests/      pytest (no network)
 frontend/     React + Vite + Tailwind (Phase 4)
 scripts/      make_demo_docs.py, run_extraction.py, deploy.sh (Phase 5)
-demo/         generated synthetic demo documents + README of what is planted
+demo/         synthetic demo docs/, recorded/ real Gemini replies for them, README of what is planted
 Dockerfile, README.md, DEMO.md, CLAUDE.md
 ```
 
@@ -72,6 +72,8 @@ cp .env.example .env    # then put your GEMINI_API_KEY in .env
 .venv/bin/python scripts/run_extraction.py --record --missing   # ...only docs without a fixture
 .venv/bin/python scripts/run_demo_case.py --replay         # full demo case: recorded extraction + live inference,
                                                            # then checks both planted assets are found (exit 1 if not)
+.venv/bin/python scripts/run_agent_demo.py                 # Phase 3: live agent on the demo case; prints activity
+                                                           # log, plan, a letter (add --hi for Hindi)
 ```
 
 ## Conventions
@@ -82,6 +84,14 @@ cp .env.example .env    # then put your GEMINI_API_KEY in .env
   transaction). Do slow Gemini calls *outside* that function.
 - Work in phases. Finish each phase, run it, show real output, then make one commit per phase.
 - Imports are rooted at `backend/` (`from app.models import ...`, `from storage import ...`).
+- Agent (`agent/loop.py`): Gemini function calling, max 10 steps, tools in `agent/tools.py` dispatch to
+  `app/services.py`, which writes every activity-log entry (en + hi). Guardrails in `agent/guardrails.py` run in
+  code: credential requests are refused before any model call; legal topics get "guidance, not legal advice".
+- Plan (`tools/plan.py`), letters (`tools/letters.py`) and procedure lookup (`kb/`) are deterministic. Procedural
+  text comes only from `backend/kb/procedures.json` (all `verified: false` placeholders for now).
+- Demo cases replay the REAL recorded extraction for byte-identical demo docs (`app/demo.py`,
+  `DEMO_REPLAY_EXTRACTION`), logged as a "saved reading". Real uploads always go live.
+- Evidence descriptions mask any 6+ digit run to the last 4 (`Evidence.mask_numbers`).
 - Asset map (`tools/asset_map.py`): confirmed items come deterministically from extracted documents; inferred items
   (`tools/inference.py`) are only ever `probable`, must cite real transaction ids, and merge through the same
   `upsert()` dedup path. `decided_by_user` items are never changed by rebuilds. Items store only the masked

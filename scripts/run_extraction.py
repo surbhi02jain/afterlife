@@ -2,7 +2,7 @@
 
   .venv/bin/python scripts/run_extraction.py                       # all demo docs, summary table
   .venv/bin/python scripts/run_extraction.py --show 01 07          # also print full JSON for files matching 01, 07
-  .venv/bin/python scripts/run_extraction.py --record              # save raw replies as pytest fixtures
+  .venv/bin/python scripts/run_extraction.py --record              # save raw replies to demo/recorded (used by tests + demo)
   .venv/bin/python scripts/run_extraction.py --record --missing    # ...only for docs not recorded yet
   .venv/bin/python scripts/run_extraction.py path/to/photo.jpg     # your own files
 
@@ -24,7 +24,7 @@ from app.config import get_settings  # noqa: E402
 from tools.extraction import ExtractionError, extract_document  # noqa: E402
 
 DEMO_DIR = ROOT / "demo" / "docs"
-FIXTURE_DIR = ROOT / "backend" / "tests" / "fixtures" / "extraction"
+FIXTURE_DIR = ROOT / "demo" / "recorded" / "extraction"
 
 
 def run_one(path: Path):
@@ -41,7 +41,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("files", nargs="*", type=Path)
     parser.add_argument("--show", nargs="*", default=[], help="substrings of filenames to print in full")
-    parser.add_argument("--record", action="store_true", help="save raw responses to tests/fixtures/extraction")
+    parser.add_argument("--record", action="store_true", help="save raw responses to demo/recorded/extraction")
     parser.add_argument("--missing", action="store_true", help="only files that have no recorded fixture yet")
     args = parser.parse_args()
 

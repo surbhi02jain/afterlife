@@ -5,11 +5,12 @@ from pathlib import Path
 
 import pytest
 
+from app.demo import DEMO_DOCS_DIR, RECORDED_DIR
 from app.models import DocumentType, ExtractedDocument
 from tools.extraction import ExtractionError, parse_extraction
 
-FIXTURES = Path(__file__).parent / "fixtures" / "extraction"
-DEMO_DOCS = Path(__file__).resolve().parents[2] / "demo" / "docs"
+FIXTURES = RECORDED_DIR
+DEMO_DOCS = DEMO_DOCS_DIR
 
 EXPECTED_TYPE = {
     "01_bank_statement_p1": DocumentType.bank_statement,

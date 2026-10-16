@@ -1,0 +1,227 @@
+{
+  "_note": "PLACEHOLDER CONTENT. Every entry is verified:false and must be replaced with verified, sourced guidance before real use. Keys are referenced by backend/kb/__init__.py.",
+  "general": {
+    "applies_to": [],
+    "priority": 0,
+    "title": {"en": "First steps for the family", "hi": "परिवार के लिए पहले कदम"},
+    "steps": {
+      "en": [
+        "Get several certified copies of the death certificate (8 to 10 is a good number). Almost every institution asks for one.",
+        "Keep the deceased's PAN, Aadhaar, passbooks, policy papers and recent statements together in one folder.",
+        "Do not use the deceased's debit/credit cards, UPI, net banking or PINs, even for small payments. Inform the institutions instead.",
+        "Note down each nominee's ID proof and bank details; most claims pay into the nominee's own account."
+      ],
+      "hi": [
+        "मृत्यु प्रमाण पत्र की कई प्रमाणित प्रतियाँ लें (8 से 10 अच्छी संख्या है)। लगभग हर संस्था इसकी माँग करती है।",
+        "दिवंगत व्यक्ति का पैन, आधार, पासबुक, पॉलिसी के कागज़ और हाल के स्टेटमेंट एक फ़ोल्डर में रखें।",
+        "दिवंगत व्यक्ति के डेबिट/क्रेडिट कार्ड, UPI, नेट बैंकिंग या PIN का उपयोग न करें, छोटे भुगतान के लिए भी नहीं। इसके बजाय संस्थाओं को सूचित करें।",
+        "हर नॉमिनी का पहचान पत्र और बैंक विवरण नोट करें; अधिकतर दावे नॉमिनी के अपने खाते में आते हैं।"
+      ]
+    },
+    "documents_required": {"en": ["Death certificate"], "hi": ["मृत्यु प्रमाण पत्र"]},
+    "typical_timeline": {"en": "Death certificates usually take 1 to 3 weeks from the local registrar.", "hi": "स्थानीय रजिस्ट्रार से मृत्यु प्रमाण पत्र आमतौर पर 1 से 3 सप्ताह में मिलता है।"},
+    "source_name": "Saath placeholder guidance (unverified)",
+    "verified": false
+  },
+  "life_insurance": {
+    "applies_to": ["life_insurance"],
+    "priority": 1,
+    "title": {"en": "Life insurance claim", "hi": "जीवन बीमा दावा"},
+    "steps": {
+      "en": [
+        "Inform the insurer about the death as early as possible (claim intimation), by letter, email or at a branch.",
+        "Ask for the death claim form and the list of documents for this policy.",
+        "The nominee fills the claim form and submits it with the documents.",
+        "If the policy is less than 3 years old, the insurer may ask for medical records; this is normal."
+      ],
+      "hi": [
+        "बीमा कंपनी को मृत्यु की सूचना जितनी जल्दी हो सके दें (क्लेम सूचना), पत्र, ईमेल या शाखा पर जाकर।",
+        "इस पॉलिसी के लिए डेथ क्लेम फ़ॉर्म और दस्तावेज़ों की सूची माँगें।",
+        "नॉमिनी क्लेम फ़ॉर्म भरकर दस्तावेज़ों के साथ जमा करें।",
+        "यदि पॉलिसी 3 साल से कम पुरानी है, तो कंपनी मेडिकल रिकॉर्ड माँग सकती है; यह सामान्य है।"
+      ]
+    },
+    "documents_required": {
+      "en": ["Death certificate", "Claim form filled by the nominee", "Original policy document (or an indemnity if lost)", "Nominee's ID and address proof", "Nominee's cancelled cheque or bank details"],
+      "hi": ["मृत्यु प्रमाण पत्र", "नॉमिनी द्वारा भरा गया क्लेम फ़ॉर्म", "मूल पॉलिसी दस्तावेज़ (खो जाने पर क्षतिपूर्ति पत्र)", "नॉमिनी का पहचान और पता प्रमाण", "नॉमिनी का रद्द चेक या बैंक विवरण"]
+    },
+    "typical_timeline": {"en": "Often settled within about 30 days of all documents being received.", "hi": "सभी दस्तावेज़ मिलने के लगभग 30 दिनों के भीतर अक्सर निपटान हो जाता है।"},
+    "time_sensitive": {"en": "Insurers expect the death to be intimated promptly; do this first.", "hi": "बीमा कंपनियाँ मृत्यु की सूचना जल्दी चाहती हैं; यह काम सबसे पहले करें।"},
+    "source_name": "Saath placeholder based on general insurer practice (unverified)",
+    "verified": false
+  },
+  "loan": {
+    "applies_to": ["home_loan", "personal_loan", "vehicle_loan", "credit_card", "other_loan"],
+    "priority": 2,
+    "title": {"en": "Loan", "hi": "लोन"},
+    "steps": {
+      "en": [
+        "Inform the lender in writing about the death and ask for the outstanding amount.",
+        "Ask whether the loan has loan-protection insurance; if yes, the insurer may pay off some or all of it.",
+        "Ask how the monthly EMI auto-debit will be handled while the claim is in progress.",
+        "Ask for a no-dues / closure letter once the loan is settled."
+      ],
+      "hi": [
+        "लेंडर को मृत्यु की लिखित सूचना दें और बकाया राशि पूछें।",
+        "पूछें कि क्या लोन पर लोन-प्रोटेक्शन बीमा है; यदि हाँ, तो बीमा कंपनी कुछ या पूरा लोन चुका सकती है।",
+        "पूछें कि क्लेम चलते समय मासिक EMI ऑटो-डेबिट का क्या होगा।",
+        "लोन निपटने के बाद नो-ड्यूज़ / क्लोज़र पत्र माँगें।"
+      ]
+    },
+    "documents_required": {
+      "en": ["Death certificate", "Loan account number", "Legal heir's ID proof"],
+      "hi": ["मृत्यु प्रमाण पत्र", "लोन खाता संख्या", "कानूनी वारिस का पहचान प्रमाण"]
+    },
+    "typical_timeline": {"en": "Varies by lender; insurance-backed closures can take 30 to 60 days.", "hi": "लेंडर के अनुसार अलग; बीमा से बंद होने में 30 से 60 दिन लग सकते हैं।"},
+    "time_sensitive": {"en": "EMIs keep auto-debiting until the lender is told.", "hi": "लेंडर को बताने तक EMI अपने आप कटती रहती है।"},
+    "source_name": "Saath placeholder based on general lender practice (unverified)",
+    "verified": false
+  },
+  "bank_savings_account": {
+    "applies_to": ["savings_account"],
+    "priority": 3,
+    "title": {"en": "Bank savings account", "hi": "बैंक बचत खाता"},
+    "steps": {
+      "en": [
+        "Inform the home branch in writing and give a copy of the death certificate. The bank will stop further card and online use.",
+        "Ask the bank to list any standing instructions or auto-debits (insurance premiums, SIPs, EMIs) on the account.",
+        "If a nominee is registered, the nominee submits the bank's claim form with their ID.",
+        "If there is no nominee, the bank will explain the legal heir documents it needs; this depends on the amount."
+      ],
+      "hi": [
+        "होम ब्रांच को लिखित सूचना दें और मृत्यु प्रमाण पत्र की प्रति दें। बैंक आगे कार्ड और ऑनलाइन उपयोग रोक देगा।",
+        "बैंक से खाते पर चल रहे सभी स्थायी निर्देश या ऑटो-डेबिट (बीमा प्रीमियम, SIP, EMI) की सूची माँगें।",
+        "यदि नॉमिनी दर्ज है, तो नॉमिनी अपने पहचान पत्र के साथ बैंक का क्लेम फ़ॉर्म जमा करें।",
+        "यदि कोई नॉमिनी नहीं है, तो बैंक बताएगा कि कानूनी वारिस के कौन से दस्तावेज़ चाहिए; यह राशि पर निर्भर करता है।"
+      ]
+    },
+    "documents_required": {
+      "en": ["Death certificate", "Bank's claim form", "Passbook or recent statement", "Nominee's ID and address proof", "Nominee's photograph"],
+      "hi": ["मृत्यु प्रमाण पत्र", "बैंक का क्लेम फ़ॉर्म", "पासबुक या हाल का स्टेटमेंट", "नॉमिनी का पहचान और पता प्रमाण", "नॉमिनी की फ़ोटो"]
+    },
+    "typical_timeline": {"en": "Nominee claims are often settled in about 2 weeks.", "hi": "नॉमिनी के दावे अक्सर लगभग 2 सप्ताह में निपट जाते हैं।"},
+    "source_name": "Saath placeholder based on general bank practice (unverified)",
+    "verified": false
+  },
+  "fixed_deposit": {
+    "applies_to": ["fixed_deposit"],
+    "priority": 3,
+    "title": {"en": "Fixed deposit", "hi": "फ़िक्स्ड डिपॉज़िट"},
+    "steps": {
+      "en": [
+        "Inform the bank branch with a copy of the death certificate and the FD receipt or number.",
+        "The nominee can usually choose to close the FD early or let it run to maturity.",
+        "Ask whether early closure after death is allowed without a penalty."
+      ],
+      "hi": [
+        "मृत्यु प्रमाण पत्र की प्रति और FD रसीद या नंबर के साथ बैंक शाखा को सूचित करें।",
+        "नॉमिनी आमतौर पर FD जल्दी बंद करने या परिपक्वता तक चलने देने का विकल्प चुन सकते हैं।",
+        "पूछें कि क्या मृत्यु के बाद जल्दी बंद करने पर कोई जुर्माना नहीं लगेगा।"
+      ]
+    },
+    "documents_required": {
+      "en": ["Death certificate", "FD receipt or FD number", "Bank's claim form", "Nominee's ID proof"],
+      "hi": ["मृत्यु प्रमाण पत्र", "FD रसीद या FD नंबर", "बैंक का क्लेम फ़ॉर्म", "नॉमिनी का पहचान प्रमाण"]
+    },
+    "typical_timeline": {"en": "Usually handled together with the savings account claim.", "hi": "आमतौर पर बचत खाते के दावे के साथ ही निपटता है।"},
+    "source_name": "Saath placeholder based on general bank practice (unverified)",
+    "verified": false
+  },
+  "epf": {
+    "applies_to": ["epf"],
+    "priority": 4,
+    "title": {"en": "Employees' Provident Fund (EPF)", "hi": "कर्मचारी भविष्य निधि (EPF)"},
+    "steps": {
+      "en": [
+        "Inform the employer's HR; they help file the EPF claim and confirm the nominee on record.",
+        "There are usually separate forms for the PF balance, the pension (EPS) and the linked insurance (EDLI). Ask for all three.",
+        "The EDLI insurance benefit is often missed; make sure it is claimed."
+      ],
+      "hi": [
+        "नियोक्ता के HR को सूचित करें; वे EPF क्लेम भरने में मदद करते हैं और रिकॉर्ड पर नॉमिनी की पुष्टि करते हैं।",
+        "आमतौर पर PF बैलेंस, पेंशन (EPS) और जुड़े बीमा (EDLI) के लिए अलग फ़ॉर्म होते हैं। तीनों माँगें।",
+        "EDLI बीमा लाभ अक्सर छूट जाता है; सुनिश्चित करें कि इसका दावा किया जाए।"
+      ]
+    },
+    "documents_required": {
+      "en": ["Death certificate", "UAN or member ID", "Nominee's ID proof and bank details", "Employer attestation on the claim forms"],
+      "hi": ["मृत्यु प्रमाण पत्र", "UAN या सदस्य आईडी", "नॉमिनी का पहचान प्रमाण और बैंक विवरण", "क्लेम फ़ॉर्म पर नियोक्ता का सत्यापन"]
+    },
+    "typical_timeline": {"en": "Often about 20 to 30 days after the employer forwards the forms.", "hi": "नियोक्ता द्वारा फ़ॉर्म भेजे जाने के बाद अक्सर लगभग 20 से 30 दिन।"},
+    "source_name": "Saath placeholder based on general EPF practice (unverified)",
+    "verified": false
+  },
+  "mutual_funds": {
+    "applies_to": ["mutual_fund"],
+    "priority": 5,
+    "title": {"en": "Mutual funds", "hi": "म्यूचुअल फ़ंड"},
+    "steps": {
+      "en": [
+        "Ask the fund house (or its registrar) for the transmission form to move units to the nominee.",
+        "Stop or cancel any running SIP so instalments don't keep debiting.",
+        "The nominee needs their own KYC-compliant account to receive the units."
+      ],
+      "hi": [
+        "फ़ंड हाउस (या उसके रजिस्ट्रार) से यूनिट्स नॉमिनी को ट्रांसफ़र करने का ट्रांसमिशन फ़ॉर्म माँगें।",
+        "चल रहा SIP रोकें या रद्द करें ताकि किस्तें कटती न रहें।",
+        "यूनिट्स पाने के लिए नॉमिनी का अपना KYC पूरा खाता होना चाहिए।"
+      ]
+    },
+    "documents_required": {
+      "en": ["Death certificate", "Transmission request form", "Folio number", "Nominee's KYC and bank details"],
+      "hi": ["मृत्यु प्रमाण पत्र", "ट्रांसमिशन अनुरोध फ़ॉर्म", "फ़ोलियो नंबर", "नॉमिनी का KYC और बैंक विवरण"]
+    },
+    "typical_timeline": {"en": "Often about 2 weeks after complete documents.", "hi": "पूरे दस्तावेज़ों के बाद अक्सर लगभग 2 सप्ताह।"},
+    "time_sensitive": {"en": "SIP instalments keep debiting until stopped.", "hi": "रोकने तक SIP की किस्तें कटती रहती हैं।"},
+    "source_name": "Saath placeholder based on general fund-house practice (unverified)",
+    "verified": false
+  },
+  "demat_shares": {
+    "applies_to": ["demat_account"],
+    "priority": 5,
+    "title": {"en": "Demat account and shares", "hi": "डीमैट खाता और शेयर"},
+    "steps": {
+      "en": [
+        "First confirm the account exists: contact the broker / depository participant named in the bank entries.",
+        "Ask for a holding statement so the family knows which shares are held.",
+        "The nominee opens (or uses) their own demat account and submits a transmission request."
+      ],
+      "hi": [
+        "पहले पुष्टि करें कि खाता है: बैंक एंट्री में दिखे ब्रोकर / डिपॉज़िटरी पार्टिसिपेंट से संपर्क करें।",
+        "होल्डिंग स्टेटमेंट माँगें ताकि परिवार जाने कि कौन से शेयर हैं।",
+        "नॉमिनी अपना डीमैट खाता खोलें (या उपयोग करें) और ट्रांसमिशन अनुरोध जमा करें।"
+      ]
+    },
+    "documents_required": {
+      "en": ["Death certificate", "Transmission request form", "Nominee's demat account details", "Nominee's KYC"],
+      "hi": ["मृत्यु प्रमाण पत्र", "ट्रांसमिशन अनुरोध फ़ॉर्म", "नॉमिनी के डीमैट खाते का विवरण", "नॉमिनी का KYC"]
+    },
+    "typical_timeline": {"en": "Often 1 to 3 weeks after complete documents.", "hi": "पूरे दस्तावेज़ों के बाद अक्सर 1 से 3 सप्ताह।"},
+    "source_name": "Saath placeholder based on general depository practice (unverified)",
+    "verified": false
+  },
+  "ppf": {
+    "applies_to": ["ppf"],
+    "priority": 6,
+    "title": {"en": "Public Provident Fund (PPF)", "hi": "पब्लिक प्रोविडेंट फ़ंड (PPF)"},
+    "steps": {
+      "en": [
+        "Inform the bank or post office where the PPF account is held.",
+        "The nominee submits the PPF claim form with the death certificate.",
+        "A PPF account cannot continue after death; the balance is paid out to the nominee."
+      ],
+      "hi": [
+        "जिस बैंक या डाकघर में PPF खाता है, उसे सूचित करें।",
+        "नॉमिनी मृत्यु प्रमाण पत्र के साथ PPF क्लेम फ़ॉर्म जमा करें।",
+        "मृत्यु के बाद PPF खाता जारी नहीं रह सकता; शेष राशि नॉमिनी को दी जाती है।"
+      ]
+    },
+    "documents_required": {
+      "en": ["Death certificate", "PPF passbook", "PPF claim form", "Nominee's ID proof"],
+      "hi": ["मृत्यु प्रमाण पत्र", "PPF पासबुक", "PPF क्लेम फ़ॉर्म", "नॉमिनी का पहचान प्रमाण"]
+    },
+    "typical_timeline": {"en": "Often 2 to 4 weeks.", "hi": "अक्सर 2 से 4 सप्ताह।"},
+    "source_name": "Saath placeholder based on general small-savings practice (unverified)",
+    "verified": false
+  }
+}
