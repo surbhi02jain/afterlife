@@ -3,12 +3,15 @@
 import mimetypes
 
 from fastapi import Depends, FastAPI, HTTPException, Response, UploadFile
+from pydantic import BaseModel
 
 from app import services
 from app.config import get_settings
-from app.models import Case, CaseCreate, CaseUpdate, Document
+from app.models import Case, CaseCreate, CaseUpdate, Document, InferenceRun, ItemStatus
 from storage import CaseNotFound, Storage, get_storage
+from tools.asset_map import asset_map_view
 from tools.extraction import SUPPORTED_MIME_TYPES, ExtractionError
+from tools.inference import InferenceError
 
 app = FastAPI(title="Saath", version="0.1.0")
 
@@ -109,3 +112,41 @@ def extract_one(document_id: str, case: Case = Depends(load_case), storage: Stor
 def extract_all(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
     """Extract every pending document. Per-file failures are recorded on each document (status=failed)."""
     return services.extract_pending(storage, case.id)
+
+
+# --- asset map -----------------------------------------------------------------
+
+class StatusChange(BaseModel):
+    status: ItemStatus  # "rejected" is shown to families as "Not applicable"
+
+
+class InferenceResponse(BaseModel):
+    run: InferenceRun
+    asset_map: dict
+
+
+@app.get("/api/cases/{case_id}/asset-map")
+def get_asset_map(case: Case = Depends(load_case)):
+    return asset_map_view(case)
+
+
+@app.post("/api/cases/{case_id}/asset-map/rebuild")
+def rebuild_asset_map(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    return asset_map_view(services.sync_asset_map(storage, case.id))
+
+
+@app.post("/api/cases/{case_id}/infer", response_model=InferenceResponse)
+def infer_hidden_assets(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    try:
+        run = services.run_inference(storage, case.id)
+    except InferenceError as exc:
+        raise HTTPException(502, str(exc))
+    return InferenceResponse(run=run, asset_map=asset_map_view(storage.get_case(case.id)))
+
+
+@app.post("/api/cases/{case_id}/items/{item_id}/status")
+def change_item_status(item_id: str, body: StatusChange, case: Case = Depends(load_case),
+                       storage: Storage = Depends(get_storage)):
+    if case.get_item(item_id) is None:
+        raise HTTPException(404, "Item not found")
+    return asset_map_view(services.set_item_status(storage, case.id, item_id, body.status))

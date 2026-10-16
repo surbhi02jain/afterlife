@@ -1,11 +1,14 @@
 """Case operations shared by the API, the CLI scripts and (later) the agent."""
 
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date
 
 from app.gemini import GeminiNotConfigured
-from app.models import Case, Document
+from app.models import Case, Document, InferenceRun, ItemStatus
 from storage import Storage
+from tools.asset_map import refresh_recurring, sync_documents
 from tools.extraction import ExtractionError, extract_document
+from tools.inference import InferenceError, apply_proposals, collect_transactions, propose
 
 
 def add_document(storage: Storage, case_id: str, filename: str, content_type: str, data: bytes) -> Document:
@@ -30,6 +33,8 @@ def extract_case_document(storage: Storage, case_id: str, document_id: str, *, c
             target = c.get_document(document_id)
             for key, value in fields.items():
                 setattr(target, key, value)
+            if target.status == "extracted":
+                sync_documents(c)  # fold the new document into the asset map
         return storage.update_case(case_id, mutate).get_document(document_id)
 
     set_status(status="extracting", error=None)
@@ -54,3 +59,35 @@ def extract_pending(storage: Storage, case_id: str, *, client=None, max_workers:
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         list(pool.map(run, pending))
     return storage.get_case(case_id)
+
+
+def sync_asset_map(storage: Storage, case_id: str) -> Case:
+    return storage.update_case(case_id, sync_documents)
+
+
+def run_inference(storage: Storage, case_id: str, *, client=None) -> InferenceRun:
+    """Ask Gemini for hidden assets (outside the case lock), then verify and merge them in."""
+    case = storage.get_case(case_id)
+    refs = collect_transactions(case)
+    if not refs:
+        raise InferenceError("There are no transactions to look through yet. Please add a statement or passbook.")
+    try:
+        result, model = propose(case, refs, client=client)
+    except GeminiNotConfigured as exc:
+        raise InferenceError(str(exc)) from exc
+
+    runs = []
+    storage.update_case(case_id, lambda c: runs.append(apply_proposals(c, result, refs, model)))
+    return runs[0]
+
+
+def set_item_status(storage: Storage, case_id: str, item_id: str, status: ItemStatus) -> Case:
+    def mutate(c: Case):
+        item = c.get_item(item_id)
+        if item is None:
+            raise KeyError(item_id)
+        item.status = status
+        item.decided_by_user = True
+        refresh_recurring(c, date.today())
+
+    return storage.update_case(case_id, mutate)

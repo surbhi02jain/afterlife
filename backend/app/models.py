@@ -139,12 +139,101 @@ class Document(BaseModel):
     extracted_with_model: str | None = None
 
 
+# ---------------------------------------------------------------------------
+# Asset map
+# ---------------------------------------------------------------------------
+
+AssetType = Literal[
+    "savings_account", "fixed_deposit", "life_insurance", "mutual_fund", "demat_account", "epf", "ppf", "other_asset"
+]
+LiabilityType = Literal["home_loan", "personal_loan", "vehicle_loan", "credit_card", "other_loan"]
+ItemStatus = Literal["confirmed", "probable", "rejected"]
+IdentifierCheck = Literal["valid", "invalid", "unchecked"]
+
+
+class Evidence(BaseModel):
+    document_id: str
+    document_name: str
+    date: str | None = None
+    description: str
+    amount: float | None = None
+    direction: Literal["credit", "debit"] | None = None
+
+    def key(self) -> tuple:
+        return (self.document_id, self.date, self.description, self.amount)
+
+
+class MapItem(BaseModel):
+    """One asset or liability. `probable` items are inferred and must never be shown as facts."""
+
+    id: str = Field(default_factory=new_id)
+    status: ItemStatus
+    institution: str | None = None
+    identifier_masked: str | None = Field(default=None, description="Last 4 characters only, e.g. XXXX1931.")
+    identifier_check: IdentifierCheck = "unchecked"
+    amount: float | None = None
+    amount_label: str | None = None
+    amount_as_of: str | None = None
+    nominee: str | None = None
+    source_document_ids: list[str] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
+    confidence: Confidence
+    reason: str | None = Field(default=None, description="Plain-language explanation, mainly for probable items.")
+    origin: Literal["document", "inference"]
+    decided_by_user: bool = False
+    next_expected_debit: str | None = Field(default=None, description="Next date a recurring debit is expected.")
+
+
+class Asset(MapItem):
+    type: AssetType
+
+
+class Liability(MapItem):
+    type: LiabilityType
+
+
+class InferenceRun(BaseModel):
+    at: datetime = Field(default_factory=utc_now)
+    model: str
+    proposed: int
+    added: list[str] = Field(default_factory=list, description="ids of new probable items")
+    merged: list[str] = Field(default_factory=list, description="ids of existing items that gained evidence")
+    discarded: list[str] = Field(default_factory=list, description="why a proposal was dropped")
+
+
+# --- Gemini schema for the inference tool ----------------------------------
+
+class InferredItem(BaseModel):
+    kind: Literal["asset", "liability"]
+    type: Literal[
+        "savings_account", "fixed_deposit", "life_insurance", "mutual_fund", "demat_account", "epf", "ppf",
+        "other_asset", "home_loan", "personal_loan", "vehicle_loan", "credit_card", "other_loan",
+    ]
+    institution: str = Field(description="Institution name as it appears in the transactions.")
+    identifier_hint: str | None = Field(
+        description="Any policy/folio/loan/account number visible in the narrations, else null."
+    )
+    reason: str = Field(description="One or two warm, plain sentences explaining why this probably exists.")
+    evidence_transaction_ids: list[str] = Field(description="IDs (like T7) of the transactions that point to it.")
+    confidence: Confidence
+
+
+class InferenceResult(BaseModel):
+    items: list[InferredItem]
+
+
 class Case(CaseCreate):
     id: str = Field(default_factory=new_id)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
     is_demo: bool = False
     documents: list[Document] = Field(default_factory=list)
+    assets: list[Asset] = Field(default_factory=list)
+    liabilities: list[Liability] = Field(default_factory=list)
+    inference_runs: list[InferenceRun] = Field(default_factory=list)
 
     def get_document(self, document_id: str) -> Document | None:
         return next((d for d in self.documents if d.id == document_id), None)
+
+    def get_item(self, item_id: str) -> Asset | Liability | None:
+        return next((i for i in [*self.assets, *self.liabilities] if i.id == item_id), None)

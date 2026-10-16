@@ -124,3 +124,72 @@ def test_delete_case_removes_uploads(api, storage):
     api.delete(f"/api/cases/{case['id']}")
     with pytest.raises(FileNotFoundError):
         storage.read_file(doc["storage_key"])
+
+
+# --- asset map endpoints ---------------------------------------------------------------------------
+
+INFERENCE_REPLY = {"items": [
+    {"kind": "asset", "type": "life_insurance", "institution": "KAVACH LIFE INS", "identifier_hint": None,
+     "reason": "Looks like a monthly premium.", "evidence_transaction_ids": ["T1"], "confidence": "medium"},
+    {"kind": "asset", "type": "demat_account", "institution": "Anand Stockbroking", "identifier_hint": None,
+     "reason": "Made up.", "evidence_transaction_ids": ["T42"], "confidence": "high"},
+]}
+
+
+def extracted_case(api, monkeypatch, fake_client):
+    monkeypatch.setattr(extraction, "get_client", lambda: fake_client)
+    case = make_case(api)
+    doc = upload(api, case["id"]).json()[0]
+    api.post(f"/api/cases/{case['id']}/documents/{doc['id']}/extract")
+    return case
+
+
+def test_extraction_fills_asset_map(api, monkeypatch, fake_client):
+    case = extracted_case(api, monkeypatch, fake_client)
+    body = api.get(f"/api/cases/{case['id']}/asset-map").json()
+    [account] = body["assets"]["confirmed"]
+    assert account["type"] == "savings_account" and account["identifier_masked"] == "XXXX1931"
+    assert body["assets"]["probable"] == []
+    assert body["totals"]["confirmed_assets_total"] == 199548.6
+
+
+def test_infer_endpoint_adds_only_evidenced_probable_items(api, monkeypatch, fake_client):
+    import json
+
+    from tools import inference
+
+    case = extracted_case(api, monkeypatch, fake_client)
+    monkeypatch.setattr(inference, "get_client", lambda: FakeClient(text=json.dumps(INFERENCE_REPLY)))
+
+    body = api.post(f"/api/cases/{case['id']}/infer").json()
+    assert len(body["run"]["added"]) == 1
+    assert "no valid transaction evidence" in body["run"]["discarded"][0]
+    [probable] = body["asset_map"]["assets"]["probable"]
+    assert probable["institution"] == "KAVACH LIFE INS"
+    assert probable["evidence"][0]["description"].startswith("NACH DR-KAVACH")
+    assert body["asset_map"]["totals"]["confirmed_assets_count"] == 1  # probable never counted
+
+
+def test_mark_item_confirmed_or_not_applicable(api, monkeypatch, fake_client):
+    import json
+
+    from tools import inference
+
+    case = extracted_case(api, monkeypatch, fake_client)
+    monkeypatch.setattr(inference, "get_client", lambda: FakeClient(text=json.dumps(INFERENCE_REPLY)))
+    item_id = api.post(f"/api/cases/{case['id']}/infer").json()["run"]["added"][0]
+
+    body = api.post(f"/api/cases/{case['id']}/items/{item_id}/status", json={"status": "rejected"}).json()
+    assert body["assets"]["rejected"][0]["id"] == item_id
+    body = api.post(f"/api/cases/{case['id']}/items/{item_id}/status", json={"status": "confirmed"}).json()
+    assert {a["id"] for a in body["assets"]["confirmed"]} >= {item_id}
+    assert body["assets"]["confirmed"][-1]["decided_by_user"] is True
+
+    assert api.post(f"/api/cases/{case['id']}/items/nope/status", json={"status": "confirmed"}).status_code == 404
+    assert api.post(f"/api/cases/{case['id']}/items/{item_id}/status", json={"status": "maybe"}).status_code == 422
+
+
+def test_infer_with_no_transactions_is_a_clear_error(api):
+    case = make_case(api)
+    response = api.post(f"/api/cases/{case['id']}/infer")
+    assert response.status_code == 502 and "no transactions" in response.json()["detail"]

@@ -14,7 +14,11 @@ Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo pa
     (default `gemini-4-argon`). Defaults were checked against https://ai.google.dev/gemini-api/docs/models
     on 2026-10-16. Re-check the docs before changing them; never guess model IDs.
   - Use `client.models.generate_content` with `response_json_schema=<PydanticModel>.model_json_schema()`
-    and validate the reply with Pydantic. Created in one place: `backend/app/gemini.py`.
+    and validate the reply with Pydantic. Created in one place: `backend/app/gemini.py`; always call
+    through `gemini.generate()` (per-model RPM throttle via `GEMINI_RPM`, honours 429 retry delays).
+  - **Quota (found 2026-10-16):** the free tier allows ~5 RPM and **20 requests/day per model**, and
+    `gemini-4-argon` has a free-tier limit of **0**. Local `.env` therefore sets `REASONING_MODEL=gemini-3.8-flash`
+    until billing is enabled. Don't burn quota: use `--replay` / `--missing` flags and recorded fixtures.
 - **Deployable to Google Cloud Run** as ONE container: a multi-stage Dockerfile builds the frontend and FastAPI serves it.
 - **No real personal data anywhere.** Demo data is synthetic, uses fictional institutions, and is watermarked.
 - **No silent fallbacks.** If a Gemini call fails or a response doesn't validate, surface the error and fix the
@@ -65,6 +69,9 @@ cp .env.example .env    # then put your GEMINI_API_KEY in .env
 .venv/bin/python scripts/make_demo_docs.py                 # regenerate demo/docs/*.png
 .venv/bin/python scripts/run_extraction.py                 # live extraction on demo docs (needs key)
 .venv/bin/python scripts/run_extraction.py --record        # ...and save responses as test fixtures
+.venv/bin/python scripts/run_extraction.py --record --missing   # ...only docs without a fixture
+.venv/bin/python scripts/run_demo_case.py --replay         # full demo case: recorded extraction + live inference,
+                                                           # then checks both planted assets are found (exit 1 if not)
 ```
 
 ## Conventions
@@ -75,3 +82,7 @@ cp .env.example .env    # then put your GEMINI_API_KEY in .env
   transaction). Do slow Gemini calls *outside* that function.
 - Work in phases. Finish each phase, run it, show real output, then make one commit per phase.
 - Imports are rooted at `backend/` (`from app.models import ...`, `from storage import ...`).
+- Asset map (`tools/asset_map.py`): confirmed items come deterministically from extracted documents; inferred items
+  (`tools/inference.py`) are only ever `probable`, must cite real transaction ids, and merge through the same
+  `upsert()` dedup path. `decided_by_user` items are never changed by rebuilds. Items store only the masked
+  identifier; full numbers stay in the document extraction.
