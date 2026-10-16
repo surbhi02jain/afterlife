@@ -1,0 +1,77 @@
+# Saath — bereavement financial navigator (hackathon project)
+
+Saath helps a grieving Indian family find and claim the deceased's financial assets.
+The family uploads whatever documents they have (statement photos, SMS/UPI screenshots,
+policy receipts). Saath (1) extracts structured data, (2) infers assets that probably exist
+but weren't uploaded, (3) builds a per-institution action plan, and (4) drafts claim letters.
+
+Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo path must be rock solid.
+
+## Non-negotiable constraints
+- **All AI goes through Google Gemini via the official `google-genai` Python SDK.** No other LLM providers.
+  - API key from env `GEMINI_API_KEY`.
+  - Model IDs from env `EXTRACTION_MODEL` (default `gemini-3.8-flash`) and `REASONING_MODEL`
+    (default `gemini-4-argon`). Defaults were checked against https://ai.google.dev/gemini-api/docs/models
+    on 2026-10-16. Re-check the docs before changing them; never guess model IDs.
+  - Use `client.models.generate_content` with `response_json_schema=<PydanticModel>.model_json_schema()`
+    and validate the reply with Pydantic. Created in one place: `backend/app/gemini.py`.
+- **Deployable to Google Cloud Run** as ONE container: a multi-stage Dockerfile builds the frontend and FastAPI serves it.
+- **No real personal data anywhere.** Demo data is synthetic, uses fictional institutions, and is watermarked.
+- **No silent fallbacks.** If a Gemini call fails or a response doesn't validate, surface the error and fix the
+  root cause. Never substitute fake data.
+- Out of scope: real bank/insurer integrations, payments, e-signing, legal filings.
+
+## Product guardrails (enforce in prompts AND code)
+- Inferred ("probable") assets are never presented as facts. They always carry evidence + confidence.
+- Legal/succession topics: "guidance, not legal advice".
+- Refuse any request to use the deceased's cards, PINs, passwords or credentials.
+- Procedures come only from `backend/kb/procedures.json` and cite `source_name`; if nothing is found,
+  say "please confirm with the institution".
+- Warm, simple language; English or Hindi per the case's `language`.
+- Deterministic code (not the model) for totals, date/deadline arithmetic, identifier masking (last 4 only)
+  and identifier format validation.
+
+## Stack
+- Backend: Python 3.11+ (local venv uses 3.14; Docker uses 3.12), FastAPI, Pydantic v2, uvicorn.
+- Frontend: React + Vite + Tailwind in `/frontend`, built to static files served by FastAPI.
+- Storage: interface in `backend/storage/base.py`, chosen by `STORAGE_BACKEND=local|gcp`.
+  `local` = JSON files + uploads under `LOCAL_DATA_DIR` (default `./data`); `gcp` = Firestore (cases) +
+  Cloud Storage (uploads, auto-deleted after 24h by a bucket lifecycle rule).
+- Tests: pytest. **Tests never call the live Gemini API.** They use recorded responses in
+  `backend/tests/fixtures/` or a fake client.
+
+## Repo layout
+```
+backend/
+  app/        FastAPI app (main.py), config.py, models.py (all Pydantic models), gemini.py (client)
+  tools/      model-backed + deterministic tools (extraction.py, ...)
+  agent/      Gemini function-calling agent loop (Phase 3)
+  kb/         procedures.json knowledge base (Phase 3)
+  storage/    base.py interface, local.py, gcp.py
+  tests/      pytest; fixtures/ holds recorded Gemini responses
+frontend/     React + Vite + Tailwind (Phase 4)
+scripts/      make_demo_docs.py, run_extraction.py, deploy.sh (Phase 5)
+demo/         generated synthetic demo documents + README of what is planted
+Dockerfile, README.md, DEMO.md, CLAUDE.md
+```
+
+## Commands (run from repo root)
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt   # setup
+cp .env.example .env    # then put your GEMINI_API_KEY in .env
+
+.venv/bin/pytest backend                                   # tests (no network)
+.venv/bin/uvicorn app.main:app --app-dir backend --reload  # API on http://localhost:8000
+.venv/bin/python scripts/make_demo_docs.py                 # regenerate demo/docs/*.png
+.venv/bin/python scripts/run_extraction.py                 # live extraction on demo docs (needs key)
+.venv/bin/python scripts/run_extraction.py --record        # ...and save responses as test fixtures
+```
+
+## Conventions
+- Keep code simple and readable; prefer working over clever. Sync FastAPI endpoints are fine.
+- All Pydantic models live in `backend/app/models.py`. They are the API contract and the Gemini schemas.
+- Dates are ISO `YYYY-MM-DD` strings in model output; amounts are plain numbers in INR.
+- Case mutations go through `storage.update_case(case_id, fn)`, which is atomic per backend (lock or Firestore
+  transaction). Do slow Gemini calls *outside* that function.
+- Work in phases. Finish each phase, run it, show real output, then make one commit per phase.
+- Imports are rooted at `backend/` (`from app.models import ...`, `from storage import ...`).

@@ -1,0 +1,5 @@
+{
+  "source_file": "06_premium_receipt.png",
+  "model": "gemini-3.6-flash",
+  "raw_response": "{\"institution\":\"JEEVAN RAKSHA LIFE INSURANCE CORPORATION\",\"document_type\":\"premium_receipt\",\"identifier\":\"784512093\",\"holder_name\":\"Mr. Suresh Narayan Rao\",\"nominee\":\"Kamala Suresh Rao (Wife)\",\"amounts\":[{\"label\":\"Sum Assured\",\"value\":500000.0,\"currency\":\"INR\"},{\"label\":\"Premium Amount Paid\",\"value\":24380.0,\"currency\":\"INR\"}],\"dates\":[{\"label\":\"Receipt Date\",\"date\":\"2026-07-14\"},{\"label\":\"Date of Commencement\",\"date\":\"2014-07-15\"},{\"label\":\"Premium Due Date\",\"date\":\"2026-07-15\"},{\"label\":\"Next Due Date\",\"date\":\"2027-07-15\"}],\"transactions\":[],\"language_detected\":\"en\",\"confidence\":\"high\"}"
+}

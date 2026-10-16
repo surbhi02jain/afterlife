@@ -1,0 +1,5 @@
+{
+  "source_file": "03_coop_passbook.png",
+  "model": "gemini-3.6-flash",
+  "raw_response": "{\"institution\":\"DECCAN GRAMIN CO-OPERATIVE BANK LTD.\",\"document_type\":\"passbook\",\"identifier\":\"SB/004417\",\"holder_name\":\"Mr. Suresh Narayan Rao\",\"nominee\":\"Kamala Suresh Rao\",\"amounts\":[{\"label\":\"closing balance\",\"value\":38765,\"currency\":\"INR\"}],\"dates\":[],\"transactions\":[{\"date\":\"2026-01-18\",\"description\":\"BY CASH\",\"amount\":5000,\"direction\":\"credit\"},{\"date\":\"2026-03-31\",\"description\":\"BY INT\",\"amount\":271,\"direction\":\"credit\"},{\"date\":\"2026-05-11\",\"description\":\"TO CASH SELF\",\"amount\":3000,\"direction\":\"debit\"},{\"date\":\"2026-06-30\",\"description\":\"BY INT\",\"amount\":254,\"direction\":\"credit\"},{\"date\":\"2026-07-14\",\"description\":\"BY CASH\",\"amount\":5000,\"direction\":\"credit\"}],\"language_detected\":\"en\",\"confidence\":\"high\"}"
+}

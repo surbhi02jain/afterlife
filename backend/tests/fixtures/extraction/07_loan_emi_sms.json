@@ -1,0 +1,5 @@
+{
+  "source_file": "07_loan_emi_sms.png",
+  "model": "gemini-3.6-flash",
+  "raw_response": "{\"institution\":\"Griha Setu Housing Finance\",\"document_type\":\"loan_sms\",\"identifier\":\"XXXXXXX7782\",\"holder_name\":null,\"nominee\":null,\"amounts\":[{\"label\":\"EMI\",\"value\":18450.0,\"currency\":\"INR\"},{\"label\":\"Principal outstanding\",\"value\":1162904.0,\"currency\":\"INR\"}],\"dates\":[{\"label\":\"due date\",\"date\":\"2026-09-05\"}],\"transactions\":[],\"language_detected\":\"en\",\"confidence\":\"high\"}"
+}

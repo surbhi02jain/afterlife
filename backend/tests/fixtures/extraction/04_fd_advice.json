@@ -1,0 +1,5 @@
+{
+  "source_file": "04_fd_advice.png",
+  "model": "gemini-3.6-flash",
+  "raw_response": "{\"institution\":\"SAHYADRI NATIONAL BANK\",\"document_type\":\"other\",\"identifier\":\"30219000456712\",\"holder_name\":\"SURESH NARAYAN RAO\",\"nominee\":\"Kamala Suresh Rao\",\"amounts\":[{\"label\":\"Principal Amount\",\"value\":200000.0,\"currency\":\"INR\"},{\"label\":\"Maturity Value\",\"value\":214582.57,\"currency\":\"INR\"}],\"dates\":[{\"label\":\"Date of Deposit\",\"date\":\"2026-03-15\"},{\"label\":\"Maturity Date\",\"date\":\"2027-03-15\"}],\"transactions\":[],\"language_detected\":\"en\",\"confidence\":\"high\"}"
+}
