@@ -15,7 +15,8 @@ Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo pa
     on 2026-10-16. Re-check the docs before changing them; never guess model IDs.
   - Use `client.models.generate_content` with `response_json_schema=<PydanticModel>.model_json_schema()`
     and validate the reply with Pydantic. Created in one place: `backend/app/gemini.py`; always call
-    through `gemini.generate()` (per-model RPM throttle via `GEMINI_RPM`, honours 429 retry delays).
+    through `gemini.generate()` (per-model RPM throttle via `GEMINI_RPM`, honours 429 retry delays). The one
+    exception is the agent: Google ADK makes its model calls, with the same throttle applied in a before-model callback.
   - **Quota (found 2026-10-16):** the free tier allows ~5 RPM and **20 requests/day per model**, and
     `gemini-4-argon` has a free-tier limit of **0**. Local `.env` therefore sets `REASONING_MODEL=gemini-3.6-flash`
     until billing is enabled (a different free model from extraction, so each gets its own daily quota; free models
@@ -50,7 +51,7 @@ Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo pa
 backend/
   app/        FastAPI app (main.py), config.py, models.py (all Pydantic models), gemini.py (client)
   tools/      model-backed + deterministic tools (extraction.py, ...)
-  agent/      Gemini function-calling agent loop (Phase 3)
+  agent/      Saath agent on Google ADK (Agent Development Kit), tools, guardrails
   kb/         procedures.json knowledge base (Phase 3)
   storage/    base.py interface, local.py, gcp.py
   tests/      pytest (no network)
@@ -90,7 +91,7 @@ GEMINI_API_KEY=... ./scripts/deploy.sh                     # Cloud Run deploy (u
   transaction). Do slow Gemini calls *outside* that function.
 - Work in phases. Finish each phase, run it, show real output, then make one commit per phase.
 - Imports are rooted at `backend/` (`from app.models import ...`, `from storage import ...`).
-- Agent (`agent/loop.py`): Gemini function calling, max 10 steps, tools in `agent/tools.py` dispatch to
+- Agent (`agent/loop.py`): Google ADK `LlmAgent` + `InMemoryRunner` over Gemini, max 10 model calls (`RunConfig.max_llm_calls`), tools in `agent/tools.py` dispatch to
   `app/services.py`, which writes every activity-log entry (en + hi). Guardrails in `agent/guardrails.py` run in
   code: credential requests are refused before any model call; legal topics get "guidance, not legal advice".
 - Plan (`tools/plan.py`), letters (`tools/letters.py`) and procedure lookup (`kb/`) are deterministic. Procedural

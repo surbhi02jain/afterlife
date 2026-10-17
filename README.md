@@ -44,7 +44,7 @@ flowchart LR
     X --> M[Asset map<br/>deterministic merge & dedup]
     X --> I[Inference<br/>Gemini: probable assets<br/>must cite transaction ids]
     I --> M
-    M --> A[Agent<br/>Gemini function calling]
+    M --> A[Agent<br/>Google ADK + Gemini]
     A -->|tools| T[lookup_procedure · ask_user<br/>build_action_plan · generate_letter]
     KB[(procedures.json)] --> T
     T --> P[Plan · Letters · Shared board]
@@ -55,7 +55,7 @@ flowchart LR
 | Read documents | Gemini (`EXTRACTION_MODEL`), image in, Pydantic-validated JSON out | [backend/tools/extraction.py](backend/tools/extraction.py) |
 | Confirmed assets | **Deterministic code**: merge by masked identifier, dedup across documents | [backend/tools/asset_map.py](backend/tools/asset_map.py) |
 | Probable assets | Gemini (`REASONING_MODEL`); every claim must cite real transaction ids; code discards any proposal without valid evidence | [backend/tools/inference.py](backend/tools/inference.py) |
-| Orchestration | Gemini function-calling agent, max 10 steps, every step written to an activity log (en + hi) | [backend/agent/](backend/agent/) |
+| Orchestration | Agent built on Google ADK (Agent Development Kit) over Gemini, max 10 model calls, every step written to an activity log (en + hi) | [backend/agent/](backend/agent/) |
 | Procedures | Looked up only from a knowledge base, each with a `source_name` | [backend/kb/procedures.json](backend/kb/procedures.json) |
 | Plan, letters, PDFs | **Deterministic code** | [backend/tools/plan.py](backend/tools/plan.py), [backend/tools/letters.py](backend/tools/letters.py) |
 | Totals, dates, masking, ID checks | **Deterministic code**, never the model | [backend/tools/finance.py](backend/tools/finance.py) |
@@ -172,7 +172,7 @@ then deploys to `asia-south1` (Mumbai) with `min-instances=1` to avoid cold star
 backend/
   app/        FastAPI app, config, Pydantic models (the API contract and Gemini schemas), Gemini client, services
   tools/      extraction, inference, asset map, plan, letters, questions, deterministic finance helpers
-  agent/      function-calling loop, tool definitions, guardrails
+  agent/      ADK agent, tool definitions, guardrails
   kb/         procedures.json knowledge base
   storage/    storage interface with local (JSON) and GCP (Firestore + GCS) backends
   tests/      pytest, no network

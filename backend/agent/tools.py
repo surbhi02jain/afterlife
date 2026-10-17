@@ -85,9 +85,6 @@ DECLARATIONS = [
     ),
 ]
 
-TOOL = types.Tool(function_declarations=DECLARATIONS)
-
-
 @dataclass
 class ToolContext:
     storage: Storage

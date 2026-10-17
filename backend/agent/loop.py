@@ -1,17 +1,33 @@
-"""Saath agent: Gemini function calling over the case tools, with a capped loop and an activity log."""
+"""Saath agent, built on Google's Agent Development Kit (ADK).
 
+ADK runs the Gemini function-calling loop: it sends the case and the tools, runs the tools Gemini asks for (one by
+one, in the order asked) and stops at MAX_STEPS model calls. Saath keeps what matters in its own code:
+  - guardrails run before ADK is involved (credential requests never reach the model) and on the final reply;
+  - every tool goes through agent.tools.dispatch(), which logs each step and returns errors to the model;
+  - each model call waits for the per-model RPM throttle (GEMINI_RPM), like every other Gemini call in the app.
+"""
+
+import asyncio
+import logging
 from dataclasses import dataclass, field
 
+from google.adk.agents import LlmAgent, RunConfig
+from google.adk.agents.invocation_context import LlmCallsLimitExceededError
+from google.adk.models import BaseLlm, Gemini
+from google.adk.runners import InMemoryRunner
+from google.adk.tools import BaseTool
 from google.genai import errors, types
 
 from agent.guardrails import REFUSAL, asks_to_use_credentials, touches_legal_topic, with_legal_note
-from agent.tools import TOOL, ToolContext, dispatch, gap_summary
+from agent.tools import DECLARATIONS, ToolContext, dispatch, gap_summary
 from app import services
 from app.config import get_settings
-from app.gemini import GeminiNotConfigured, generate, get_client
+from app.gemini import GeminiNotConfigured, get_rate_limiter
 from app.models import Case, new_id
 from storage import Storage
 from tools.i18n import inr, nice_date
+
+log = logging.getLogger("saath.agent")
 
 MAX_STEPS = 10
 ANALYSE_MESSAGE = "Please go through everything we uploaded and tell us what to do next."
@@ -74,9 +90,58 @@ def case_context(case: Case) -> str:
             f"\nLETTERS: {len(case.letters)} drafted")
 
 
-def run_agent(storage: Storage, case_id: str, message: str = ANALYSE_MESSAGE, *, client=None,
-              tool_client=None, model: str | None = None, max_steps: int = MAX_STEPS) -> AgentResult:
-    """client: the agent's Gemini client. tool_client: client used by extraction/inference tools (tests)."""
+class SaathTool(BaseTool):
+    """One ADK tool per Saath tool: the declaration Gemini sees, and a run that goes through dispatch()."""
+
+    def __init__(self, declaration: types.FunctionDeclaration, ctx: ToolContext, result: "AgentResult",
+                 lock: asyncio.Lock):
+        super().__init__(name=declaration.name, description=declaration.description)
+        self.declaration, self.ctx, self.result, self.lock = declaration, ctx, result, lock
+
+    def _get_declaration(self) -> types.FunctionDeclaration:
+        return self.declaration
+
+    async def run_async(self, *, args, tool_context) -> dict:
+        # ADK starts all calls of one turn at once, but they depend on each other (hidden-asset search needs the
+        # documents read first), so the run's lock makes them go one by one, in the order Gemini asked.
+        async with self.lock:
+            output = await asyncio.to_thread(dispatch, self.ctx, self.name, dict(args))  # blocking: storage, Gemini
+            self.result.tool_calls.append({"step": self.result.steps, "tool": self.name, "args": dict(args),
+                                           "ok": "error" not in output})
+        return {"result": output}
+
+
+def _gemini(model: str) -> Gemini:
+    key = get_settings().gemini_api_key
+    if not key:
+        raise GeminiNotConfigured("GEMINI_API_KEY is not set. Add it to .env or the environment.")
+    # ADK builds the client (one per event loop). 429s and brief 5xx spikes are retried with backoff:
+    # 6 attempts wait 2+4+8+16+32 = ~62s in total, enough for Gemini's usual "retry in ~56s".
+    return Gemini(model=model, client_kwargs={"api_key": key}, retry_options=types.HttpRetryOptions(
+        attempts=6, initial_delay=2.0, max_delay=60.0, exp_base=2.0, http_status_codes=[429, 500, 502, 503, 504]))
+
+
+async def _run(agent: LlmAgent, case_id: str, text: str, max_steps: int, result: "AgentResult") -> str:
+    runner = InMemoryRunner(agent=agent, app_name="saath")
+    session = await runner.session_service.create_session(app_name="saath", user_id=case_id)
+    message = types.Content(role="user", parts=[types.Part.from_text(text=text)])
+    reply = ""
+    try:
+        async for event in runner.run_async(user_id=case_id, session_id=session.id, new_message=message,
+                                            run_config=RunConfig(max_llm_calls=max_steps)):
+            if event.is_final_response() and event.content:
+                reply = "".join(p.text for p in event.content.parts or [] if p.text and not p.thought).strip()
+    except LlmCallsLimitExceededError:
+        result.stopped_early = True
+    finally:
+        await runner.close()
+    return reply
+
+
+def run_agent(storage: Storage, case_id: str, message: str = ANALYSE_MESSAGE, *, tool_client=None,
+              model: str | BaseLlm | None = None, max_steps: int = MAX_STEPS) -> AgentResult:
+    """model: a Gemini model id, or any ADK model (tests pass a scripted one). tool_client: Gemini client used by
+    the extraction/inference tools (tests)."""
     case = storage.get_case(case_id)
     lang = case.language
     run_id = new_id()[:12]
@@ -89,44 +154,46 @@ def run_agent(storage: Storage, case_id: str, message: str = ANALYSE_MESSAGE, *,
                         "दिवंगत के कार्ड या पासवर्ड के उपयोग का अनुरोध अस्वीकार किया", run_id=run_id)
         return AgentResult(run_id=run_id, reply=reply, steps=0)
 
-    client = client or get_client()
-    model = model or get_settings().reasoning_model
-    config = types.GenerateContentConfig(
-        system_instruction=SYSTEM_PROMPT.format(language="Hindi (Devanagari script)" if lang == "hi" else "English"),
-        tools=[TOOL],
-        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-        thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MEDIUM),
-    )
-    contents = [types.Content(role="user", parts=[types.Part.from_text(
-        text=f"{case_context(case)}\n\nMESSAGE FROM THE FAMILY:\n{message}")])]
-    ctx = ToolContext(storage, case_id, run_id, tool_client)
     result = AgentResult(run_id=run_id, reply="", steps=0)
+    ctx = ToolContext(storage, case_id, run_id, tool_client)
+    known = {d.name for d in DECLARATIONS}
+    lock = asyncio.Lock()
 
-    for step in range(1, max_steps + 1):
-        result.steps = step
-        try:
-            response = generate(client, model=model, contents=contents, config=config)
-        except (errors.APIError, GeminiNotConfigured) as exc:
-            detail = f"{exc.code}: {exc.message}" if isinstance(exc, errors.APIError) else str(exc)
-            services.record(storage, case_id, "agent_error", "Saath couldn't finish just now", "साथ अभी पूरा नहीं कर सका",
-                            ok=False, run_id=run_id, error=detail[:500])
-            raise AgentError(f"Gemini request failed ({detail})") from exc
+    async def before_model(callback_context, llm_request):
+        result.steps += 1
+        await asyncio.to_thread(get_rate_limiter().acquire, llm_request.model or "agent")
 
-        calls = response.function_calls or []
-        if not calls:
-            result.reply = (response.text or "").strip()
-            break
-        contents.append(response.candidates[0].content)  # keeps thought signatures intact
-        parts = []
-        for call in calls:
-            args = dict(call.args or {})
-            output = dispatch(ctx, call.name, args)
-            result.tool_calls.append({"step": step, "tool": call.name, "args": args, "ok": "error" not in output})
-            parts.append(types.Part(function_response=types.FunctionResponse(
-                id=call.id, name=call.name, response={"result": output})))
-        contents.append(types.Content(role="user", parts=parts))
-    else:
-        result.stopped_early = True
+    def unknown_tool(tool, args, tool_context):
+        # ADK lets a before-tool callback answer a call to a tool that doesn't exist; send the error back to Gemini.
+        if tool.name not in known:
+            output = dispatch(ctx, tool.name, dict(args))
+            result.tool_calls.append({"step": result.steps, "tool": tool.name, "args": dict(args), "ok": False})
+            return {"result": output}
+        return None
+
+    try:
+        agent = LlmAgent(
+            name="saath",
+            model=model if isinstance(model, BaseLlm) else _gemini(model or get_settings().reasoning_model),
+            instruction=SYSTEM_PROMPT.format(language="Hindi (Devanagari script)" if lang == "hi" else "English"),
+            tools=[SaathTool(d, ctx, result, lock) for d in DECLARATIONS],
+            generate_content_config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MEDIUM)),
+            before_model_callback=before_model,
+            before_tool_callback=unknown_tool,
+        )
+        result.reply = asyncio.run(_run(agent, case_id, f"{case_context(case)}\n\nMESSAGE FROM THE FAMILY:\n{message}",
+                                        max_steps, result))
+    except Exception as exc:  # Gemini errors, a missing key, or anything ADK raises: logged, shown, never hidden
+        detail = f"{exc.code}: {exc.message}" if isinstance(exc, errors.APIError) else str(exc)
+        if not isinstance(exc, (errors.APIError, GeminiNotConfigured)):
+            log.exception("agent run %s failed", run_id)
+        services.record(storage, case_id, "agent_error", "Saath couldn't finish just now", "साथ अभी पूरा नहीं कर सका",
+                        ok=False, run_id=run_id, error=detail[:500])
+        raise AgentError(f"Gemini request failed ({detail})") from exc
+
+    if result.stopped_early:
+        result.steps = max_steps
         result.reply = ("I've done the main steps but stopped there to keep things short. Everything so far is saved."
                         if lang == "en" else "मैंने मुख्य कदम पूरे कर लिए हैं और यहीं रुका हूँ। अब तक का सब सहेजा गया है।")
 
