@@ -6,7 +6,7 @@ export function ActivitySummary({ lang, summary }) {
   return (
     <ul className="flex flex-wrap gap-2">
       {summary.map((line) => (
-        <li key={line.en} className="rounded-full bg-brand-soft px-3 py-1 text-[0.9rem] font-semibold text-brand-dark">
+        <li key={line.en} className="rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand-dark">
           {line[lang] || line.en}
         </li>
       ))}
@@ -19,8 +19,8 @@ export function ActivityList({ lang, entries, limit }) {
   return (
     <ol className="space-y-2">
       {shown.map((a, n) => (
-        <li key={`${a.at}-${n}`} className={`flex gap-3 rounded-xl px-3 py-2 ${a.ok ? "bg-sand-50" : "bg-rose-soft text-rose-ink"}`}>
-          <span className="shrink-0 tabular-nums text-ink-soft text-[0.85rem] pt-0.5">
+        <li key={`${a.at}-${n}`} className={`flex gap-3 rounded-2xl px-3 py-2 ${a.ok ? "bg-sand-50" : "bg-rose-soft text-rose-ink"}`}>
+          <span className="shrink-0 tabular-nums text-ink-soft text-sm pt-0.5">
             {new Date(a.at).toLocaleTimeString(lang === "hi" ? "hi-IN" : "en-IN", { hour: "2-digit", minute: "2-digit" })}
           </span>
           <span>{lang === "hi" ? a.summary_hi : a.summary_en}</span>
@@ -52,7 +52,7 @@ export default function ActivityPanel({ lang, open, onClose, summary, entries })
       >
         <div className="flex items-center justify-between">
           <h2 id="activity-title" className="font-serif text-2xl">{t(lang, "activity")}</h2>
-          <button ref={closeRef} onClick={onClose} className="min-h-11 rounded-xl px-3 font-semibold text-brand hover:bg-brand-soft">
+          <button ref={closeRef} onClick={onClose} className="min-h-11 rounded-full px-4 font-semibold text-brand hover:bg-brand-soft">
             {t(lang, "close")}
           </button>
         </div>

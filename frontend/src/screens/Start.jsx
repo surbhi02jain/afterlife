@@ -2,7 +2,8 @@ import { useState } from "react";
 import { api } from "../api";
 import { t } from "../i18n";
 import { go } from "../nav";
-import { Button, Card, ErrorNote } from "../components/ui";
+import { Button, Card, ErrorNote, field } from "../components/ui";
+import { StartBackdrop } from "../components/Art";
 
 const RELATIONSHIPS = ["spouse", "son", "daughter", "parent", "sibling", "other"];
 
@@ -14,7 +15,6 @@ function lastCase() {
   }
 }
 
-const field = "mt-2 block w-full min-h-12 rounded-xl border-2 border-sand-300 bg-white px-4 py-3 text-base focus:border-brand";
 
 export default function Start({ lang }) {
   const [form, setForm] = useState({ deceased_name: "", date_of_death: "", relationship: "", language: lang });
@@ -54,14 +54,16 @@ export default function Start({ lang }) {
   }
 
   return (
+    <>
+      <StartBackdrop className="pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-[48vh] w-full" />
     <div className="fade-in grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-start">
       <section>
         {deleted && (
-          <p role="status" className="mb-4 rounded-xl bg-sage-soft px-4 py-3 text-sage-ink">
+          <p role="status" className="mb-4 rounded-2xl bg-sage-soft px-4 py-3 text-sage-ink">
             {t(lang, "deletedNotice")}
           </p>
         )}
-        <h1 className="font-serif text-[2rem] leading-tight sm:text-[2.4rem]">{t(lang, "startTitle")}</h1>
+        <h1 className="font-serif text-[2rem] leading-tight text-balance sm:text-[2.25rem]">{t(lang, "startTitle")}</h1>
         <p className="mt-4 text-ink-soft">{t(lang, "startBody")}</p>
         <Card className="mt-6 bg-brand-soft/60">
           <p className="text-ink-soft">{t(lang, "demoHint")}</p>
@@ -80,17 +82,17 @@ export default function Start({ lang }) {
         <form onSubmit={begin} className="space-y-5">
           <label className="block font-semibold">
             {t(lang, "theirName")}
-            <input required maxLength={120} className={field} value={form.deceased_name} onChange={set("deceased_name")} autoComplete="off" />
+            <input required maxLength={120} className={`mt-2 ${field}`} value={form.deceased_name} onChange={set("deceased_name")} autoComplete="off" />
           </label>
           <label className="block font-semibold">
             {t(lang, "dateOfDeath")}
-            <input required type="date" max={today} className={field} value={form.date_of_death} onChange={set("date_of_death")} />
+            <input required type="date" max={today} className={`mt-2 ${field}`} value={form.date_of_death} onChange={set("date_of_death")} />
           </label>
           <label className="block font-semibold">
             {t(lang, "yourRelationship")}
-            <select required className={field} value={form.relationship} onChange={set("relationship")}>
+            <select required className={`mt-2 ${field}`} value={form.relationship} onChange={set("relationship")}>
               <option value="" disabled>
-                —
+                {t(lang, "chooseOne")}
               </option>
               {RELATIONSHIPS.map((r) => (
                 <option key={r} value={r}>
@@ -103,7 +105,7 @@ export default function Start({ lang }) {
             <legend className="font-semibold">{t(lang, "preferredLanguage")}</legend>
             <div className="mt-2 flex gap-3">
               {[["en", "English"], ["hi", "हिन्दी"]].map(([value, name]) => (
-                <label key={value} className={`flex min-h-12 flex-1 cursor-pointer items-center gap-2 rounded-xl border-2 px-4
+                <label key={value} className={`flex min-h-12 flex-1 cursor-pointer items-center gap-2 rounded-2xl border-2 px-4
                   ${form.language === value ? "border-brand bg-brand-soft" : "border-sand-300"}`}>
                   <input type="radio" name="language" value={value} checked={form.language === value} onChange={set("language")} />
                   {name}
@@ -118,5 +120,6 @@ export default function Start({ lang }) {
         </form>
       </Card>
     </div>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { t, typeLabel } from "../i18n";
-import { Button, ErrorNote, PageTitle, PrimaryBar } from "../components/ui";
+import { orgName, t, typeLabel } from "../i18n";
+import { Button, ErrorNote, PageTitle, PrimaryBar, field } from "../components/ui";
 
 function selectedFromHash() {
   const match = window.location.hash.match(/[?&]l=([a-f0-9]+)/);
@@ -74,10 +74,10 @@ export default function Letters({ c, lang, refresh }) {
               role="tab"
               aria-selected={l.id === letter?.id}
               onClick={() => setSelected(l.id)}
-              className={`min-h-11 rounded-xl px-4 py-2 text-[0.95rem] font-semibold
+              className={`min-h-11 rounded-full px-4 py-2 text-base font-semibold
                 ${l.id === letter?.id ? "bg-brand text-white" : "bg-white text-ink-soft border border-sand-200 hover:border-brand"}`}
             >
-              {l.title}
+              {l.title.replace(l.institution, orgName(l.institution))}
             </button>
           ))}
         </div>
@@ -87,15 +87,15 @@ export default function Letters({ c, lang, refresh }) {
         <label className="mb-6 block max-w-md">
           <span className="font-semibold">{t(lang, "makeLetterFor")}</span>
           <select
-            className="mt-2 block min-h-12 w-full rounded-xl border-2 border-sand-300 bg-white px-4"
+            className={`mt-2 ${field}`}
             value=""
             disabled={busy === "make"}
             onChange={(e) => makeFor(e.target.value)}
           >
-            <option value="">—</option>
+            <option value="">{t(lang, "chooseOne")}</option>
             {itemsWithoutLetter.map((i) => (
               <option key={i.id} value={i.id}>
-                {i.institution} · {typeLabel(lang, i.type)}
+                {orgName(i.institution)} ({typeLabel(lang, i.type)})
               </option>
             ))}
           </select>
@@ -107,7 +107,7 @@ export default function Letters({ c, lang, refresh }) {
           <label className="block">
             <span className="sr-only">Title</span>
             <input
-              className="min-h-12 w-full rounded-xl border-2 border-sand-300 bg-white px-4 font-semibold"
+              className={`${field} font-semibold`}
               value={draft.title}
               maxLength={200}
               onChange={(e) => setDraft({ ...draft, title: e.target.value })}
@@ -116,7 +116,7 @@ export default function Letters({ c, lang, refresh }) {
           <label className="block">
             <span className="sr-only">{letter.title}</span>
             <textarea
-              className="min-h-[60vh] w-full rounded-2xl border-2 border-sand-300 bg-white p-5 font-serif text-[1rem] leading-relaxed"
+              className="min-h-[60vh] w-full rounded-2xl border-2 border-sand-300 bg-white p-5 font-serif text-base leading-relaxed"
               value={draft.body}
               onChange={(e) => setDraft({ ...draft, body: e.target.value })}
               spellCheck

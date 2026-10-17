@@ -46,7 +46,7 @@ export default function ReadAloud({ lang }) {
     <button
       onClick={toggle}
       aria-pressed={speaking}
-      className="min-h-11 rounded-xl px-3 py-2 text-[0.95rem] font-semibold text-brand hover:bg-brand-soft"
+      className="min-h-11 rounded-full px-3.5 py-2 text-base font-semibold text-brand hover:bg-brand-soft"
     >
       <span aria-hidden="true">{speaking ? "■ " : "🔈 "}</span>
       {speaking ? t(lang, "stopReading") : t(lang, "readAloud")}

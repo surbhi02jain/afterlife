@@ -25,7 +25,8 @@ const SCREENS = [
 ];
 
 function parseRoute(hash) {
-  const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  // "?l=<id>" after a screen (e.g. letters?l=...) is read by that screen, not part of the route
+  const parts = hash.replace(/^#\/?/, "").replace(/\?.*$/, "").split("/").filter(Boolean);
   if (parts[0] === "case" && parts[1]) return { name: "case", id: parts[1], screen: parts[2] || "upload" };
   if (parts[0] === "share" && parts[1]) return { name: "share", token: parts[1] };
   return { name: "start" };
@@ -54,11 +55,11 @@ function storedLang() {
 
 function Brand({ lang }) {
   return (
-    <a href="#/" className="flex items-center gap-3 rounded-xl">
+    <a href="#/" className="flex items-center gap-3 rounded-2xl">
       <img src="/favicon.svg" alt="" className="h-10 w-10" />
       <span>
         <span className="block font-serif text-xl leading-none text-brand-dark">{t(lang, "appName")}</span>
-        <span className="hidden text-[0.8rem] text-ink-soft sm:block">{t(lang, "tagline")}</span>
+        <span className="hidden text-sm text-ink-soft sm:block">{t(lang, "tagline")}</span>
       </span>
     </a>
   );
@@ -66,12 +67,12 @@ function Brand({ lang }) {
 
 function Header({ lang, onToggleLang, onActivity, children }) {
   return (
-    <header className="border-b border-sand-200 bg-sand-50/95">
+    <header className="border-b border-sand-200/60">
       <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2 px-4 py-3">
         <Brand lang={lang} />
         <div className="flex flex-wrap items-center gap-1">
           {onActivity && (
-            <button onClick={onActivity} className="min-h-11 rounded-xl px-3 py-2 text-[0.95rem] font-semibold text-brand hover:bg-brand-soft">
+            <button onClick={onActivity} className="min-h-11 rounded-full px-3.5 py-2 text-base font-semibold text-brand hover:bg-brand-soft">
               <span aria-hidden="true">✦ </span>
               {t(lang, "activity")}
             </button>
@@ -80,7 +81,7 @@ function Header({ lang, onToggleLang, onActivity, children }) {
           <button
             onClick={onToggleLang}
             aria-label={t(lang, "languageLabel")}
-            className="min-h-11 rounded-xl border-2 border-brand/30 px-3 py-1.5 text-[0.95rem] font-semibold text-brand hover:border-brand"
+            className="min-h-11 rounded-full border-2 border-brand/30 px-4 py-1.5 text-base font-semibold text-brand hover:border-brand"
           >
             {t(lang, "language")}
           </button>
@@ -91,9 +92,16 @@ function Header({ lang, onToggleLang, onActivity, children }) {
   );
 }
 
-function Footer({ lang }) {
+function Footer({ lang, privacyHref }) {
   return (
-    <footer className="mx-auto max-w-4xl px-4 pb-10 pt-6 text-[0.85rem] text-ink-soft">{t(lang, "disclaimerShort")}</footer>
+    <footer className="mx-auto flex max-w-4xl flex-wrap justify-between gap-2 px-4 pb-10 pt-6 text-sm text-ink-soft">
+      <span>{t(lang, "disclaimerShort")}</span>
+      {privacyHref && (
+        <a href={privacyHref} className="font-semibold text-brand underline-offset-4 hover:underline">
+          {t(lang, "nav_privacy")}
+        </a>
+      )}
+    </footer>
   );
 }
 
@@ -162,28 +170,36 @@ function CaseShell({ id, screen, lang, setLang }) {
   return (
     <>
       <Header lang={lang} onToggleLang={toggleLang} onActivity={c ? () => setActivityOpen(true) : null}>
-        <nav aria-label="Steps" className="mx-auto max-w-4xl px-2 pb-2">
-          <ul className="flex flex-wrap gap-1">
-            {SCREENS.map(([key, label]) => (
-              <li key={key}>
+        <nav aria-label="Steps" className="mx-auto max-w-4xl">
+          {/* The steps are a real sequence, so they are numbered; on phones the row scrolls instead of wrapping. */}
+          <ol className="flex gap-1 overflow-x-auto px-2 pb-2 [scrollbar-width:none]">
+            {SCREENS.filter(([key]) => key !== "privacy").map(([key, label], n) => (
+              <li key={key} className="shrink-0">
                 <a
                   href={`#/case/${id}/${key}`}
                   aria-current={key === current[0] ? "page" : undefined}
-                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-[0.95rem] font-semibold
+                  className={`inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-base font-semibold
                     ${key === current[0] ? "bg-brand text-white" : "text-ink-soft hover:bg-sand-100"}`}
                 >
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-6 w-6 items-center justify-center rounded-full text-sm tabular-nums
+                      ${key === current[0] ? "bg-white text-brand" : "border border-sand-300"}`}
+                  >
+                    {n + 1}
+                  </span>
                   {t(lang, label)}
                   {key === "questions" && openQuestions > 0 && (
-                    <span className="rounded-full bg-amber-soft px-2 text-[0.8rem] text-amber-ink">{openQuestions}</span>
+                    <span className="rounded-full bg-amber-soft px-2 text-sm text-amber-ink">{openQuestions}</span>
                   )}
                 </a>
               </li>
             ))}
-          </ul>
+          </ol>
         </nav>
       </Header>
       {c?.is_demo && (
-        <div className="bg-amber-soft px-4 py-2 text-center text-[0.9rem] text-amber-ink">{t(lang, "sampleBanner")}</div>
+        <div className="bg-brand-soft px-4 py-2 text-center text-sm text-brand-dark">{t(lang, "sampleBanner")}</div>
       )}
       <main className="mx-auto max-w-4xl px-4 py-8">
         <ErrorNote lang={lang} error={error} onRetry={refresh} />
@@ -201,7 +217,7 @@ function CaseShell({ id, screen, lang, setLang }) {
           />
         )}
       </main>
-      <Footer lang={lang} />
+      <Footer lang={lang} privacyHref={`#/case/${id}/privacy`} />
       <ActivityPanel
         lang={lang}
         open={activityOpen}

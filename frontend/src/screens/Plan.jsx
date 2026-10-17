@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../api";
-import { t, typeLabel } from "../i18n";
+import { orgName, t, typeLabel } from "../i18n";
 import { go } from "../nav";
 import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar } from "../components/ui";
 
@@ -12,12 +12,12 @@ function TaskCard({ lang, task, onLetter, busy }) {
           {task.order}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-xl font-semibold">
+          <h3 className="text-lg font-semibold">
             <span className="sr-only">{task.order}. </span>
-            {task.institution}
+            {orgName(task.institution)}
           </h3>
           <p className="mt-1 text-ink-soft">
-            {task.items.map((i) => `${typeLabel(lang, i.type)}${i.identifier_masked ? ` ${i.identifier_masked}` : ""}`).join(" · ")}
+            {task.items.map((i) => `${typeLabel(lang, i.type)}${i.identifier_masked ? ` ${i.identifier_masked}` : ""}`).join(", ")}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {task.needs_confirmation && <Badge tone="amber">{t(lang, "needsChecking")}</Badge>}
@@ -25,7 +25,7 @@ function TaskCard({ lang, task, onLetter, busy }) {
           </div>
 
           {task.time_sensitive.length > 0 && (
-            <div className="mt-4 rounded-xl border border-amber-line bg-amber-soft px-4 py-3 text-amber-ink">
+            <div className="mt-4 rounded-2xl border border-amber-line bg-amber-soft px-4 py-3 text-amber-ink">
               <p className="font-semibold">⏱ {t(lang, "timeSensitive")}</p>
               <ul className="mt-1 list-disc pl-5">
                 {task.time_sensitive.map((flag) => (
@@ -44,7 +44,7 @@ function TaskCard({ lang, task, onLetter, busy }) {
             {task.why_this_order}
           </p>
 
-          <details className="mt-4 rounded-xl bg-sand-50 px-4 py-3">
+          <details className="mt-4 rounded-2xl bg-sand-50 px-4 py-3">
             <summary className="cursor-pointer font-semibold text-brand">{t(lang, "allSteps")}</summary>
             <p className="mt-3 font-semibold">{t(lang, "steps")}</p>
             <ol className="mt-1 list-decimal space-y-1 pl-6">
@@ -68,8 +68,8 @@ function TaskCard({ lang, task, onLetter, busy }) {
                 {task.typical_timeline}
               </p>
             )}
-            <p className="mt-3 text-[0.85rem] text-ink-soft">
-              {t(lang, "source")}: {task.source_names.join(", ")} · {!task.verified && t(lang, "unverified")}
+            <p className="mt-3 text-sm text-ink-soft">
+              {t(lang, "source")}: {task.source_names.join(", ")}{!task.verified && ` (${t(lang, "unverified")})`}
             </p>
           </details>
 
@@ -77,6 +77,19 @@ function TaskCard({ lang, task, onLetter, busy }) {
             {t(lang, "prepareLetter")}
           </Button>
         </div>
+      </div>
+    </Card>
+  );
+}
+
+function PlanProgress({ lang, tasks }) {
+  const done = tasks.filter((task) => task.board_status === "done").length;
+  return (
+    <Card className="mb-5">
+      <p className="font-semibold">{t(lang, "planProgress", { done, n: tasks.length })}</p>
+      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-sand-100" role="progressbar" aria-valuemin={0}
+           aria-valuemax={tasks.length} aria-valuenow={done}>
+        <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${(done / (tasks.length || 1)) * 100}%` }} />
       </div>
     </Card>
   );
@@ -125,7 +138,8 @@ export default function Plan({ c, lang, refresh }) {
         </PrimaryBar>
       ) : (
         <>
-          <Card className="mb-6 bg-brand-soft/50">
+          <PlanProgress lang={lang} tasks={plan.tasks} />
+          <Card className="mb-5 bg-brand-soft/50">
             <h2 className="font-serif text-xl">{t(lang, "firstForEveryone")}</h2>
             <ul className="mt-3 list-disc space-y-2 pl-6">
               {plan.general_steps.map((s) => (

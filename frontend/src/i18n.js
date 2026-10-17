@@ -30,6 +30,7 @@ const en = {
   theirName: "Their name",
   dateOfDeath: "Date they passed away",
   yourRelationship: "You are their",
+  chooseOne: "Choose one",
   rel_spouse: "Wife or husband",
   rel_son: "Son",
   rel_daughter: "Daughter",
@@ -66,12 +67,14 @@ const en = {
 
   // asset map
   mapTitle: "What we found",
+  mapBody: "Everything your documents show, and a few things they point to.",
   fromSaath: "From Saath",
   discoveryTitle: "We may have found {n} more things",
+  mapSummaryLoans: "They also show loans of {total}.",
+  confirmedSoFar: "Confirmed so far, across {n} accounts and policies",
+  otherAssets: "Other",
   discoveryBody: "These had no document of their own. They are not confirmed. Please check each one.",
-  confirmedTotal: "Confirmed so far",
   probableNotCounted: "Things we're not sure about are not counted.",
-  owed: "Loans and dues",
   confirmed: "Confirmed",
   probable: "Probably exists, please check",
   liabilities: "Loans and dues",
@@ -104,6 +107,7 @@ const en = {
   // plan
   planTitle: "Your plan, in a sensible order",
   planBody: "Start at the top. Each step says why it comes where it does.",
+  planProgress: "{done} of {n} steps done",
   makePlan: "Prepare my plan",
   firstForEveryone: "Before anything else",
   firstStep: "First step",
@@ -150,6 +154,7 @@ const en = {
 
   // privacy
   privacyTitle: "Your privacy",
+  privacyBody: "What happens to your documents, and how to remove everything.",
   privacyPoints: [
     "Your documents are read by Google Gemini to find accounts and policies. They are not used for anything else.",
     "On our cloud storage, uploaded files are set to delete themselves 24 hours after upload. The case notes stay until you delete them.",
@@ -192,6 +197,7 @@ const hi = {
   theirName: "उनका नाम",
   dateOfDeath: "उनके निधन की तारीख़",
   yourRelationship: "आप उनके हैं",
+  chooseOne: "चुनें",
   rel_spouse: "पत्नी या पति",
   rel_son: "बेटा",
   rel_daughter: "बेटी",
@@ -226,12 +232,14 @@ const hi = {
   noDocsYet: "अभी कोई दस्तावेज़ नहीं।",
 
   mapTitle: "क्या मिला",
+  mapBody: "आपके दस्तावेज़ों में जो दिखा, और कुछ चीज़ें जिनकी ओर वे इशारा करते हैं।",
   fromSaath: "साथ की ओर से",
   discoveryTitle: "शायद {n} और चीज़ें मिली हैं",
+  mapSummaryLoans: "इनमें {total} के लोन भी दिखते हैं।",
+  confirmedSoFar: "अब तक पक्का, {n} खातों और पॉलिसियों में",
+  otherAssets: "अन्य",
   discoveryBody: "इनका अपना कोई दस्तावेज़ नहीं था। ये पक्की नहीं हैं। कृपया हर एक की जाँच करें।",
-  confirmedTotal: "अब तक पक्का",
   probableNotCounted: "जिन चीज़ों पर पक्का नहीं है, उन्हें नहीं जोड़ा गया।",
-  owed: "लोन और बकाया",
   confirmed: "पक्का",
   probable: "शायद मौजूद है, कृपया जाँचें",
   liabilities: "लोन और बकाया",
@@ -262,6 +270,7 @@ const hi = {
 
   planTitle: "आपकी योजना, सही क्रम में",
   planBody: "ऊपर से शुरू करें। हर कदम बताता है कि वह वहाँ क्यों है।",
+  planProgress: "{n} में से {done} कदम पूरे",
   makePlan: "मेरी योजना तैयार करें",
   firstForEveryone: "सबसे पहले",
   firstStep: "पहला कदम",
@@ -305,6 +314,7 @@ const hi = {
   linkInvalid: "यह लिंक अब मान्य नहीं है।",
 
   privacyTitle: "आपकी गोपनीयता",
+  privacyBody: "आपके दस्तावेज़ों का क्या होता है, और सब कुछ कैसे हटाएँ।",
   privacyPoints: [
     "खाते और पॉलिसी खोजने के लिए आपके दस्तावेज़ Google Gemini पढ़ता है। इनका किसी और काम में उपयोग नहीं होता।",
     "हमारे क्लाउड स्टोरेज पर अपलोड की गई फ़ाइलें अपलोड के 24 घंटे बाद अपने आप हटने के लिए सेट हैं। मामले के नोट्स तब तक रहते हैं जब तक आप उन्हें न हटाएँ।",
@@ -360,6 +370,20 @@ export function t(lang, key, vars = {}) {
 
 export const typeLabel = (lang, type) => TYPE[lang]?.[type] ?? type.replaceAll("_", " ");
 export const docTypeLabel = (lang, type) => DOC_TYPE[lang]?.[type] ?? type;
+
+// Statements often print names in capitals ("SAHYADRI NATIONAL BANK"). Show them in normal case, but keep
+// short or vowel-less words as acronyms (SBI, LIC, HDFC, LTD).
+const SMALL_WORDS = new Set(["of", "and", "the", "for"]);
+export function orgName(name) {
+  if (!name || name !== name.toUpperCase()) return name;
+  return name.replace(/[A-Z]+/g, (word, at) => {
+    const lower = word.toLowerCase();
+    if (SMALL_WORDS.has(lower) || name[at - 1] === "-") return lower; // "Co-operative"
+    if (["co", "ltd", "pvt"].includes(lower)) return word[0] + lower.slice(1);
+    if (word.length <= 3 || !/[AEIOU]/.test(word)) return word;
+    return word[0] + lower.slice(1);
+  });
+}
 
 export function inr(value) {
   if (value === null || value === undefined) return "—";

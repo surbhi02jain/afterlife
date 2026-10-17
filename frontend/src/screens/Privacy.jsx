@@ -26,7 +26,7 @@ export default function Privacy({ c, lang }) {
 
   return (
     <div className="fade-in">
-      <PageTitle title={t(lang, "privacyTitle")} />
+      <PageTitle title={t(lang, "privacyTitle")} body={t(lang, "privacyBody")} />
       <Card>
         <ul className="list-disc space-y-3 pl-6">
           {t(lang, "privacyPoints").map((point) => (
@@ -35,7 +35,7 @@ export default function Privacy({ c, lang }) {
         </ul>
       </Card>
       <ErrorNote lang={lang} error={error} />
-      <Card className="mt-6 border-rose-ink/30">
+      <Card className="mt-5 border-rose-ink/30">
         {!confirming ? (
           <Button variant="danger" onClick={() => setConfirming(true)}>
             {t(lang, "deleteData")}

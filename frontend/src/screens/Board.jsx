@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { t, typeLabel } from "../i18n";
+import { orgName, t, typeLabel } from "../i18n";
 import { go } from "../nav";
 import { Button, Card, ErrorNote, PageTitle, Spinner } from "../components/ui";
 
@@ -10,12 +10,12 @@ const BACK = { in_progress: "todo", done: "in_progress" };
 
 function TaskTile({ lang, task, onMove, busy, readOnly }) {
   return (
-    <li className="rounded-xl border border-sand-200 bg-white p-4">
+    <li className="rounded-2xl border border-sand-200 bg-white p-4">
       <p className="font-semibold">
-        {task.order}. {task.institution}
+        {task.order}. {orgName(task.institution)}
       </p>
-      <p className="text-[0.9rem] text-ink-soft">
-        {task.items.map((i) => `${typeLabel(lang, i.type)}${i.identifier_masked ? ` ${i.identifier_masked}` : ""}`).join(" · ")}
+      <p className="text-sm text-ink-soft">
+        {task.items.map((i) => `${typeLabel(lang, i.type)}${i.identifier_masked ? ` ${i.identifier_masked}` : ""}`).join(", ")}
       </p>
       {!readOnly && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -37,7 +37,7 @@ function TaskTile({ lang, task, onMove, busy, readOnly }) {
 
 function Columns({ lang, tasks, onMove, busy, readOnly }) {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-5 md:grid-cols-3 md:items-start">
       {COLUMNS.map((col) => {
         const items = tasks.filter((task) => task.board_status === col);
         return (
@@ -111,13 +111,13 @@ export default function Board({ c, lang, refresh }) {
       ) : (
         <>
           <Columns lang={lang} tasks={c.plan.tasks} onMove={move} busy={busy} />
-          <Card className="mt-8">
+          <Card className="mt-10">
             <h2 className="font-serif text-xl">{t(lang, "shareTitle")}</h2>
             <p className="mt-1 text-ink-soft">{t(lang, "shareBody")}</p>
             {shareUrl ? (
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <input readOnly value={shareUrl} aria-label={t(lang, "shareTitle")}
-                       className="min-h-12 flex-1 rounded-xl border-2 border-sand-300 bg-sand-50 px-4 text-[0.9rem]"
+                       className="min-h-12 flex-1 rounded-2xl border-2 border-sand-300 bg-sand-50 px-4 text-sm"
                        onFocus={(e) => e.target.select()} />
                 <Button onClick={copy}>{copied ? `✓ ${t(lang, "copied")}` : t(lang, "copy")}</Button>
               </div>
@@ -145,7 +145,7 @@ export function SharedBoard({ token, lang }) {
   if (!data) return <Spinner label={t(lang, "loading")} />;
   return (
     <div className="fade-in">
-      <p className="mb-4 rounded-xl bg-brand-soft px-4 py-2 text-brand-dark">{t(lang, "sharedView")}</p>
+      <p className="mb-4 rounded-2xl bg-brand-soft px-4 py-2 text-brand-dark">{t(lang, "sharedView")}</p>
       <PageTitle title={t(lang, "boardTitle")} body={t(lang, "forName", { name: data.deceased_name })} />
       <Columns lang={lang} tasks={data.tasks} readOnly />
     </div>

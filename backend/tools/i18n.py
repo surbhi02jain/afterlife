@@ -33,7 +33,7 @@ def pick(language: str, en: str, hi: str) -> str:
 
 
 def inr(value: float | None) -> str:
-    """Indian digit grouping with a rupee prefix: 232198.6 -> 'Rs 2,32,198.60'."""
+    """Indian digit grouping with a rupee sign: 232198.6 -> '₹2,32,198.60'."""
     if value is None:
         return "-"
     whole, frac = f"{abs(value):.2f}".split(".")
@@ -43,7 +43,7 @@ def inr(value: float | None) -> str:
             groups.insert(0, head[-2:])
             head = head[:-2]
         whole = ",".join(([head] if head else []) + groups + [tail])
-    return f"{'-' if value < 0 else ''}Rs {whole}.{frac}"
+    return f"{'-' if value < 0 else ''}₹{whole}.{frac}"
 
 
 def nice_date(d: date | str | None, language: str = "en") -> str:

@@ -176,7 +176,7 @@ def test_enquiry_letter_for_probable_item_never_claims_it_exists():
     letter = draft_letter(case, item(case, "life_insurance", "kavach").id, TODAY)
     assert letter.kind == "existence_enquiry"
     assert "confirm whether any life insurance policy exists" in letter.body
-    assert letter.body.count("Rs 3,150.00") == 3
+    assert letter.body.count("₹3,150.00") == 3
     assert "policy no." not in letter.body
 
 

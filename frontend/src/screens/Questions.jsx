@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../api";
 import { t } from "../i18n";
 import { go } from "../nav";
-import { Button, Card, ErrorNote, PageTitle, PrimaryBar } from "../components/ui";
+import { Button, Card, ErrorNote, PageTitle, PrimaryBar, SectionTitle, field } from "../components/ui";
 
 function QuestionCard({ lang, q, onAnswer, busy }) {
   const [text, setText] = useState("");
@@ -30,7 +30,7 @@ function QuestionCard({ lang, q, onAnswer, busy }) {
           <label className="sr-only" htmlFor={`a-${q.id}`}>{t(lang, "typeAnswer")}</label>
           <input
             id={`a-${q.id}`}
-            className="min-h-12 flex-1 rounded-xl border-2 border-sand-300 px-4 py-3 focus:border-brand"
+            className={`${field} sm:flex-1`}
             placeholder={t(lang, "typeAnswer")}
             maxLength={500}
             value={text}
@@ -81,7 +81,7 @@ export default function Questions({ c, lang, refresh }) {
     <div className="fade-in">
       <PageTitle title={t(lang, "questionsTitle")} body={t(lang, "questionsBody")} />
       <ErrorNote lang={lang} error={error} />
-      <div className="space-y-4">
+      <div className="space-y-5">
         {open.map((q) => (
           <QuestionCard key={q.id} lang={lang} q={q} onAnswer={answer} busy={busy} />
         ))}
@@ -95,11 +95,11 @@ export default function Questions({ c, lang, refresh }) {
         </div>
       )}
       {done.length > 0 && (
-        <section className="mt-8">
-          <h2 className="font-serif text-xl">{t(lang, "answered")}</h2>
+        <section className="mt-10">
+          <SectionTitle>{t(lang, "answered")}</SectionTitle>
           <ul className="mt-3 space-y-2">
             {done.map((q) => (
-              <li key={q.id} className="rounded-xl bg-sage-soft px-4 py-3">
+              <li key={q.id} className="rounded-2xl bg-sage-soft px-4 py-3">
                 <span className="block text-ink-soft">{q.text}</span>
                 <span className="font-semibold text-sage-ink">{q.answer}</span>
               </li>

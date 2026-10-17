@@ -1,52 +1,95 @@
 @import "tailwindcss";
 
-/* Calm, warm palette. Text colours meet WCAG AA (most AAA) on the sand background. */
+/* "Lavender and marigold": a calm lavender page, deep violet ink for text and actions, and marigold used only
+   for things Saath found. "sand" names are kept so every screen picks this up. Text meets WCAG AA+. */
 @theme {
-  --color-sand-50: #faf7f2;
-  --color-sand-100: #f3ede3;
-  --color-sand-200: #e7dfd2;
-  --color-sand-300: #d3c6b3;
-  --color-ink: #2b2a28;
-  --color-ink-soft: #57524b;
-  --color-brand: #2f5d62;
-  --color-brand-dark: #244a4e;
-  --color-brand-soft: #e4eeec;
-  --color-amber-soft: #fff5e1;
-  --color-amber-line: #d9a94a;
-  --color-amber-ink: #6b4a07;
-  --color-sage-soft: #e8f1e8;
-  --color-sage-ink: #2e5b34;
+  --color-sand-50: #f5f3fa; /* lavender paper: page background */
+  --color-sand-100: #ece8f4;
+  --color-sand-200: #e1dbec; /* ruled lines, borders */
+  --color-sand-300: #c7bedb;
+  --color-ink: #221c2e;
+  --color-ink-soft: #5a5267;
+  --color-brand: #4b2e83; /* deep violet */
+  --color-brand-dark: #3a2266;
+  --color-brand-soft: #ece6f7;
+  --color-amber-soft: #fdf1d6; /* marigold wash */
+  --color-amber-line: #f2b33d; /* marigold */
+  --color-amber-ink: #7a4e00;
+  --color-sage-soft: #e2efe7;
+  --color-sage-ink: #2f6b4f;
   --color-rose-soft: #fbedec;
   --color-rose-ink: #8f2d2d;
   --font-sans: "Noto Sans", "Noto Sans Devanagari", system-ui, sans-serif;
-  --font-serif: "Noto Serif", Georgia, serif;
+  --font-serif: "Tiro Devanagari Hindi", Georgia, serif; /* one face designed for both Hindi and English */
+  --shadow-soft: 0 10px 30px -14px rgb(75 46 131 / 0.22);
 }
 
 /* 1rem = 18px, so all body text is at least 18px. */
 html {
   font-size: 18px;
+  accent-color: var(--color-brand); /* radios and checkboxes in Saath violet, not browser blue */
 }
 
 body {
-  background: var(--color-sand-50);
+  /* a soft lavender dawn at the top of every page, settling into the plain page colour */
+  background: linear-gradient(180deg, #ebe4f8 0, var(--color-sand-50) 420px) no-repeat, var(--color-sand-50);
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-:lang(hi) body,
-:lang(hi) {
-  font-family: "Noto Sans Devanagari", "Noto Sans", system-ui, sans-serif;
+/* Hindi puts Devanagari first in the body face only; headings keep Tiro, which covers both scripts. */
+html:lang(hi) {
+  --font-sans: "Noto Sans Devanagari", "Noto Sans", system-ui, sans-serif;
 }
 
+/* Keyboard focus: a violet outline that follows each element's own shape (pills stay pills). */
 :focus-visible {
   outline: 3px solid var(--color-brand);
   outline-offset: 3px;
-  border-radius: 10px;
+}
+
+/* Form fields show focus as a violet border plus a soft halo, instead of a second outline around the border. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 4px rgb(75 46 131 / 0.18);
+}
+
+/* Dropdowns: our own chevron with room around it, instead of the browser's arrow pressed against the edge. */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b2e83' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.1rem center;
+  background-size: 1.15rem;
+  padding-right: 3rem;
+  cursor: pointer;
+}
+select:invalid,
+select:has(option[value=""]:checked) {
+  color: var(--color-ink-soft); /* the "Choose one" prompt reads as a hint, not a chosen value */
+}
+
+/* The one orchestrated moment: each clue in a "found" ledger gets its marigold mark in turn. */
+.ledger-mark {
+  background: var(--color-amber-line);
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .ledger-mark {
+    transform-origin: top;
+    animation: mark-in 0.35s ease-out both;
+    animation-delay: calc(0.25s + var(--row, 0) * 0.12s);
+  }
+  @keyframes mark-in {
+    from {
+      transform: scaleY(0);
+    }
+  }
   .fade-in {
     animation: fade-in 0.4s ease-out both;
   }

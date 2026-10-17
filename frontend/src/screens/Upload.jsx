@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
 import { api } from "../api";
-import { docTypeLabel, t } from "../i18n";
+import { docTypeLabel, orgName, t } from "../i18n";
 import { go } from "../nav";
 import { ActivityList, ActivitySummary } from "../components/ActivityPanel";
+import { PapersArt } from "../components/Art";
 import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, Spinner } from "../components/ui";
 
 const READ_AT_ONCE = 2;
@@ -14,8 +15,8 @@ function StatusChip({ lang, doc, reading }) {
       <span className="text-sage-ink">
         <span aria-hidden="true">✓ </span>
         {t(lang, "st_extracted")}: {docTypeLabel(lang, doc.document_type)}
-        {doc.institution ? ` · ${doc.institution}` : ""}
-        {doc.saved_reading && <span className="ml-2 text-[0.85rem] text-ink-soft">({t(lang, "savedReading")})</span>}
+        {doc.institution ? `, ${orgName(doc.institution)}` : ""}
+        {doc.saved_reading && <span className="ml-2 text-sm text-ink-soft">({t(lang, "savedReading")})</span>}
       </span>
     );
   if (doc.status === "failed") return <span className="text-rose-ink">{t(lang, "st_failed")}</span>;
@@ -107,8 +108,9 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
           className={`rounded-2xl border-[3px] border-dashed p-8 text-center transition
             ${dragging ? "border-brand bg-brand-soft" : "border-sand-300 bg-white"}`}
         >
+          <PapersArt className="mx-auto mb-3 h-16 w-auto" />
           <p className="text-lg font-semibold">{t(lang, "dropHere")}</p>
-          <p className="mt-1 text-ink-soft text-[0.9rem]">{t(lang, "fileTypes")}</p>
+          <p className="mt-1 text-ink-soft text-sm">{t(lang, "fileTypes")}</p>
           <input
             ref={input}
             type="file"
@@ -129,9 +131,9 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
       <ErrorNote lang={lang} error={error} />
 
       {c.documents.length > 0 && (
-        <ul className="mt-6 divide-y divide-sand-200 rounded-2xl border border-sand-200 bg-white" aria-live="polite">
+        <ul className="mt-5 divide-y divide-sand-200 rounded-2xl border border-sand-200 bg-white" aria-live="polite">
           {c.documents.map((d) => (
-            <li key={d.id} className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <li key={d.id} className="flex flex-col gap-1 px-5 py-4">
               <span className="break-all font-semibold">{d.filename}</span>
               <span className="flex flex-wrap items-center gap-3">
                 <StatusChip lang={lang} doc={d} reading={reading.has(d.id)} />
@@ -142,7 +144,7 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
                 )}
               </span>
               {d.status === "failed" && d.error && (
-                <span className="text-[0.85rem] text-rose-ink sm:basis-full" data-no-read>
+                <span className="text-sm text-rose-ink sm:basis-full" data-no-read>
                   {d.error.slice(0, 220)}
                 </span>
               )}
@@ -179,7 +181,7 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
           <Button onClick={() => go(`/case/${c.id}/map`)}>{t(lang, "seeFound")}</Button>
         )}
         {analysed && allRead && !analysing && (
-          <Badge tone="sage">{c.activity_summary.map((l) => l[lang] || l.en).slice(0, 2).join(" · ")}</Badge>
+          <Badge tone="sage">{c.activity_summary.map((l) => l[lang] || l.en).slice(0, 2).join(", ")}</Badge>
         )}
       </PrimaryBar>
     </div>
