@@ -1,4 +1,4 @@
-"""Generate clearly fake, realistic-looking demo documents for the Saath demo family.
+"""Generate clearly fake, realistic-looking demo documents for the Afterlife demo family.
 
 Everything here is synthetic: fictional person, fictional institutions, made-up numbers, and every image
 carries a "SYNTHETIC DEMO DOCUMENT" watermark.
@@ -87,7 +87,7 @@ def watermark(img: Image.Image) -> Image.Image:
     stamp = stamp.rotate(28, expand=True)
     layer.paste(stamp, ((w - stamp.width) // 2, (h - stamp.height) // 2), stamp)
     d.rectangle([0, 0, w, 30], fill=(200, 30, 30, 230))
-    d.text((w // 2, 15), "SYNTHETIC DEMO DOCUMENT - NOT REAL - fictional person and institution (Saath hackathon demo)",
+    d.text((w // 2, 15), "SYNTHETIC DEMO DOCUMENT - NOT REAL - fictional person and institution (Afterlife hackathon demo)",
            font=font("bold", 16), fill="white", anchor="mm")
     return Image.alpha_composite(img, layer).convert("RGB")
 
@@ -490,7 +490,7 @@ def readme() -> str:
     def fmt(rows):
         return "\n".join(f"| {dt} | `{nar}` | {'Dr ' + inr(dr) if dr else 'Cr ' + inr(cr)} |" for dt, nar, _, dr, cr in rows)
 
-    return f"""# Saath demo family (100% synthetic)
+    return f"""# Afterlife demo family (100% synthetic)
 
 **Deceased:** {PERSON_TITLE} (fictional), date of death {DATE_OF_DEATH}. Family: {WIFE} (wife), {SON} (son).
 Every institution name is fictional and every image is watermarked "SYNTHETIC DEMO DOCUMENT".

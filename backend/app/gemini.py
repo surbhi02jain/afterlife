@@ -2,7 +2,8 @@
 
 `generate()` wraps client.models.generate_content with:
   - a per-model requests-per-minute throttle (GEMINI_RPM; the free tier allows only a few RPM), and
-  - a bounded wait-and-retry on 429 that honours the retry delay Gemini sends back.
+  - a bounded wait-and-retry on 429 that honours the retry delay Gemini sends back, and
+  - network failures (timeouts, dropped connections) raised as GeminiUnreachable.
 Other errors are raised unchanged; callers turn them into user-facing messages.
 """
 
@@ -13,12 +14,13 @@ import time
 from collections import defaultdict, deque
 from functools import lru_cache
 
+import httpx
 from google import genai
 from google.genai import errors, types
 
 from app.config import get_settings
 
-log = logging.getLogger("saath.gemini")
+log = logging.getLogger("afterlife.gemini")
 
 MAX_429_RETRIES = 3
 MAX_429_WAIT_SECONDS = 70
@@ -26,6 +28,10 @@ MAX_429_WAIT_SECONDS = 70
 
 class GeminiNotConfigured(RuntimeError):
     pass
+
+
+class GeminiUnreachable(RuntimeError):
+    """The request never got a reply (timeout, connection reset). Message is safe to show the user."""
 
 
 @lru_cache(maxsize=1)
@@ -92,6 +98,8 @@ def generate(client, *, model: str, contents, config: types.GenerateContentConfi
         limiter.acquire(model)
         try:
             return client.models.generate_content(model=model, contents=contents, config=config)
+        except httpx.TransportError as exc:
+            raise GeminiUnreachable(f"Couldn't reach Gemini ({type(exc).__name__}). Please try again.") from exc
         except errors.APIError as exc:
             if exc.code != 429 or attempt == MAX_429_RETRIES:
                 raise

@@ -12,7 +12,7 @@ import Plan from "./screens/Plan";
 import Letters from "./screens/Letters";
 import Board, { SharedBoard } from "./screens/Board";
 import Privacy from "./screens/Privacy";
-import { go } from "./nav";
+import { go, parseRoute } from "./nav";
 
 const SCREENS = [
   ["upload", "nav_upload", Upload],
@@ -23,14 +23,6 @@ const SCREENS = [
   ["board", "nav_board", Board],
   ["privacy", "nav_privacy", Privacy],
 ];
-
-function parseRoute(hash) {
-  // "?l=<id>" after a screen (e.g. letters?l=...) is read by that screen, not part of the route
-  const parts = hash.replace(/^#\/?/, "").replace(/\?.*$/, "").split("/").filter(Boolean);
-  if (parts[0] === "case" && parts[1]) return { name: "case", id: parts[1], screen: parts[2] || "upload" };
-  if (parts[0] === "share" && parts[1]) return { name: "share", token: parts[1] };
-  return { name: "start" };
-}
 
 function useRoute() {
   const [hash, setHash] = useState(window.location.hash);
@@ -47,7 +39,7 @@ function useRoute() {
 
 function storedLang() {
   try {
-    return localStorage.getItem("saath.lang") === "hi" ? "hi" : "en";
+    return localStorage.getItem("afterlife.lang") === "hi" ? "hi" : "en";
   } catch {
     return "en";
   }
@@ -122,7 +114,7 @@ function CaseShell({ id, screen, lang, setLang }) {
     } catch (e) {
       if (e.status === 404) {
         try {
-          localStorage.removeItem("saath.case");
+          localStorage.removeItem("afterlife.case");
         } catch {}
         go("/");
       } else setError(e);
@@ -132,7 +124,7 @@ function CaseShell({ id, screen, lang, setLang }) {
   useEffect(() => {
     refresh();
     try {
-      localStorage.setItem("saath.case", id);
+      localStorage.setItem("afterlife.case", id);
     } catch {}
   }, [id, refresh]);
 
@@ -155,8 +147,7 @@ function CaseShell({ id, screen, lang, setLang }) {
     const next = lang === "en" ? "hi" : "en";
     setLang(next);
     try {
-      await api.patchCase(id, { language: next });
-      if (c?.plan) await api.buildPlan(id);
+      await api.patchCase(id, { language: next }); // the server redoes the plan and unedited letters
       await refresh();
     } catch (e) {
       setError(e);
@@ -235,13 +226,13 @@ export default function App() {
   const setLang = useCallback((next) => {
     setLangState(next);
     try {
-      localStorage.setItem("saath.lang", next);
+      localStorage.setItem("afterlife.lang", next);
     } catch {}
   }, []);
 
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.title = lang === "hi" ? "साथ" : "Saath";
+    document.title = lang === "hi" ? "आफ्टरलाइफ़" : "Afterlife";
   }, [lang]);
 
   if (route.name === "case") return <CaseShell id={route.id} screen={route.screen} lang={lang} setLang={setLang} />;

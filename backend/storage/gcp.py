@@ -7,6 +7,7 @@ import threading
 from collections import defaultdict
 from typing import Callable
 
+from google.api_core.exceptions import NotFound
 from google.cloud import firestore, storage as gcs
 
 from app.models import Case, utc_now
@@ -84,4 +85,13 @@ class GcpStorage(Storage):
         return key
 
     def read_file(self, storage_key: str) -> bytes:
-        return self.bucket.blob(storage_key).download_as_bytes()
+        try:
+            return self.bucket.blob(storage_key).download_as_bytes()
+        except NotFound as exc:  # e.g. removed by the 24h lifecycle rule
+            raise FileNotFoundError(storage_key) from exc
+
+    def delete_file(self, storage_key: str) -> None:
+        try:
+            self.bucket.blob(storage_key).delete()
+        except NotFound:
+            pass  # already gone (idempotent)

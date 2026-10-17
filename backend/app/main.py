@@ -1,4 +1,4 @@
-"""Saath API. Also serves the built frontend (frontend/dist) so the app ships as one container."""
+"""Afterlife API. Also serves the built frontend (frontend/dist) so the app ships as one container."""
 
 import mimetypes
 
@@ -17,7 +17,7 @@ from tools.inference import InferenceError
 from tools.letters import letter_pdf
 from tools.questions import QuestionError
 
-app = FastAPI(title="Saath", version="0.3.0")
+app = FastAPI(title="Afterlife", version="0.3.0")
 
 
 def load_case(case_id: str, storage: Storage = Depends(get_storage)) -> Case:
@@ -85,12 +85,7 @@ def get_case(case: Case = Depends(load_case)):
 @app.patch("/api/cases/{case_id}")
 def update_case(body: CaseUpdate, case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
     changes = body.model_dump(exclude_unset=True, exclude_none=True)
-
-    def mutate(c: Case):
-        for key, value in changes.items():
-            setattr(c, key, value)
-
-    return case_view(storage.update_case(case.id, mutate))
+    return case_view(services.update_case_details(storage, case.id, changes))
 
 
 @app.delete("/api/cases/{case_id}", status_code=204)
@@ -138,6 +133,17 @@ def upload_documents(
 @app.get("/api/cases/{case_id}/documents")
 def list_documents(case: Case = Depends(load_case)):
     return [document_view(d) for d in case.documents]
+
+
+@app.delete("/api/cases/{case_id}/documents/{document_id}")
+def remove_document(document_id: str, case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    """Remove one upload: its file, its extraction and anything only it proved. Returns the updated case."""
+    if case.get_document(document_id) is None:
+        raise HTTPException(404, "Document not found")
+    try:
+        return case_view(services.remove_document(storage, case.id, document_id))
+    except KeyError:
+        raise HTTPException(404, "Document not found")
 
 
 @app.post("/api/cases/{case_id}/documents/{document_id}/extract")
@@ -206,7 +212,7 @@ def _agent_response(storage: Storage, case_id: str, message: str):
 
 @app.post("/api/cases/{case_id}/analyse")
 def analyse(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
-    """Run the Saath agent over the whole case: extract, infer, look up procedures, ask, plan, draft letters."""
+    """Run the Afterlife agent over the whole case: extract, infer, look up procedures, ask, plan, draft letters."""
     return _agent_response(storage, case.id, ANALYSE_MESSAGE)
 
 
@@ -285,7 +291,7 @@ def download_letter(letter_id: str, case: Case = Depends(load_case)):
     letter = case.get_letter(letter_id)
     if letter is None:
         raise HTTPException(404, "Letter not found")
-    filename = "saath-letter-" + "".join(ch for ch in letter.institution.lower() if ch.isalnum())[:30] + ".pdf"
+    filename = "afterlife-letter-" + "".join(ch for ch in letter.institution.lower() if ch.isalnum())[:30] + ".pdf"
     return Response(letter_pdf(letter), media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 

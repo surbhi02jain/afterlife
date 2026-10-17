@@ -13,7 +13,7 @@ from app import demo
 from app.gemini import GeminiNotConfigured
 from app.models import ActivityEntry, Case, Document, InferenceRun, ItemStatus, Letter, Question, new_id
 from storage import Storage
-from tools.asset_map import refresh_recurring, sync_documents
+from tools.asset_map import forget_document, refresh_recurring, sync_documents
 from tools.extraction import ExtractionError, extract_document, parse_extraction
 from tools.i18n import label
 from tools.inference import InferenceError, apply_proposals, collect_transactions, propose
@@ -63,6 +63,8 @@ def extract_case_document(storage: Storage, case_id: str, document_id: str, *, c
     def finish(**fields):
         def mutate(c: Case):
             target = c.get_document(document_id)
+            if target is None:
+                return  # the family removed it while it was being read
             for key, value in fields.items():
                 setattr(target, key, value)
             if target.status == "extracted":
@@ -75,7 +77,10 @@ def extract_case_document(storage: Storage, case_id: str, document_id: str, *, c
             elif target.status == "failed":
                 log(c, "extract_document", f"Couldn't read {target.filename}", f"{target.filename} पढ़ा नहीं जा सका",
                     ok=False, run_id=run_id, document_id=document_id, error=target.error)
-        return storage.update_case(case_id, mutate).get_document(document_id)
+        updated = storage.update_case(case_id, mutate).get_document(document_id)
+        if updated is None:
+            raise ExtractionError("This document was removed.")
+        return updated
 
     finish(status="extracting", error=None)
     try:
@@ -89,12 +94,41 @@ def extract_case_document(storage: Storage, case_id: str, document_id: str, *, c
     except Exception as exc:  # timeouts, network, a deleted upload: never leave the document stuck as "extracting"
         if isinstance(exc, (ExtractionError, GeminiNotConfigured)):
             message = str(exc)
+        elif isinstance(exc, FileNotFoundError):
+            message = "This file is no longer stored (uploads are deleted after 24 hours). Please upload it again."
         else:
             logging.getLogger("saath.services").exception("extraction of %s failed", document_id)
             message = f"Couldn't read this file just now ({type(exc).__name__}). Please try again."
         finish(status="failed", error=message)
         raise ExtractionError(message) from exc
     return finish(status="extracted", error=None, extraction=document, extracted_with_model=model)
+
+
+def remove_document(storage: Storage, case_id: str, document_id: str) -> Case:
+    """The family removes an upload (wrong file, unreadable photo). Its file, extraction and anything only it
+    proved go too. Open questions and unedited letters about removed items go; letters the family edited stay."""
+    removed_keys = []
+
+    def mutate(c: Case):
+        doc = c.get_document(document_id)
+        if doc is None:
+            raise KeyError(document_id)
+        removed_keys.append(doc.storage_key)
+        gone = set(forget_document(c, document_id))
+        c.questions = [q for q in c.questions if not (q.status == "open" and q.item_id in gone)]
+        c.letters = [l for l in c.letters if l.edited or l.item_id not in gone]
+        if c.plan:
+            c.plan = build_plan(c)
+        refresh_letters(c)
+        n = len(gone)
+        log(c, "remove_document",
+            f"Removed {doc.filename}" + (f" and {n} item{'s' if n != 1 else ''} it showed" if n else ""),
+            f"{doc.filename} हटाया" + (f" और उससे जुड़ी {n} चीज़ें भी" if n else ""), document_id=document_id,
+            removed_items=n)
+
+    case = storage.update_case(case_id, mutate)
+    storage.delete_file(removed_keys[0])  # after the record, so a failure here leaves no dangling reference
+    return case
 
 
 def extract_pending(storage: Storage, case_id: str, *, client=None, max_workers: int = 4) -> Case:
@@ -148,6 +182,19 @@ def refresh_letters(c: Case) -> None:
             fresh = draft_letter(c, letter.item_id)
             fresh.id, fresh.created_at = letter.id, letter.created_at
             c.letters[n] = fresh
+
+
+def update_case_details(storage: Storage, case_id: str, changes: dict) -> Case:
+    """Name, date of death, relationship or language changed: redo the plan and unedited letters to match.
+    Letters the family edited keep their text (and language)."""
+    def mutate(c: Case):
+        for key, value in changes.items():
+            setattr(c, key, value)
+        if c.plan:
+            c.plan = build_plan(c)
+        refresh_letters(c)
+
+    return storage.update_case(case_id, mutate)
 
 
 def set_item_status(storage: Storage, case_id: str, item_id: str, status: ItemStatus) -> Case:

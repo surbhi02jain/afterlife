@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy Saath to Google Cloud Run. Safe to re-run: every step checks before creating.
+# Deploy Afterlife to Google Cloud Run. Safe to re-run: every step checks before creating.
 #
 #   gcloud auth login && gcloud config set project YOUR_PROJECT_ID
 #   GEMINI_API_KEY=... ./scripts/deploy.sh          # first deploy (stores the key in Secret Manager)
@@ -11,14 +11,15 @@ set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
 REGION="${REGION:-asia-south1}"                      # Mumbai
-SERVICE="${SERVICE:-saath}"
-BUCKET="${BUCKET:-${PROJECT_ID}-saath-uploads}"
+SERVICE="${SERVICE:-afterlife}"
+BUCKET="${BUCKET:-${PROJECT_ID}-afterlife-uploads}"
 FIRESTORE_DATABASE="(default)"
 SECRET_NAME="GEMINI_API_KEY"
-RUNTIME_SA="saath-run"
+RUNTIME_SA="afterlife-run"
 EXTRACTION_MODEL="${EXTRACTION_MODEL:-gemini-3.8-flash}"
-REASONING_MODEL="${REASONING_MODEL:-gemini-4-argon}"   # needs a billed Gemini project (free tier quota is 0)
-GEMINI_RPM="${GEMINI_RPM:-0}"                          # 0 = no client-side throttle (paid tier)
+# Free-tier defaults (same as .env.example). Once billing is on: REASONING_MODEL=gemini-4-argon GEMINI_RPM=0
+REASONING_MODEL="${REASONING_MODEL:-gemini-3.6-flash}"  # gemini-4-argon has a free-tier quota of 0
+GEMINI_RPM="${GEMINI_RPM:-5}"                           # free tier allows ~5/min; 0 = no client-side throttle
 MIN_INSTANCES="${MIN_INSTANCES:-1}"                    # 1 avoids a cold start during the live demo
 MAX_INSTANCES="${MAX_INSTANCES:-3}"
 
@@ -75,7 +76,7 @@ fi
 
 step "Runtime service account ${SA_EMAIL} (least privilege)"
 if ! gcloud iam service-accounts describe "${SA_EMAIL}" --project "${PROJECT_ID}" >/dev/null 2>&1; then
-  gcloud iam service-accounts create "${RUNTIME_SA}" --display-name="Saath Cloud Run" --project "${PROJECT_ID}"
+  gcloud iam service-accounts create "${RUNTIME_SA}" --display-name="Afterlife Cloud Run" --project "${PROJECT_ID}"
 fi
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" --member="serviceAccount:${SA_EMAIL}" \
   --role=roles/datastore.user --condition=None >/dev/null

@@ -64,6 +64,11 @@ def test_check_identifier(item_type, identifier, expected):
     ("Kavach Life Insurance", "Jeevan Raksha Life Insurance Corporation", False),
     ("Sahyadri National Bank", "Deccan Gramin Co-operative Bank", False),
     ("Life Insurance", "Life Insurance Co", False),  # nothing distinctive to compare
+    ("LIC", "LIC of India", True),
+    ("LIC", "Life Insurance Corporation of India", True),
+    ("SBI", "State Bank of India", True),
+    ("SBI Life Insurance", "State Bank of India", False),   # a different company
+    ("LIC Housing Finance", "Life Insurance Corporation of India", False),
 ])
 def test_same_institution(a, b, same):
     assert same_institution(a, b) is same
@@ -110,6 +115,10 @@ def test_totals_exclude_probable_and_rejected():
     ("ACH DR-NAVODAYA MF-SIP-1048832", "ACH DR-NAVODAYA MF-SIP-XXXX8832"),
     ("UPI/SHARMA GENERAL STORE/groceries", "UPI/SHARMA GENERAL STORE/groceries"),
     ("FINAL DIVIDEND FY26 2026", "FINAL DIVIDEND FY26 2026"),   # short numbers are left alone
+    ("Aadhaar 1234 5678 9012", "Aadhaar XXXX9012"),
+    ("CARD 4111-1111-1111-1234 POS", "CARD XXXX1234 POS"),
+    ("POLICYNO784512093", "POLICYNOXXXX2093"),
+    ("NEFT 2026-08-05 REF 12", "NEFT 2026-08-05 REF 12"),       # dates are not account numbers
 ])
 def test_evidence_masks_long_numbers(text, masked):
     from app.models import Evidence

@@ -1,12 +1,10 @@
-# Saath — a bereavement financial navigator
-
-> *Saath* (साथ) means "together" / "alongside".
+# Afterlife — a bereavement financial navigator
 
 When someone dies in India, their family often doesn't know what accounts, policies or investments existed. Money
-sits unclaimed because nobody knew to ask. Saath helps a grieving family find those assets and claim them.
+sits unclaimed because nobody knew to ask. Afterlife helps a grieving family find those assets and claim them.
 
 The family uploads whatever they have: photos of bank statements, a passbook, SMS and UPI screenshots, a premium
-receipt. Saath then:
+receipt. Afterlife then:
 
 1. **Reads** each document with Gemini and pulls out accounts, policies, balances, nominees and transactions.
 2. **Finds what's missing.** It spots assets that probably exist but weren't uploaded. Dividend credits imply a demat
@@ -32,7 +30,7 @@ fictional banks and insurers ([demo/README.md](demo/README.md) lists everything 
 - **Found with no document at all:** a demat account at "Anand Stockbroking" (from dividend credits and DP charges)
   and a second life policy with "Kavach Life" (from monthly premium debits). Both are shown as **probable**, with
   the exact transactions as evidence. They are never presented as facts.
-- **Gaps flagged:** the EPF passbook shows no nominee, so Saath asks the family a follow-up question.
+- **Gaps flagged:** the EPF passbook shows no nominee, so Afterlife asks the family a follow-up question.
 
 ---
 
@@ -62,7 +60,7 @@ flowchart LR
 
 All AI goes through one place, [backend/app/gemini.py](backend/app/gemini.py), using the official `google-genai`
 SDK with `response_json_schema`. It throttles requests per model and honours 429 retry delays. If a call fails or a
-reply doesn't validate, the error is shown. Saath never substitutes made-up data.
+reply doesn't validate, the error is shown. Afterlife never substitutes made-up data.
 
 ## Guardrails
 
@@ -73,7 +71,7 @@ These run **in code**, not just in prompts:
 - **No credentials.** Any request to use the deceased's cards, PINs, OTPs, passwords or net banking is refused
   *before* any model call ([backend/agent/guardrails.py](backend/agent/guardrails.py)), in English and Hindi.
 - **Guidance, not legal advice.** Wills, succession and legal-heir topics automatically get that note.
-- **Procedures are cited.** Steps come only from the knowledge base. If nothing matches, Saath says "please confirm
+- **Procedures are cited.** Steps come only from the knowledge base. If nothing matches, Afterlife says "please confirm
   with the institution".
 - **Masking.** Only the last 4 digits of any account or policy number are shown or stored on asset items.
 - **Privacy.** On Cloud Storage, uploads delete themselves after 24 hours (bucket lifecycle rule). The family can
@@ -149,8 +147,8 @@ API.
 
 ```bash
 # try the container locally
-docker build -t saath . && docker run -p 8080:8080 -e STORAGE_BACKEND=local -e LOCAL_DATA_DIR=/tmp/data \
-  -e GEMINI_API_KEY=... saath
+docker build -t afterlife . && docker run -p 8080:8080 -e STORAGE_BACKEND=local -e LOCAL_DATA_DIR=/tmp/data \
+  -e GEMINI_API_KEY=... afterlife
 
 # deploy (after: gcloud auth login && gcloud config set project YOUR_PROJECT_ID)
 GEMINI_API_KEY=... ./scripts/deploy.sh
@@ -158,8 +156,9 @@ GEMINI_API_KEY=... ./scripts/deploy.sh
 
 [scripts/deploy.sh](scripts/deploy.sh) is safe to re-run. It enables the APIs, creates the Firestore database, the
 upload bucket (with the 24-hour delete rule), a runtime service account and a Secret Manager secret for the key,
-then deploys to `asia-south1` (Mumbai) with `min-instances=1` to avoid cold starts. It defaults to the paid-tier
-`gemini-4-argon`; on the free tier, run `REASONING_MODEL=gemini-3.6-flash GEMINI_RPM=5 ./scripts/deploy.sh`.
+then deploys to `asia-south1` (Mumbai) with `min-instances=1` to avoid cold starts. It defaults to the free-tier
+settings (`gemini-3.6-flash`, `GEMINI_RPM=5`); once billing is enabled, run
+`REASONING_MODEL=gemini-4-argon GEMINI_RPM=0 ./scripts/deploy.sh`.
 
 ## Tech stack
 
@@ -187,7 +186,7 @@ demo/         synthetic demo documents, recorded Gemini replies, list of what is
   "SYNTHETIC DEMO DOCUMENT".
 - **Procedures are placeholders.** Entries in `procedures.json` are marked `verified: false`, and the app says so
   and asks families to confirm with each institution.
-- **Out of scope:** real bank or insurer integrations, payments, e-signing and legal filings. Saath prepares the
+- **Out of scope:** real bank or insurer integrations, payments, e-signing and legal filings. Afterlife prepares the
   family to act; it doesn't act for them.
 
-*Saath gives guidance, not legal or financial advice.*
+*Afterlife gives guidance, not legal or financial advice.*

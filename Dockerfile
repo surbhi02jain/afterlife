@@ -24,8 +24,8 @@ COPY demo/docs/ demo/docs/
 COPY demo/recorded/ demo/recorded/
 COPY --from=ui /ui/dist/ frontend/dist/
 
-RUN useradd --create-home --uid 10001 saath && chown -R saath /app
-USER saath
+RUN useradd --create-home --uid 10001 afterlife && chown -R afterlife /app
+USER afterlife
 
 # Cloud Run sets PORT; sh -c so ${PORT} expands, exec so uvicorn receives signals.
 CMD ["sh", "-c", "exec uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port ${PORT} --timeout-keep-alive 75"]

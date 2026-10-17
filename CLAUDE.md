@@ -1,8 +1,8 @@
-# Saath — bereavement financial navigator (hackathon project)
+# Afterlife — bereavement financial navigator (hackathon project)
 
-Saath helps a grieving Indian family find and claim the deceased's financial assets.
+Afterlife helps a grieving Indian family find and claim the deceased's financial assets.
 The family uploads whatever documents they have (statement photos, SMS/UPI screenshots,
-policy receipts). Saath (1) extracts structured data, (2) infers assets that probably exist
+policy receipts). Afterlife (1) extracts structured data, (2) infers assets that probably exist
 but weren't uploaded, (3) builds a per-institution action plan, and (4) drafts claim letters.
 
 Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo path must be rock solid.
@@ -69,7 +69,7 @@ cp .env.example .env    # then put your GEMINI_API_KEY in .env
 .venv/bin/pytest backend                                   # tests (no network)
 (cd frontend && npm install && npm run build)              # build UI into frontend/dist (served by FastAPI)
 (cd frontend && npm run dev)                               # UI dev server on :5173, proxies /api to :8000
-docker build -t saath . && docker run -p 8080:8080 -e STORAGE_BACKEND=local -e LOCAL_DATA_DIR=/tmp/data saath
+docker build -t afterlife . && docker run -p 8080:8080 -e STORAGE_BACKEND=local -e LOCAL_DATA_DIR=/tmp/data afterlife
 GEMINI_API_KEY=... ./scripts/deploy.sh                     # Cloud Run deploy (user runs it after gcloud auth)
 # GcpStorage against emulators: see the docstring in backend/tests/test_gcp_storage.py
 .venv/bin/uvicorn app.main:app --app-dir backend --reload  # API on http://localhost:8000

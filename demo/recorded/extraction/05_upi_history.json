@@ -1,5 +1,5 @@
 {
   "source_file": "05_upi_history.png",
-  "model": "gemini-3.6-flash",
+  "model": "gemini-3.8-flash",
   "raw_response": "{\"institution\":\"PayDost\",\"document_type\":\"upi_history\",\"identifier\":\"sureshrao.sample@paydost\",\"holder_name\":null,\"nominee\":null,\"amounts\":[],\"dates\":[],\"transactions\":[{\"date\":\"2026-08-23\",\"description\":\"Received from Arjun S Rao\",\"amount\":5000,\"direction\":\"credit\"},{\"date\":\"2026-08-20\",\"description\":\"Paid to Sanjeevani Medicals\",\"amount\":3460,\"direction\":\"debit\"},{\"date\":\"2026-08-17\",\"description\":\"Paid to Pune Power Distribution\",\"amount\":2310,\"direction\":\"debit\"},{\"date\":\"2026-08-14\",\"description\":\"Paid to Anand Stockbroking\",\"amount\":10000,\"direction\":\"debit\"},{\"date\":\"2026-08-04\",\"description\":\"Paid to Sharma General Store\",\"amount\":2140,\"direction\":\"debit\"}],\"language_detected\":\"en\",\"confidence\":\"high\"}"
 }

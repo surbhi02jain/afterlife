@@ -6,7 +6,7 @@ from google.genai import errors, types
 from pydantic import ValidationError
 
 from app.config import get_settings
-from app.gemini import generate, get_client
+from app.gemini import GeminiUnreachable, generate, get_client
 from app.models import ExtractedDocument
 
 SUPPORTED_MIME_TYPES = {
@@ -82,6 +82,8 @@ def extract_document(data: bytes, mime_type: str, *, client=None, model: str | N
         )
     except errors.APIError as exc:
         raise ExtractionError(f"Gemini request failed ({exc.code}): {exc.message}") from exc
+    except GeminiUnreachable as exc:
+        raise ExtractionError(str(exc)) from exc
 
     raw = response.text
     if not raw:

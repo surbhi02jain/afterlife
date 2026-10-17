@@ -28,11 +28,26 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [reading, setReading] = useState(new Set());
+  const [removing, setRemoving] = useState(null); // { id, busy } while asking "remove this file?"
   const [error, setError] = useState(null);
 
   const pending = c.documents.filter((d) => d.status !== "extracted");
   const allRead = c.documents.length > 0 && pending.length === 0;
-  const analysed = c.activity.some((a) => a.tool === "infer_hidden_assets" && a.ok);
+  // Analysed = the hidden-asset search ran after the documents last changed (a file read or removed).
+  const lastChange = c.activity.findLastIndex((a) => a.tool === "remove_document" || (a.tool === "extract_document" && a.ok));
+  const analysed = c.activity.findLastIndex((a) => a.tool === "infer_hidden_assets" && a.ok) > lastChange;
+
+  async function removeDocument(id) {
+    setRemoving({ id, busy: true });
+    setError(null);
+    try {
+      setCase(await api.removeDocument(c.id, id));
+      setRemoving(null);
+    } catch (e) {
+      setError(e);
+      setRemoving({ id, busy: false });
+    }
+  }
 
   async function readDocuments(ids) {
     const queue = [...ids];
@@ -142,10 +157,27 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
                     {t(lang, "retry")}
                   </Button>
                 )}
+                {!reading.has(d.id) && !analysing && removing?.id !== d.id && (
+                  <Button variant="quiet" onClick={() => setRemoving({ id: d.id, busy: false })}>
+                    {t(lang, "removeDoc")}
+                  </Button>
+                )}
               </span>
               {d.status === "failed" && d.error && (
                 <span className="text-sm text-rose-ink sm:basis-full" data-no-read>
                   {d.error.slice(0, 220)}
+                </span>
+              )}
+              {removing?.id === d.id && (
+                <span role="alertdialog" aria-label={t(lang, "removeDocConfirm")}
+                      className="flex flex-col gap-2 sm:basis-full sm:flex-row sm:items-center" data-no-read>
+                  <span className="text-[0.95rem]">{t(lang, "removeDocConfirm")}</span>
+                  <Button variant="danger" busy={removing.busy} onClick={() => removeDocument(d.id)} autoFocus>
+                    {t(lang, "removeYes")}
+                  </Button>
+                  <Button variant="secondary" onClick={() => setRemoving(null)}>
+                    {t(lang, "cancel")}
+                  </Button>
                 </span>
               )}
             </li>

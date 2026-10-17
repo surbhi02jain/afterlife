@@ -15,7 +15,7 @@ from google.genai import errors, types
 from pydantic import ValidationError
 
 from app.config import get_settings
-from app.gemini import generate, get_client
+from app.gemini import GeminiUnreachable, generate, get_client
 from app.models import Case, Evidence, InferenceResult, InferenceRun
 from tools.asset_map import Candidate, refresh_recurring, upsert
 
@@ -117,6 +117,8 @@ def propose(case: Case, refs: list[TxnRef], *, client=None, model: str | None = 
         )
     except errors.APIError as exc:
         raise InferenceError(f"Gemini request failed ({exc.code}): {exc.message}") from exc
+    except GeminiUnreachable as exc:
+        raise InferenceError(str(exc)) from exc
     if not response.text:
         raise InferenceError("Gemini returned an empty response for inference.")
     try:

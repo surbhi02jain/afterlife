@@ -20,7 +20,7 @@
     },
     "documents_required": {"en": ["Death certificate"], "hi": ["मृत्यु प्रमाण पत्र"]},
     "typical_timeline": {"en": "Death certificates usually take 1 to 3 weeks from the local registrar.", "hi": "स्थानीय रजिस्ट्रार से मृत्यु प्रमाण पत्र आमतौर पर 1 से 3 सप्ताह में मिलता है।"},
-    "source_name": "Saath placeholder guidance (unverified)",
+    "source_name": "Afterlife placeholder guidance (unverified)",
     "verified": false
   },
   "life_insurance": {
@@ -47,7 +47,7 @@
     },
     "typical_timeline": {"en": "Often settled within about 30 days of all documents being received.", "hi": "सभी दस्तावेज़ मिलने के लगभग 30 दिनों के भीतर अक्सर निपटान हो जाता है।"},
     "time_sensitive": {"en": "Insurers expect the death to be intimated promptly; do this first.", "hi": "बीमा कंपनियाँ मृत्यु की सूचना जल्दी चाहती हैं; यह काम सबसे पहले करें।"},
-    "source_name": "Saath placeholder based on general insurer practice (unverified)",
+    "source_name": "Afterlife placeholder based on general insurer practice (unverified)",
     "verified": false
   },
   "loan": {
@@ -74,7 +74,7 @@
     },
     "typical_timeline": {"en": "Varies by lender; insurance-backed closures can take 30 to 60 days.", "hi": "लेंडर के अनुसार अलग; बीमा से बंद होने में 30 से 60 दिन लग सकते हैं।"},
     "time_sensitive": {"en": "EMIs keep auto-debiting until the lender is told.", "hi": "लेंडर को बताने तक EMI अपने आप कटती रहती है।"},
-    "source_name": "Saath placeholder based on general lender practice (unverified)",
+    "source_name": "Afterlife placeholder based on general lender practice (unverified)",
     "verified": false
   },
   "bank_savings_account": {
@@ -100,7 +100,7 @@
       "hi": ["मृत्यु प्रमाण पत्र", "बैंक का क्लेम फ़ॉर्म", "पासबुक या हाल का स्टेटमेंट", "नॉमिनी का पहचान और पता प्रमाण", "नॉमिनी की फ़ोटो"]
     },
     "typical_timeline": {"en": "Nominee claims are often settled in about 2 weeks.", "hi": "नॉमिनी के दावे अक्सर लगभग 2 सप्ताह में निपट जाते हैं।"},
-    "source_name": "Saath placeholder based on general bank practice (unverified)",
+    "source_name": "Afterlife placeholder based on general bank practice (unverified)",
     "verified": false
   },
   "fixed_deposit": {
@@ -124,7 +124,7 @@
       "hi": ["मृत्यु प्रमाण पत्र", "FD रसीद या FD नंबर", "बैंक का क्लेम फ़ॉर्म", "नॉमिनी का पहचान प्रमाण"]
     },
     "typical_timeline": {"en": "Usually handled together with the savings account claim.", "hi": "आमतौर पर बचत खाते के दावे के साथ ही निपटता है।"},
-    "source_name": "Saath placeholder based on general bank practice (unverified)",
+    "source_name": "Afterlife placeholder based on general bank practice (unverified)",
     "verified": false
   },
   "epf": {
@@ -148,7 +148,7 @@
       "hi": ["मृत्यु प्रमाण पत्र", "UAN या सदस्य आईडी", "नॉमिनी का पहचान प्रमाण और बैंक विवरण", "क्लेम फ़ॉर्म पर नियोक्ता का सत्यापन"]
     },
     "typical_timeline": {"en": "Often about 20 to 30 days after the employer forwards the forms.", "hi": "नियोक्ता द्वारा फ़ॉर्म भेजे जाने के बाद अक्सर लगभग 20 से 30 दिन।"},
-    "source_name": "Saath placeholder based on general EPF practice (unverified)",
+    "source_name": "Afterlife placeholder based on general EPF practice (unverified)",
     "verified": false
   },
   "mutual_funds": {
@@ -173,7 +173,7 @@
     },
     "typical_timeline": {"en": "Often about 2 weeks after complete documents.", "hi": "पूरे दस्तावेज़ों के बाद अक्सर लगभग 2 सप्ताह।"},
     "time_sensitive": {"en": "SIP instalments keep debiting until stopped.", "hi": "रोकने तक SIP की किस्तें कटती रहती हैं।"},
-    "source_name": "Saath placeholder based on general fund-house practice (unverified)",
+    "source_name": "Afterlife placeholder based on general fund-house practice (unverified)",
     "verified": false
   },
   "demat_shares": {
@@ -197,7 +197,7 @@
       "hi": ["मृत्यु प्रमाण पत्र", "ट्रांसमिशन अनुरोध फ़ॉर्म", "नॉमिनी के डीमैट खाते का विवरण", "नॉमिनी का KYC"]
     },
     "typical_timeline": {"en": "Often 1 to 3 weeks after complete documents.", "hi": "पूरे दस्तावेज़ों के बाद अक्सर 1 से 3 सप्ताह।"},
-    "source_name": "Saath placeholder based on general depository practice (unverified)",
+    "source_name": "Afterlife placeholder based on general depository practice (unverified)",
     "verified": false
   },
   "ppf": {
@@ -221,7 +221,7 @@
       "hi": ["मृत्यु प्रमाण पत्र", "PPF पासबुक", "PPF क्लेम फ़ॉर्म", "नॉमिनी का पहचान प्रमाण"]
     },
     "typical_timeline": {"en": "Often 2 to 4 weeks.", "hi": "अक्सर 2 से 4 सप्ताह।"},
-    "source_name": "Saath placeholder based on general small-savings practice (unverified)",
+    "source_name": "Afterlife placeholder based on general small-savings practice (unverified)",
     "verified": false
   }
 }

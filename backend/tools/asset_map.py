@@ -180,17 +180,24 @@ def _known_digits(case: Case, item: Asset | Liability) -> set[str]:
     return {d for d in digits if len(d) >= 4}
 
 
-def _ids_match(candidate_digits: str, known: set[str]) -> bool | None:
-    """True/False when both sides have numbers; None when they can't be compared."""
+def _ids_match(candidate_digits: str, known: set[str]) -> str | None:
+    """'full' when one number contains the other (5+ digits), 'last4' when only the last 4 digits agree,
+    'differ' when both sides have numbers that don't agree, None when they can't be compared."""
     if len(candidate_digits) < 4 or not known:
         return None
+    result = "differ"
     for d in known:
-        if d[-4:] == candidate_digits[-4:]:
-            return True
         shorter, longer = sorted([d, candidate_digits], key=len)
         if len(shorter) >= 5 and shorter in longer:
-            return True
-    return False
+            return "full"
+        if d[-4:] == candidate_digits[-4:]:
+            result = "last4"
+    return result
+
+
+def _institutions_compatible(a: str | None, b: str | None) -> bool:
+    """Same institution, or one side doesn't name one we can compare."""
+    return same_institution(a, b) or not institution_tokens(a) or not institution_tokens(b)
 
 
 def find_match(case: Case, cand: Candidate) -> Asset | Liability | None:
@@ -202,7 +209,10 @@ def find_match(case: Case, cand: Candidate) -> Asset | Liability | None:
         if cand.type in SINGLETON_TYPES:
             return item
         ids = _ids_match(cand_digits, _known_digits(case, item))
-        if ids is True:
+        if ids == "full":
+            return item
+        # 4 matching digits are common across banks: only trust them when the institution doesn't disagree
+        if ids == "last4" and _institutions_compatible(item.institution, cand.institution):
             return item
         if ids is None and same_institution(item.institution, cand.institution):
             return item
@@ -306,6 +316,32 @@ def sync_documents(case: Case, today: date | None = None) -> None:
             upsert(case, cand)
     link_transactions(case)
     refresh_recurring(case, today or date.today())
+
+
+def forget_document(case: Case, document_id: str, today: date | None = None) -> list[str]:
+    """Remove a document from the case and the asset map; returns the ids of items that went with it.
+
+    Its evidence goes from every item. An item only that document proved is removed, and so is an inferred item
+    with no transactions left to cite (a probable item without evidence would be a guess). Items the family
+    confirmed or rejected themselves stay. Run analysis again to look for hidden assets afresh.
+    """
+    case.documents = [d for d in case.documents if d.id != document_id]
+    removed = []
+    for items in (case.assets, case.liabilities):
+        for item in list(items):
+            item.evidence = [e for e in item.evidence if e.document_id != document_id]
+            if document_id in item.source_document_ids:
+                item.source_document_ids.remove(document_id)
+                # the balance may have come from the removed document; sync_documents re-reads the remaining ones
+                item.amount = item.amount_label = item.amount_as_of = None
+            if item.decided_by_user:
+                continue
+            unproven = item.origin == "document" and not item.source_document_ids
+            if unproven or (item.origin == "inference" and not item.evidence):
+                items.remove(item)
+                removed.append(item.id)
+    sync_documents(case, today)
+    return removed
 
 
 def asset_map_view(case: Case) -> dict:

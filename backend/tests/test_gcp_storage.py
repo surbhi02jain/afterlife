@@ -3,7 +3,7 @@
   docker run -d -p 8681:8681 gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators \\
       gcloud emulators firestore start --host-port=0.0.0.0:8681
   docker run -d -p 4443:4443 fsouza/fake-gcs-server:1.52.2 -scheme http -port 4443 -public-host localhost:4443
-  curl -X POST localhost:4443/storage/v1/b -H 'content-type: application/json' -d '{"name":"saath-test"}'
+  curl -X POST localhost:4443/storage/v1/b -H 'content-type: application/json' -d '{"name":"afterlife-test"}'
   FIRESTORE_EMULATOR_HOST=localhost:8681 STORAGE_EMULATOR_HOST=http://localhost:4443 .venv/bin/pytest backend -k gcp
 """
 
@@ -24,7 +24,7 @@ pytestmark = pytest.mark.skipif(not (os.getenv("FIRESTORE_EMULATOR_HOST") and os
 def gcp():
     from storage.gcp import GcpStorage
 
-    return GcpStorage(project="demo-saath", bucket="saath-test")
+    return GcpStorage(project="demo-afterlife", bucket="afterlife-test")
 
 
 def test_case_round_trip_and_not_found(gcp):
@@ -59,6 +59,10 @@ def test_files_and_delete_my_data(gcp):
     key = gcp.save_file(case.id, "doc1", b"\x89PNG data", "image/png")
     gcp.save_file(case.id, "doc2", b"%PDF data", "application/pdf")
     assert gcp.read_file(key) == b"\x89PNG data"
+    gcp.delete_file(key)
+    with pytest.raises(FileNotFoundError):
+        gcp.read_file(key)
+    gcp.delete_file(key)  # idempotent
 
     gcp.delete_case(case.id)
     with pytest.raises(CaseNotFound):

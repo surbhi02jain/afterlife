@@ -75,8 +75,11 @@ _GENERIC_WORDS = {
     "life", "insurance", "ins", "assurance", "general",
     "mutual", "fund", "mf", "amc", "asset", "management",
     "housing", "finance", "financial", "hfl", "services", "securities", "stockbroking", "broking",
-    "nach", "ach", "dr", "cr", "upi", "neft", "imps", "emi", "prem", "premium", "sip", "lic",
+    "nach", "ach", "dr", "cr", "upi", "neft", "imps", "emi", "prem", "premium", "sip",
 }
+# Words that can sit next to an acronym without changing which company it is ("LIC of India", "SBI Ltd").
+# Sector words are NOT here: "SBI Life Insurance" and "LIC Housing Finance" are different companies.
+_NAME_FILLER = {"the", "of", "and", "india", "ltd", "limited", "pvt", "private", "co", "company"}
 
 
 def institution_tokens(name: str | None) -> set[str]:
@@ -84,7 +87,19 @@ def institution_tokens(name: str | None) -> set[str]:
     return {w for w in words if w not in _GENERIC_WORDS and len(w) > 1}
 
 
+def _is_acronym_of(short: str | None, full: str | None) -> bool:
+    """'LIC' / 'LIC of India' for 'Life Insurance Corporation of India', 'SBI' for 'State Bank of India'."""
+    core = [w for w in re.findall(r"[a-z]+", (short or "").lower()) if w not in _NAME_FILLER]
+    if len(core) != 1 or not 3 <= len(core[0]) <= 6:
+        return False
+    full_words = [w for w in re.findall(r"[a-z]+", (full or "").lower()) if w not in _NAME_FILLER - {"india"}]
+    initials = "".join(w[0] for w in full_words)
+    return len(full_words) >= 3 and initials in (core[0], core[0] + "i")  # trailing "i" = "...of India"
+
+
 def same_institution(a: str | None, b: str | None) -> bool:
+    if _is_acronym_of(a, b) or _is_acronym_of(b, a):
+        return True
     ta, tb = institution_tokens(a), institution_tokens(b)
     if not ta or not tb:
         return False

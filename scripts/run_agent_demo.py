@@ -1,4 +1,4 @@
-"""Phase 3 end-to-end from the CLI: demo case -> Saath agent (live Gemini function calling) -> results.
+"""Phase 3 end-to-end from the CLI: demo case -> Afterlife agent (live Gemini function calling) -> results.
 
   .venv/bin/python scripts/run_agent_demo.py            # English
   .venv/bin/python scripts/run_agent_demo.py --hi       # Hindi case

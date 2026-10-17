@@ -75,8 +75,14 @@ class LocalStorage(Storage):
         (folder / document_id).write_bytes(data)
         return f"{case_id}/{document_id}"
 
-    def read_file(self, storage_key: str) -> bytes:
+    def _upload_path(self, storage_key: str) -> Path:
         path = (self.uploads_dir / storage_key).resolve()
         if self.uploads_dir.resolve() not in path.parents:
             raise FileNotFoundError(storage_key)
-        return path.read_bytes()
+        return path
+
+    def read_file(self, storage_key: str) -> bytes:
+        return self._upload_path(storage_key).read_bytes()
+
+    def delete_file(self, storage_key: str) -> None:
+        self._upload_path(storage_key).unlink(missing_ok=True)

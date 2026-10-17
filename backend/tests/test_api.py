@@ -5,6 +5,7 @@ import pytest
 from app import services
 from tests.conftest import FakeClient
 from tools import extraction
+from tools.extraction import ExtractionError
 
 CASE = {"deceased_name": "Demo Person", "date_of_death": "2026-09-02", "relationship": "son", "language": "en"}
 PNG = b"\x89PNG\r\n\x1a\nfake"
@@ -233,3 +234,118 @@ def test_answers_flow_into_unedited_letters_but_never_overwrite_edits(api, stora
     api.put(f"/api/cases/{case['id']}/letters/{letter['id']}", json={"body": "My own words."})
     api.post(f"/api/cases/{case['id']}/items/{item_id}/status", json={"status": "confirmed"})
     assert api.get(f"/api/cases/{case['id']}").json()["letters"][0]["body"] == "My own words."
+
+
+def test_future_date_of_death_is_rejected_on_update_and_the_case_stays_readable(api):
+    case = make_case(api)
+    future = (date.today() + timedelta(days=30)).isoformat()
+    assert api.patch(f"/api/cases/{case['id']}", json={"date_of_death": future}).status_code == 422
+    assert api.get(f"/api/cases/{case['id']}").status_code == 200
+
+
+def test_network_error_marks_the_document_failed_instead_of_stuck(api, storage, monkeypatch):
+    import httpx
+
+    monkeypatch.setattr(extraction, "get_client", lambda: FakeClient(error=httpx.ReadTimeout("slow")))
+    case = make_case(api)
+    upload(api, case["id"])
+    response = api.post(f"/api/cases/{case['id']}/extract")
+    assert response.status_code == 200
+    [doc] = response.json()["documents"]
+    assert doc["status"] == "failed" and "Couldn't reach Gemini (ReadTimeout)" in doc["error"]
+
+
+def test_expired_upload_asks_the_family_to_upload_again(api, storage):
+    import shutil
+
+    case = make_case(api)
+    doc = upload(api, case["id"]).json()[0]
+    shutil.rmtree(storage.uploads_dir / case["id"])  # what the 24h bucket lifecycle rule does in production
+    response = api.post(f"/api/cases/{case['id']}/documents/{doc['id']}/extract")
+    assert response.status_code == 502 and "upload it again" in response.json()["detail"]
+    assert storage.get_case(case["id"]).documents[0].status == "failed"
+
+
+def test_unexpected_error_still_surfaces_but_never_leaves_the_document_stuck(storage):
+    from tests.helpers import new_case
+
+    case = storage.create_case(new_case())
+    doc = services.add_document(storage, case.id, "a.png", "image/png", PNG)
+    with pytest.raises(ExtractionError, match="ZeroDivisionError") as raised:
+        services.extract_case_document(storage, case.id, doc.id, client=FakeClient(error=ZeroDivisionError()))
+    assert isinstance(raised.value.__cause__, ZeroDivisionError)
+    assert storage.get_case(case.id).documents[0].status == "failed"
+
+
+def test_switching_language_redrafts_plan_and_unedited_letters_only(api, monkeypatch, fake_client):
+    case = extracted_case(api, monkeypatch, fake_client)
+    item_id = api.get(f"/api/cases/{case['id']}/asset-map").json()["assets"]["confirmed"][0]["id"]
+    api.post(f"/api/cases/{case['id']}/plan")
+    first = api.post(f"/api/cases/{case['id']}/letters", json={"item_id": item_id}).json()
+
+    body = api.patch(f"/api/cases/{case['id']}", json={"language": "hi"}).json()
+    assert body["plan"]["language"] == "hi"
+    [letter] = body["letters"]
+    assert letter["language"] == "hi" and letter["id"] == first["id"] and "सेवा में" in letter["body"]
+
+    api.put(f"/api/cases/{case['id']}/letters/{letter['id']}", json={"body": "मेरे अपने शब्द।"})
+    body = api.patch(f"/api/cases/{case['id']}", json={"language": "en"}).json()
+    assert body["plan"]["language"] == "en"
+    assert body["letters"][0]["body"] == "मेरे अपने शब्द।"  # the family's edit is never overwritten
+
+
+def test_removing_a_wrong_upload_takes_its_item_letter_and_questions_with_it(api, storage, monkeypatch, fake_client):
+    from tools.questions import QuestionDraft, find_gaps
+
+    case = extracted_case(api, monkeypatch, fake_client)
+    doc_id = storage.get_case(case["id"]).documents[0].id
+    item_id = api.get(f"/api/cases/{case['id']}/asset-map").json()["assets"]["confirmed"][0]["id"]
+    api.post(f"/api/cases/{case['id']}/plan")
+    api.post(f"/api/cases/{case['id']}/letters", json={"item_id": item_id})
+    storage.update_case(case["id"], lambda c: setattr(c.get_item(item_id), "nominee", None))  # so we ask about it
+    gap = next(g for g in find_gaps(storage.get_case(case["id"])) if g.item_id == item_id)
+    services.ask_questions(storage, case["id"], [QuestionDraft(gap_id=gap.id, text="Nominee?", why="claims")])
+
+    response = api.delete(f"/api/cases/{case['id']}/documents/{doc_id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["documents"] == [] and body["asset_map"]["assets"]["confirmed"] == []
+    assert body["letters"] == [] and body["questions"] == [] and body["plan"]["tasks"] == []
+    assert body["activity"][-1]["summary_en"] == "Removed statement.png and 1 item it showed"
+    assert list((storage.uploads_dir / case["id"]).iterdir()) == []  # the file itself is gone
+    assert api.delete(f"/api/cases/{case['id']}/documents/{doc_id}").status_code == 404
+
+
+def test_edited_letters_survive_removing_their_document(api, storage, monkeypatch, fake_client):
+    case = extracted_case(api, monkeypatch, fake_client)
+    doc_id = storage.get_case(case["id"]).documents[0].id
+    item_id = api.get(f"/api/cases/{case['id']}/asset-map").json()["assets"]["confirmed"][0]["id"]
+    letter = api.post(f"/api/cases/{case['id']}/letters", json={"item_id": item_id}).json()
+    api.put(f"/api/cases/{case['id']}/letters/{letter['id']}", json={"body": "My own words."})
+    body = api.delete(f"/api/cases/{case['id']}/documents/{doc_id}").json()
+    assert [l["body"] for l in body["letters"]] == ["My own words."]
+
+
+def test_document_removed_while_being_read_is_a_clear_error(storage):
+    from tests.helpers import new_case
+
+    case = storage.create_case(new_case())
+    doc = services.add_document(storage, case.id, "a.png", "image/png", PNG)
+
+    class RemovesItself(FakeClient):
+        def __init__(self):
+            super().__init__(text="{}")
+            outer = self
+
+            class Models:
+                calls = []
+
+                def generate_content(self, **kwargs):
+                    services.remove_document(storage, case.id, doc.id)
+                    raise RuntimeError("never reached by the family")
+
+            outer.models = Models()
+
+    with pytest.raises(extraction.ExtractionError, match="removed"):
+        services.extract_case_document(storage, case.id, doc.id, client=RemovesItself())
+    assert storage.get_case(case.id).documents == []

@@ -1,4 +1,4 @@
-// Thin wrapper over the Saath API. Errors carry the server's plain-language `detail`.
+// Thin wrapper over the Afterlife API. Errors carry the server's plain-language `detail`.
 
 async function request(method, path, body) {
   const options = { method, headers: {} };
@@ -12,7 +12,7 @@ async function request(method, path, body) {
   try {
     response = await fetch(path, options);
   } catch {
-    throw new Error("We couldn't reach Saath. Please check your internet connection.");
+    throw new Error("We couldn't reach Afterlife. Please check your internet connection.");
   }
   if (response.status === 204) return null;
   const data = await response.json().catch(() => ({}));
@@ -38,6 +38,7 @@ export const api = {
     for (const f of files) form.append("files", f);
     return request("POST", `${c(id)}/documents`, form);
   },
+  removeDocument: (id, docId) => request("DELETE", `${c(id)}/documents/${docId}`),
   extract: (id, docId) => request("POST", `${c(id)}/documents/${docId}/extract`),
   analyse: (id) => request("POST", `${c(id)}/analyse`),
   setItemStatus: (id, itemId, status) => request("POST", `${c(id)}/items/${itemId}/status`, { status }),

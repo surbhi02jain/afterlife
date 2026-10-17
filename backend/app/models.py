@@ -102,18 +102,26 @@ class ExtractedDocument(BaseModel):
 # Cases and documents
 # ---------------------------------------------------------------------------
 
-class CaseCreate(BaseModel):
+def _not_in_future(value: date | None) -> date | None:
+    if value is not None and value > date.today():
+        raise ValueError("date of death cannot be in the future")
+    return value
+
+
+class CaseFields(BaseModel):
     deceased_name: str = Field(min_length=1, max_length=120)
     date_of_death: date
     relationship: str = Field(min_length=1, max_length=60, description="How the user is related to the deceased.")
     language: Literal["en", "hi"] = "en"
 
+
+class CaseCreate(CaseFields):
+    """Input only: the future-date check must not run when a stored Case is loaded."""
+
     @field_validator("date_of_death")
     @classmethod
     def not_in_future(cls, value: date) -> date:
-        if value > date.today():
-            raise ValueError("date of death cannot be in the future")
-        return value
+        return _not_in_future(value)
 
 
 class CaseUpdate(BaseModel):
@@ -121,6 +129,11 @@ class CaseUpdate(BaseModel):
     date_of_death: date | None = None
     relationship: str | None = Field(default=None, min_length=1, max_length=60)
     language: Literal["en", "hi"] | None = None
+
+    @field_validator("date_of_death")
+    @classmethod
+    def not_in_future(cls, value: date | None) -> date | None:
+        return _not_in_future(value)
 
 
 DocumentStatus = Literal["uploaded", "extracting", "extracted", "failed"]
@@ -151,11 +164,16 @@ ItemStatus = Literal["confirmed", "probable", "rejected"]
 IdentifierCheck = Literal["valid", "invalid", "unchecked"]
 
 
-_LONG_NUMBER = re.compile(r"\b([A-Za-z]{0,4})(\d{2,})(\d{4})\b")
+# Aadhaar "1234 5678 9012", card "4111-1111-1111-1234". Dates (2026-08-05) don't fit the 4-4-4 shape.
+_GROUPED_NUMBER = re.compile(r"(?<![\d-])\d{4}(?:[ -]\d{4}){2,3}(?![\d-])")
+# A run of 6+ digits, optionally glued to a letter prefix of any length ("POLICYNO784512093").
+_LONG_NUMBER = re.compile(r"(?<![A-Za-z0-9])([A-Za-z]*)(\d{2,})(\d{4})(?!\d)")
 
 
 def mask_long_numbers(text: str) -> str:
-    """'POL 784512093' -> 'POL XXXX2093', 'HL0098817782' -> 'HLXXXX7782'. Only runs of 6+ digits are masked."""
+    """'POL 784512093' -> 'POL XXXX2093', 'HL0098817782' -> 'HLXXXX7782', '1234 5678 9012' -> 'XXXX9012'.
+    Only runs of 6+ digits (or 4-digit groups) are masked."""
+    text = _GROUPED_NUMBER.sub(lambda m: "XXXX" + m.group(0)[-4:], text)
     return _LONG_NUMBER.sub(lambda m: f"{m.group(1)}XXXX{m.group(3)}", text)
 
 
@@ -323,7 +341,7 @@ class Letter(BaseModel):
     edited: bool = False
 
 
-class Case(CaseCreate):
+class Case(CaseFields):
     id: str = Field(default_factory=new_id)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)

@@ -1,5 +1,5 @@
 {
   "source_file": "04_fd_advice.png",
-  "model": "gemini-3.6-flash",
-  "raw_response": "{\"institution\":\"SAHYADRI NATIONAL BANK\",\"document_type\":\"other\",\"identifier\":\"30219000456712\",\"holder_name\":\"SURESH NARAYAN RAO\",\"nominee\":\"Kamala Suresh Rao\",\"amounts\":[{\"label\":\"Principal Amount\",\"value\":200000.0,\"currency\":\"INR\"},{\"label\":\"Maturity Value\",\"value\":214582.57,\"currency\":\"INR\"}],\"dates\":[{\"label\":\"Date of Deposit\",\"date\":\"2026-03-15\"},{\"label\":\"Maturity Date\",\"date\":\"2027-03-15\"}],\"transactions\":[],\"language_detected\":\"en\",\"confidence\":\"high\"}"
+  "model": "gemini-3.8-flash",
+  "raw_response": "{\n  \"institution\": \"SAHYADRI NATIONAL BANK\",\n  \"document_type\": \"other\",\n  \"identifier\": \"30219000456712\",\n  \"holder_name\": \"SURESH NARAYAN RAO\",\n  \"nominee\": \"Kamala Suresh Rao\",\n  \"amounts\": [\n    {\n      \"label\": \"Principal Amount\",\n      \"value\": 200000.0,\n      \"currency\": \"INR\"\n    },\n    {\n      \"label\": \"Maturity Value\",\n      \"value\": 214582.57,\n      \"currency\": \"INR\"\n    }\n  ],\n  \"dates\": [\n    {\n      \"label\": \"Date of Deposit\",\n      \"date\": \"2026-03-15\"\n    },\n    {\n      \"label\": \"Maturity Date\",\n      \"date\": \"2027-03-15\"\n    }\n  ],\n  \"transactions\": [],\n  \"language_detected\": \"en\",\n  \"confidence\": \"high\"\n}"
 }

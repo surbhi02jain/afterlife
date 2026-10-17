@@ -238,3 +238,76 @@ def test_as_of_ignores_future_dates():
     case = new_case()
     doc = add_doc(case, recorded("04_fd_advice"))
     assert as_of_date(doc, TODAY) == "2026-03-15"  # deposit date, not the 2027 maturity date
+
+
+def test_accounts_at_different_banks_sharing_last_four_digits_stay_separate():
+    case = new_case()
+    add_doc(case, extracted(institution="Sahyadri National Bank", document_type="bank_statement",
+                            identifier="30218847201931"))
+    add_doc(case, extracted(institution="Konkan Gramin Bank", document_type="passbook", identifier="99887766551931"))
+    sync_documents(case)
+    assert sorted(a.institution for a in case.assets) == ["Konkan Gramin Bank", "Sahyadri National Bank"]
+
+
+def test_masked_page_two_still_merges_with_page_one_of_the_same_bank():
+    case = new_case()
+    add_doc(case, extracted(institution="Sahyadri National Bank", document_type="bank_statement",
+                            identifier="30218847201931"))
+    add_doc(case, extracted(institution="SAHYADRI NATIONAL BANK", document_type="bank_statement",
+                            identifier="XXXXXXXXXX1931"))
+    sync_documents(case)
+    assert len(case.assets) == 1
+
+
+def test_lic_policy_and_lic_premium_clue_are_one_item():
+    case = new_case()
+    add_doc(case, extracted(institution="Life Insurance Corporation of India", document_type="premium_receipt"))
+    sync_documents(case)
+    from tools.asset_map import Candidate, upsert
+
+    item, created = upsert(case, Candidate(type="life_insurance", institution="LIC", identifier=None,
+                                           confidence="medium", origin="inference"))
+    assert not created and len(case.assets) == 1
+
+
+def test_forgetting_one_page_keeps_the_account_the_other_page_proves():
+    from tools.asset_map import forget_document
+
+    case, p1, p2 = statement_case()
+    sync_documents(case, TODAY)
+    assert forget_document(case, p2.id, TODAY) == []
+    [account] = case.assets
+    assert account.source_document_ids == [p1.id]
+    assert all(e.document_id != p2.id for e in account.evidence)
+    assert account.amount is not None and account.amount_as_of <= TODAY.isoformat()  # re-read from page 1
+
+
+def test_forgetting_the_only_document_removes_its_item_and_unbacked_inferences():
+    from tools.asset_map import forget_document
+
+    case = new_case()
+    statement = add_doc(case, extracted(
+        institution="Sahyadri National Bank", document_type="bank_statement", identifier="30218847201931",
+        transactions=[{"date": "2026-08-07", "description": "NACH DR-KAVACH LIFE INS-PREM", "amount": 3150,
+                       "direction": "debit"}]))
+    sync_documents(case, TODAY)
+    refs = collect_transactions(case)
+    run = apply_proposals(case, InferenceResult.model_validate({"items": [
+        {"kind": "asset", "type": "life_insurance", "institution": "Kavach Life", "identifier_hint": None,
+         "reason": "Monthly premiums.", "evidence_transaction_ids": ["T1"], "confidence": "medium"}]}),
+        refs, "test", TODAY)
+    account_id, [policy_id] = case.assets[0].id, run.added
+
+    assert sorted(forget_document(case, statement.id, TODAY)) == sorted([account_id, policy_id])
+    assert case.assets == [] and case.documents == []
+
+
+def test_family_decisions_survive_forgetting_a_document():
+    from tools.asset_map import forget_document
+
+    case, p1, p2 = statement_case()
+    sync_documents(case, TODAY)
+    case.assets[0].decided_by_user = True
+    forget_document(case, p1.id, TODAY)
+    forget_document(case, p2.id, TODAY)
+    assert len(case.assets) == 1

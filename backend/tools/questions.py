@@ -10,7 +10,7 @@ from google.genai import errors, types
 from pydantic import BaseModel, Field, ValidationError
 
 from app.config import get_settings
-from app.gemini import generate, get_client
+from app.gemini import GeminiUnreachable, generate, get_client
 from app.models import Case, Question, QuestionTarget, utc_now
 from tools.i18n import inr, label, nice_date, pick
 
@@ -105,6 +105,8 @@ def draft_questions(case: Case, gaps: list[Gap], *, client=None, model: str | No
         )
     except errors.APIError as exc:
         raise QuestionError(f"Gemini request failed ({exc.code}): {exc.message}") from exc
+    except GeminiUnreachable as exc:
+        raise QuestionError(str(exc)) from exc
     try:
         return QuestionDrafts.model_validate_json(response.text or "")
     except ValidationError as exc:

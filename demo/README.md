@@ -1,4 +1,4 @@
-# Saath demo family (100% synthetic)
+# Afterlife demo family (100% synthetic)
 
 **Deceased:** Mr. Suresh Narayan Rao (fictional), date of death 2026-09-02. Family: Kamala Suresh Rao (wife), Arjun Suresh Rao (son).
 Every institution name is fictional and every image is watermarked "SYNTHETIC DEMO DOCUMENT".

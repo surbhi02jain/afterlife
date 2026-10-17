@@ -1,7 +1,7 @@
-"""Saath agent, built on Google's Agent Development Kit (ADK).
+"""Afterlife agent, built on Google's Agent Development Kit (ADK).
 
 ADK runs the Gemini function-calling loop: it sends the case and the tools, runs the tools Gemini asks for (one by
-one, in the order asked) and stops at MAX_STEPS model calls. Saath keeps what matters in its own code:
+one, in the order asked) and stops at MAX_STEPS model calls. Afterlife keeps what matters in its own code:
   - guardrails run before ADK is involved (credential requests never reach the model) and on the final reply;
   - every tool goes through agent.tools.dispatch(), which logs each step and returns errors to the model;
   - each model call waits for the per-model RPM throttle (GEMINI_RPM), like every other Gemini call in the app.
@@ -33,7 +33,7 @@ MAX_STEPS = 10
 ANALYSE_MESSAGE = "Please go through everything we uploaded and tell us what to do next."
 
 SYSTEM_PROMPT = """\
-You are Saath ("together"), a calm and kind assistant helping an Indian family with the money matters of a
+You are Afterlife, a calm and kind assistant helping an Indian family with the money matters of a
 loved one who has died. The person writing to you is grieving. Be warm, brief and plain. No jargon.
 
 When asked to go through the case, work in this order (call independent tools in parallel):
@@ -188,7 +188,7 @@ def run_agent(storage: Storage, case_id: str, message: str = ANALYSE_MESSAGE, *,
         detail = f"{exc.code}: {exc.message}" if isinstance(exc, errors.APIError) else str(exc)
         if not isinstance(exc, (errors.APIError, GeminiNotConfigured)):
             log.exception("agent run %s failed", run_id)
-        services.record(storage, case_id, "agent_error", "Saath couldn't finish just now", "साथ अभी पूरा नहीं कर सका",
+        services.record(storage, case_id, "agent_error", "Afterlife couldn't finish just now", "आफ्टरलाइफ़ अभी पूरा नहीं कर सका",
                         ok=False, run_id=run_id, error=detail[:500])
         raise AgentError(f"Gemini request failed ({detail})") from exc
 

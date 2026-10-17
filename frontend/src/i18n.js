@@ -1,14 +1,14 @@
 // All UI text in English and Hindi. Keep sentences short and gentle.
 
 const en = {
-  appName: "Saath",
+  appName: "Afterlife",
   tagline: "Gentle help with a loved one's money matters",
   sampleBanner: "Sample family. Every name, number and document here is made up.",
   language: "हिन्दी",
   languageLabel: "Switch to Hindi",
   readAloud: "Read aloud",
   stopReading: "Stop reading",
-  activity: "What Saath did",
+  activity: "What Afterlife did",
   close: "Close",
   loading: "Getting things ready…",
   errorTitle: "Something didn't work",
@@ -26,7 +26,7 @@ const en = {
   // start
   startTitle: "We are sorry for your loss.",
   startBody:
-    "Saath helps you find the accounts, policies and investments your loved one had, and what to do about each one. We go one gentle step at a time.",
+    "Afterlife helps you find the accounts, policies and investments your loved one had, and what to do about each one. We go one gentle step at a time.",
   theirName: "Their name",
   dateOfDeath: "Date they passed away",
   yourRelationship: "You are their",
@@ -40,7 +40,7 @@ const en = {
   preferredLanguage: "Language for letters and steps",
   begin: "Begin",
   tryDemo: "Try with a demo family",
-  demoHint: "See how Saath works with a made-up family. No real data.",
+  demoHint: "See how Afterlife works with a made-up family. No real data.",
   continueCase: "Continue where you left off",
   deletedNotice: "Everything has been deleted.",
 
@@ -57,10 +57,13 @@ const en = {
   st_failed: "Couldn't read this",
   savedReading: "sample reading",
   retry: "Try again",
+  removeDoc: "Remove",
+  removeDocConfirm: "Remove this file? Anything found only in it will be taken off the list.",
+  removeYes: "Yes, remove",
   readDocs: "Read {n} documents",
   reading: "Reading your documents…",
   analyse: "Find what might be missing",
-  analysing: "Saath is looking through everything…",
+  analysing: "Afterlife is looking through everything…",
   analysingBody: "This usually takes under a minute. You can watch what's happening below.",
   seeFound: "See what we found",
   noDocsYet: "No documents yet.",
@@ -68,7 +71,7 @@ const en = {
   // asset map
   mapTitle: "What we found",
   mapBody: "Everything your documents show, and a few things they point to.",
-  fromSaath: "From Saath",
+  fromAfterlife: "From Afterlife",
   discoveryTitle: "We may have found {n} more things",
   mapSummaryLoans: "They also show loans of {total}.",
   confirmedSoFar: "Confirmed so far, across {n} accounts and policies",
@@ -91,7 +94,7 @@ const en = {
   nomineeUnknown: "Nominee not known",
   nextDebit: "Next auto-debit expected on {date}",
   asOf: "as of {date}",
-  nothingFound: "Nothing found yet. Add documents and Saath will look through them.",
+  nothingFound: "Nothing found yet. Add documents and Afterlife will look through them.",
   nextQuestions: "Next: a few questions",
 
   // questions
@@ -159,24 +162,24 @@ const en = {
     "Your documents are read by Google Gemini to find accounts and policies. They are not used for anything else.",
     "On our cloud storage, uploaded files are set to delete themselves 24 hours after upload. The case notes stay until you delete them.",
     "We only ever show the last 4 digits of account and policy numbers.",
-    "Saath will never ask for passwords, PINs, OTPs or card numbers.",
+    "Afterlife will never ask for passwords, PINs, OTPs or card numbers.",
   ],
   deleteData: "Delete my data",
   deleteConfirm: "This deletes the case, every uploaded file and all letters. It cannot be undone.",
   deleteYes: "Yes, delete everything",
   cancel: "Cancel",
-  disclaimerShort: "Saath gives guidance, not legal or financial advice.",
+  disclaimerShort: "Afterlife gives guidance, not legal or financial advice.",
 };
 
 const hi = {
-  appName: "साथ",
+  appName: "आफ्टरलाइफ़",
   tagline: "प्रियजन के पैसों के कामों में सहज मदद",
   sampleBanner: "नमूना परिवार। यहाँ हर नाम, नंबर और दस्तावेज़ काल्पनिक है।",
   language: "English",
   languageLabel: "Switch to English",
   readAloud: "सुनें",
   stopReading: "रोकें",
-  activity: "साथ ने क्या किया",
+  activity: "आफ्टरलाइफ़ ने क्या किया",
   close: "बंद करें",
   loading: "तैयारी हो रही है…",
   errorTitle: "कुछ ठीक से नहीं हुआ",
@@ -193,7 +196,7 @@ const hi = {
 
   startTitle: "आपके दुःख में हम आपके साथ हैं।",
   startBody:
-    "साथ आपके प्रियजन के खाते, पॉलिसी और निवेश खोजने में मदद करता है, और बताता है कि हर एक के लिए क्या करना है। हम एक-एक कदम आराम से चलेंगे।",
+    "आफ्टरलाइफ़ आपके प्रियजन के खाते, पॉलिसी और निवेश खोजने में मदद करता है, और बताता है कि हर एक के लिए क्या करना है। हम एक-एक कदम आराम से चलेंगे।",
   theirName: "उनका नाम",
   dateOfDeath: "उनके निधन की तारीख़",
   yourRelationship: "आप उनके हैं",
@@ -207,7 +210,7 @@ const hi = {
   preferredLanguage: "पत्रों और कदमों की भाषा",
   begin: "शुरू करें",
   tryDemo: "नमूना परिवार के साथ देखें",
-  demoHint: "एक काल्पनिक परिवार के साथ देखें कि साथ कैसे काम करता है। कोई असली जानकारी नहीं।",
+  demoHint: "एक काल्पनिक परिवार के साथ देखें कि आफ्टरलाइफ़ कैसे काम करता है। कोई असली जानकारी नहीं।",
   continueCase: "जहाँ छोड़ा था वहीं से जारी रखें",
   deletedNotice: "सब कुछ हटा दिया गया है।",
 
@@ -223,17 +226,20 @@ const hi = {
   st_failed: "यह पढ़ा नहीं जा सका",
   savedReading: "नमूना पठन",
   retry: "फिर कोशिश करें",
+  removeDoc: "हटाएँ",
+  removeDocConfirm: "यह फ़ाइल हटाएँ? जो चीज़ें सिर्फ़ इसी में मिली थीं, वे भी सूची से हट जाएँगी।",
+  removeYes: "हाँ, हटाएँ",
   readDocs: "{n} दस्तावेज़ पढ़ें",
   reading: "आपके दस्तावेज़ पढ़े जा रहे हैं…",
   analyse: "देखें कि क्या छूट गया हो सकता है",
-  analysing: "साथ सब कुछ देख रहा है…",
+  analysing: "आफ्टरलाइफ़ सब कुछ देख रहा है…",
   analysingBody: "इसमें आमतौर पर एक मिनट से कम लगता है। नीचे देख सकते हैं कि क्या हो रहा है।",
   seeFound: "देखें क्या मिला",
   noDocsYet: "अभी कोई दस्तावेज़ नहीं।",
 
   mapTitle: "क्या मिला",
   mapBody: "आपके दस्तावेज़ों में जो दिखा, और कुछ चीज़ें जिनकी ओर वे इशारा करते हैं।",
-  fromSaath: "साथ की ओर से",
+  fromAfterlife: "आफ्टरलाइफ़ की ओर से",
   discoveryTitle: "शायद {n} और चीज़ें मिली हैं",
   mapSummaryLoans: "इनमें {total} के लोन भी दिखते हैं।",
   confirmedSoFar: "अब तक पक्का, {n} खातों और पॉलिसियों में",
@@ -256,7 +262,7 @@ const hi = {
   nomineeUnknown: "नॉमिनी ज्ञात नहीं",
   nextDebit: "अगला ऑटो-डेबिट {date} को अपेक्षित",
   asOf: "{date} तक",
-  nothingFound: "अभी कुछ नहीं मिला। दस्तावेज़ जोड़ें, साथ उन्हें देखेगा।",
+  nothingFound: "अभी कुछ नहीं मिला। दस्तावेज़ जोड़ें, आफ्टरलाइफ़ उन्हें देखेगा।",
   nextQuestions: "आगे: कुछ प्रश्न",
 
   questionsTitle: "कुछ सहज प्रश्न",
@@ -319,13 +325,13 @@ const hi = {
     "खाते और पॉलिसी खोजने के लिए आपके दस्तावेज़ Google Gemini पढ़ता है। इनका किसी और काम में उपयोग नहीं होता।",
     "हमारे क्लाउड स्टोरेज पर अपलोड की गई फ़ाइलें अपलोड के 24 घंटे बाद अपने आप हटने के लिए सेट हैं। मामले के नोट्स तब तक रहते हैं जब तक आप उन्हें न हटाएँ।",
     "हम खाते और पॉलिसी नंबर के केवल आख़िरी 4 अंक दिखाते हैं।",
-    "साथ कभी पासवर्ड, PIN, OTP या कार्ड नंबर नहीं माँगेगा।",
+    "आफ्टरलाइफ़ कभी पासवर्ड, PIN, OTP या कार्ड नंबर नहीं माँगेगा।",
   ],
   deleteData: "मेरा डेटा हटाएँ",
   deleteConfirm: "इससे मामला, हर अपलोड की गई फ़ाइल और सभी पत्र हट जाएँगे। इसे वापस नहीं किया जा सकता।",
   deleteYes: "हाँ, सब कुछ हटाएँ",
   cancel: "रद्द करें",
-  disclaimerShort: "साथ मार्गदर्शन देता है, कानूनी या वित्तीय सलाह नहीं।",
+  disclaimerShort: "आफ्टरलाइफ़ मार्गदर्शन देता है, कानूनी या वित्तीय सलाह नहीं।",
 };
 
 const TYPE = {

@@ -40,4 +40,9 @@ class Storage(ABC):
         """Store bytes and return a storage key."""
 
     @abstractmethod
-    def read_file(self, storage_key: str) -> bytes: ...
+    def read_file(self, storage_key: str) -> bytes:
+        """Raises FileNotFoundError when the file is gone (e.g. the 24h upload lifecycle rule)."""
+
+    @abstractmethod
+    def delete_file(self, storage_key: str) -> None:
+        """Delete one uploaded file. Idempotent."""

@@ -9,7 +9,7 @@ const RELATIONSHIPS = ["spouse", "son", "daughter", "parent", "sibling", "other"
 
 function lastCase() {
   try {
-    return localStorage.getItem("saath.case");
+    return localStorage.getItem("afterlife.case");
   } catch {
     return null;
   }

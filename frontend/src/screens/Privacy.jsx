@@ -15,7 +15,7 @@ export default function Privacy({ c, lang }) {
     try {
       await api.deleteCase(c.id);
       try {
-        localStorage.removeItem("saath.case");
+        localStorage.removeItem("afterlife.case");
       } catch {}
       go("/deleted");
     } catch (e) {
