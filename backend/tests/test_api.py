@@ -103,6 +103,24 @@ def test_extract_failure_is_recorded_not_hidden(api, monkeypatch):
     assert stored["document_type"] is None
 
 
+def test_timeout_marks_document_failed_not_stuck(api, monkeypatch):
+    monkeypatch.setattr(extraction, "get_client", lambda: FakeClient(error=TimeoutError("read timed out")))
+    case = make_case(api)
+    doc = upload(api, case["id"]).json()[0]
+
+    response = api.post(f"/api/cases/{case['id']}/documents/{doc['id']}/extract")
+    assert response.status_code == 502
+    stored = api.get(f"/api/cases/{case['id']}").json()["documents"][0]
+    assert stored["status"] == "failed"
+    assert "try again" in stored["error"]
+
+
+def test_upload_rejects_too_many_files(api):
+    case = make_case(api)
+    files = [("files", (f"{n}.png", PNG, "image/png")) for n in range(21)]
+    assert api.post(f"/api/cases/{case['id']}/documents", files=files).status_code == 413
+
+
 def test_extract_without_api_key_fails_clearly(api):
     case = make_case(api)
     doc = upload(api, case["id"]).json()[0]

@@ -108,10 +108,6 @@ def add_months(d: date, months: int) -> date:
     return date(year, month, min(d.day, monthrange(year, month)[1]))
 
 
-def days_between(start: date, end: date) -> int:
-    return (end - start).days
-
-
 def recurring_cadence(dates: list[date]) -> int | None:
     """Return 1 (monthly) or 12 (yearly) if the dates repeat at that cadence, else None. Needs 2+ dates."""
     ds = sorted(set(dates))

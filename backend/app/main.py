@@ -110,17 +110,23 @@ def _content_type(upload: UploadFile) -> str:
     return (guessed or declared or "application/octet-stream").lower()
 
 
+MAX_FILES_PER_UPLOAD = 20  # every file is held in memory until all are checked
+
+
+# Plain `def` so FastAPI runs it on a worker thread: storage calls block and would stall every other request.
 @app.post("/api/cases/{case_id}/documents", status_code=201)
-async def upload_documents(
+def upload_documents(
     files: list[UploadFile], case: Case = Depends(load_case), storage: Storage = Depends(get_storage)
 ):
+    if len(files) > MAX_FILES_PER_UPLOAD:
+        raise HTTPException(413, f"Please upload at most {MAX_FILES_PER_UPLOAD} files at a time.")
     limit = get_settings().max_upload_bytes
     prepared = []
     for upload in files:
         content_type = _content_type(upload)
         if content_type not in SUPPORTED_MIME_TYPES:
             raise HTTPException(415, f"{upload.filename}: please upload a photo (PNG/JPEG/WEBP/HEIC) or a PDF.")
-        data = await upload.read(limit + 1)
+        data = upload.file.read(limit + 1)
         if len(data) > limit:
             raise HTTPException(413, f"{upload.filename} is larger than {limit // (1024 * 1024)} MB.")
         if not data:
@@ -166,11 +172,6 @@ def get_asset_map(case: Case = Depends(load_case)):
     return asset_map_view(case)
 
 
-@app.post("/api/cases/{case_id}/asset-map/rebuild")
-def rebuild_asset_map(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
-    return asset_map_view(services.sync_asset_map(storage, case.id))
-
-
 @app.post("/api/cases/{case_id}/infer", response_model=InferenceResponse)
 def infer_hidden_assets(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
     try:
@@ -212,11 +213,6 @@ def analyse(case: Case = Depends(load_case), storage: Storage = Depends(get_stor
 @app.post("/api/cases/{case_id}/agent")
 def agent_message(body: AgentMessage, case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
     return _agent_response(storage, case.id, body.message)
-
-
-@app.get("/api/cases/{case_id}/activity")
-def activity(case: Case = Depends(load_case)):
-    return {"summary": services.activity_summary(case), "entries": [a.model_dump(mode="json") for a in case.activity]}
 
 
 # --- questions, plan, letters --------------------------------------------------

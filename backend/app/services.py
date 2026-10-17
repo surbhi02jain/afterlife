@@ -4,6 +4,7 @@ Every operation records a plain-language entry (English + Hindi) in the case's a
 "AI activity" panel is complete no matter whether the agent or the UI triggered it.
 """
 
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
@@ -77,17 +78,22 @@ def extract_case_document(storage: Storage, case_id: str, document_id: str, *, c
         return storage.update_case(case_id, mutate).get_document(document_id)
 
     finish(status="extracting", error=None)
-    data = storage.read_file(doc.storage_key)
-    recorded = demo.recorded_reply(data) if case.is_demo and demo.replay_enabled() else None
     try:
+        data = storage.read_file(doc.storage_key)
+        recorded = demo.recorded_reply(data) if case.is_demo and demo.replay_enabled() else None
         if recorded:
             document, model = parse_extraction(recorded["raw_response"]), f"{recorded['model']} (recorded)"
         else:
             result = extract_document(data, doc.content_type, client=client)
             document, model = result.document, result.model
-    except (ExtractionError, GeminiNotConfigured) as exc:
-        finish(status="failed", error=str(exc))
-        raise ExtractionError(str(exc)) from exc
+    except Exception as exc:  # timeouts, network, a deleted upload: never leave the document stuck as "extracting"
+        if isinstance(exc, (ExtractionError, GeminiNotConfigured)):
+            message = str(exc)
+        else:
+            logging.getLogger("saath.services").exception("extraction of %s failed", document_id)
+            message = f"Couldn't read this file just now ({type(exc).__name__}). Please try again."
+        finish(status="failed", error=message)
+        raise ExtractionError(message) from exc
     return finish(status="extracted", error=None, extraction=document, extracted_with_model=model)
 
 
@@ -107,10 +113,6 @@ def extract_pending(storage: Storage, case_id: str, *, client=None, max_workers:
 
 
 # --- asset map ---------------------------------------------------------------------------------------
-
-def sync_asset_map(storage: Storage, case_id: str) -> Case:
-    return storage.update_case(case_id, sync_documents)
-
 
 def run_inference(storage: Storage, case_id: str, *, client=None, run_id: str | None = None) -> InferenceRun:
     """Ask Gemini for hidden assets (outside the case lock), then verify and merge them in."""
@@ -202,7 +204,8 @@ def lookup_procedure(storage: Storage, case_id: str, item_type: str, run_id: str
     return result
 
 
-def _save_questions(storage: Storage, case_id: str, drafts, run_id: str | None) -> list[Question]:
+def ask_questions(storage: Storage, case_id: str, drafts, run_id: str | None = None) -> list[Question]:
+    """Save drafted questions for real gaps. The agent writes the text itself; the UI gets it from Gemini first."""
     created = []
 
     def mutate(c: Case):
@@ -216,11 +219,6 @@ def _save_questions(storage: Storage, case_id: str, drafts, run_id: str | None) 
     return created
 
 
-def ask_questions(storage: Storage, case_id: str, drafts, run_id: str | None = None) -> list[Question]:
-    """Used by the agent, which writes the question text itself (no extra model call)."""
-    return _save_questions(storage, case_id, drafts, run_id)
-
-
 def generate_questions(storage: Storage, case_id: str, *, client=None) -> list[Question]:
     """Used by the UI: Gemini phrases 2 to 4 of the deterministic gaps."""
     case = storage.get_case(case_id)
@@ -231,7 +229,7 @@ def generate_questions(storage: Storage, case_id: str, *, client=None) -> list[Q
         drafts = draft_questions(case, gaps, client=client).questions
     except (QuestionError, GeminiNotConfigured) as exc:
         raise QuestionError(str(exc)) from exc
-    return _save_questions(storage, case_id, drafts, None)
+    return ask_questions(storage, case_id, drafts)
 
 
 def answer_question(storage: Storage, case_id: str, question_id: str, answer: str) -> Case:
