@@ -1,4 +1,4 @@
-# Virasat — find and claim what your loved one left behind
+# Virasat: find and claim what your loved one left behind
 
 > *Virasat* (विरासत) means "legacy" in Hindi: the legacy your loved one left.
 
@@ -140,14 +140,14 @@ For UI development, run `(cd frontend && npm run dev)` as well (port 5173, proxi
 
 | Variable | Default | Notes |
 |---|---|---|
-| `GEMINI_API_KEY` | — | Required for live Gemini calls |
+| `GEMINI_API_KEY` | none | Required for live Gemini calls |
 | `EXTRACTION_MODEL` | `gemini-3.8-flash` | Reads document images |
 | `REASONING_MODEL` | `gemini-4-argon` | Inference + agent. **Not on the free tier**; `.env.example` uses `gemini-3.6-flash` |
 | `GEMINI_RPM` | `0` | Client-side requests/minute per model. Use `5` on the free tier |
 | `GEMINI_DAILY_LIMIT` | `300` | Gemini calls per day per instance (about 30 analyses); then a polite "try tomorrow". `0` = no limit. Also set a quota on the key in the Cloud Console |
 | `STORAGE_BACKEND` | `local` | `local` = JSON files on disk; `gcp` = Firestore + Cloud Storage |
 | `LOCAL_DATA_DIR` | `./data` | For `local` storage |
-| `GCP_PROJECT`, `GCS_BUCKET`, `FIRESTORE_DATABASE` | — | For `gcp` storage |
+| `GCP_PROJECT`, `GCS_BUCKET`, `FIRESTORE_DATABASE` | none | For `gcp` storage |
 | `DEMO_REPLAY_EXTRACTION` | `true` | Sample-family uploads replay recorded Gemini readings (see below) |
 
 **On the free tier** (about 5 requests/minute and 20/day per model), use two *different* free models for

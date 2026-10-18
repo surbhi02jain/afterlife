@@ -1,4 +1,4 @@
-# Virasat — find and claim what your loved one left behind (hackathon project)
+# Virasat: find and claim what your loved one left behind (hackathon project)
 
 Virasat helps a grieving Indian family find and claim the deceased's financial assets.
 The family uploads whatever documents they have (statement photos, SMS/UPI screenshots,

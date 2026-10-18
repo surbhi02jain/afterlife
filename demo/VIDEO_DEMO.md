@@ -24,10 +24,10 @@ the hackathon asks for. Part C maps every feature to the step that shows it.
 4. **Browser:** a fresh Chrome profile or window, 1440×900 or larger, zoom 100%, bookmarks bar and extensions hidden.
    Allow the microphone for `localhost` when asked (step 6). Keep a second **incognito** window ready for step 17.
 5. **Files**, in two folders:
-   - `afterlife/demo/docs/` – the family's 9 documents (01 to 09).
-   - `afterlife/demo/video/` – `10_bank_statement_sep.png` (money keeps leaving after the death) and
+   - `afterlife/demo/docs/`: the family's 9 documents (01 to 09).
+   - `afterlife/demo/video/`: `10_bank_statement_sep.png` (money keeps leaving after the death) and
      `11_passbook_other_person.png` (someone else's passbook).
-   - `afterlife/demo/samples/` – `reply_kavach_life.png` (a genuine reply) and `message_fake_bank.png` (a scam).
+   - `afterlife/demo/samples/`: `reply_kavach_life.png` (a genuine reply) and `message_fake_bank.png` (a scam).
 6. **Password for the locked PDF** (`08_mf_statement.pdf`): `SURE1503`.
 7. Make regenerating the two video documents possible any time: `.venv/bin/python scripts/make_video_docs.py`.
 
@@ -38,18 +38,18 @@ the hackathon asks for. Part C maps every feature to the step that shows it.
 | Deceased | **Suresh Narayan Rao**, died **2 September 2026**, Pune |
 | You | **Arjun**, his son |
 | Nominee | Kamala Suresh Rao, his wife |
-| Hidden on purpose | a **Kavach Life** policy (only monthly premium debits) and a **demat account at Anand Stockbroking** (dividends, DP charges) – no document for either |
+| Hidden on purpose | a **Kavach Life** policy (only monthly premium debits) and a **demat account at Anand Stockbroking** (dividends, DP charges); no document for either |
 | Planted name differences | EPF passbook says **"S N RAO"**; co-op passbook nominee says **"Smt. Kamla Rao"** |
 | After the death | 5 payments, **₹61,600**, left his Sahyadri account in September (EMI, premium, SIP, an ATM withdrawal at another branch, a wallet top-up) |
 
 ---
 
-## Part A — full walkthrough (every feature)
+## Part A: full walkthrough (every feature)
 
 Times are rough; "Find what might be missing" depends on Gemini.
 
 ### 1. Start a case (start screen)
-- Show the start screen: the lotus logo, **"Virasat — Find and claim what your loved one left behind"**, the dawn
+- Show the start screen: the lotus logo, **"Virasat: Find and claim what your loved one left behind"**, the dawn
   backdrop, "We are sorry for your loss."
 - Fill the form:
   - **Their name:** `Suresh Narayan Rao`
@@ -61,7 +61,7 @@ Times are rough; "Find what might be missing" depends on Gemini.
 
 ### 2. Documents: what to upload
 - On **Documents**, the guide **"What can I upload, and where do I find it?"** is open. Scroll through it.
-- *Say:* "Families rarely have neat paperwork. Virasat tells them what helps and where it usually is – and never to
+- *Say:* "Families rarely have neat paperwork. Virasat tells them what helps and where it usually is, and never to
   log in with the deceased's passwords."
 
 ### 3. Upload everything at once
@@ -74,12 +74,12 @@ Times are rough; "Find what might be missing" depends on Gemini.
   - `11_passbook_other_person.png` shows, in red: **"This document is in the name of Mr. Ramesh Kumar Sharma, not
     Suresh Narayan Rao. Please check it is the right document, or remove it."**
   - Every other file shows **Read: …** with its type and bank.
-- *Say:* "Gemini is reading phone photos, a passbook, SMS and UPI screenshots – into a strict structure that code
+- *Say:* "Gemini is reading phone photos, a passbook, SMS and UPI screenshots into a strict structure that code
   checks."
 
 ### 4. A paper in someone else's name → Remove
 - On `11_passbook_other_person.png`, click **Remove** → **Yes, remove**.
-- *Say:* "If a paper isn't his – a mix-up, or someone trying it on – Virasat flags it, and the family removes it."
+- *Say:* "If a paper isn't his (a mix-up, or someone trying it on), Virasat flags it, and the family removes it."
 
 ### 5. Unlock the password-protected statement
 - On `08_mf_statement.pdf`, type **`SURE1503`** and click **Open file**. It is read like the others.
@@ -96,8 +96,8 @@ purpose: the agent uses what the family remembers as hints while it reads the tr
   > *(English: "He paid a Kavach Life insurance premium every month. When Arjun was born he opened a PPF account at the
   > post office. His ATM PIN was 4412.")*
 - Click **Stop and send**. Under **What we heard**:
-  - **Kavach Life** – *backed by 3 payments in the statements*.
-  - **PPF at the Post Office** – *no payment found in the papers yet, so it is marked "not very sure"*.
+  - **Kavach Life**: *backed by 3 payments in the statements*.
+  - **PPF at the Post Office**: *no payment found in the papers yet, so it is marked "not very sure"*.
   - **What you said** shows the PIN as **[removed]**.
 - *Say:* "A grieving mother can just talk, in Hindi. Code matches what she remembers against the statements, the agent
   will use it as a hint, and the PIN she mentioned is never stored."
@@ -113,12 +113,12 @@ purpose: the agent uses what the family remembers as hints while it reads the tr
 
 ### 8. What we found (the key moment)
 The app moves to **What we found**. Show, top to bottom:
-1. **Red alert – "Money left an account after Suresh Narayan Rao passed away":** **5 payments, ₹61,600 in total**:
+1. **Red alert: "Money left an account after Suresh Narayan Rao passed away":** **5 payments, ₹61,600 in total**:
    EMI on 5 Sep, Kavach premium on 7 Sep, **₹20,000 ATM withdrawal at Hadapsar on 9 Sep**, SIP on 10 Sep, **₹15,000
    wallet top-up on 11 Sep**. "It is first in your plan."
    *Say:* "He died on the 2nd. Someone withdrew twenty thousand rupees a week later. That goes straight to the top."
-2. **Confirmed so far** – the total, the coloured bar and the legend (savings, FD, life insurance, mutual fund, EPF).
-3. **"We may have found 3 more things"** – marigold cards: **Kavach Life** (life insurance), **Anand Stockbroking**
+2. **Confirmed so far**: the total, the coloured bar and the legend (savings, FD, life insurance, mutual fund, EPF).
+3. **"We may have found 3 more things"**: marigold cards: **Kavach Life** (life insurance), **Anand Stockbroking**
    (demat) and the **PPF** from the memory. Open Kavach: its ledger rows are the three premium debits (click a file
    name to open that statement), and its reason
    ends "Your family remembers it too." The PPF has only the family's words, so it is "not very sure".
@@ -129,7 +129,7 @@ The app moves to **What we found**. Show, top to bottom:
 
 ### 9. Confirm or reject a probable item
 - On **Anand Stockbroking**, click **Yes, this is right**. It moves to Confirmed and the total updates.
-- (Leave **Kavach Life** probable – step 12 confirms it from the insurer's letter.)
+- (Leave **Kavach Life** probable; step 12 confirms it from the insurer's letter.)
 - Later, **Remember something else? Tell us** (below the cards) adds another memory; it is checked at once.
 
 ### 10. Questions
@@ -146,14 +146,14 @@ The app moves to **What we found**. Show, top to bottom:
 Click **See your plan**. Show:
 - **"Stay safe from scams"** notice at the top.
 - **0 of N steps done** progress bar.
-- **Step 1: Sahyadri National Bank** – *Time-sensitive*: "₹61,600 left this account in 5 payments after Suresh Narayan
+- **Step 1: Sahyadri National Bank**: *Time-sensitive*: "₹61,600 left this account in 5 payments after Suresh Narayan
   Rao passed away…", and why it comes first.
-- **Griha Setu Housing Finance** – next EMI date, *Time-sensitive*.
-- A probable institution (Kavach Life) – *Needs checking*, first step "Ask Kavach Life to confirm…".
+- **Griha Setu Housing Finance**: next EMI date, *Time-sensitive*.
+- A probable institution (Kavach Life): *Needs checking*, first step "Ask Kavach Life to confirm…".
 - Open **All steps and documents** on one step: steps and documents come from the knowledge base, with the source.
-- **Check names across the papers** (lower on the page): **Names are written differently on some papers** –
+- **Check names across the papers** (lower on the page): **Names are written differently on some papers**:
   *Their name*: "Suresh Narayan Rao" vs **"S N RAO"** on the EPF passbook; *The nominee's name*: "Kamala Suresh Rao"
-  vs **"Smt. Kamla Rao"** on the co-op passbook – with **What you can do** from the knowledge base.
+  vs **"Smt. Kamla Rao"** on the co-op passbook, with **What you can do** from the knowledge base.
   (If it shows **Check the names**, click it.)
 - *Say:* "The plan is ordered by urgency, written in plain steps, and it warns them about name mismatches before a
   bank does."
@@ -164,7 +164,7 @@ Click **See your plan**. Show:
   Kavach letter, use **Make a letter for…** → Kavach Life.) Don't edit it: edited letters are never rewritten.
 - Back on **Plan**, on the **Kavach Life** step, click **Got a reply from them? Upload it** and choose
   `demo/samples/reply_kavach_life.png`.
-- You'll see: **Reply from Kavach Life…** – **"They confirmed it exists. It is now in your confirmed list."**, **Please
+- You'll see: **Reply from Kavach Life…**: **"They confirmed it exists. It is now in your confirmed list."**, **Please
   respond by** a date (worked out in code), **What they ask for (0 of 5 ready)** with ticks, and **Your covering letter
   is ready**. Tick one requirement.
 - **After:** click **Letters** again. The same Kavach letter is now a **claim letter**: "Intimation of the death… policy
@@ -206,7 +206,7 @@ Click **See your plan**. Show:
 
 ---
 
-## Part B — the 3-minute video
+## Part B: the 3-minute video
 
 Record Part A in pieces (pre-run steps 3–7 so you are not filming waits), then edit to this. Speak over it, or add
 captions.
@@ -214,21 +214,21 @@ captions.
 | Time | Show | Say (about 25 words per 10 seconds) |
 |---|---|---|
 | 0:00–0:15 | Start screen, then the form being filled | "When someone dies in India, families often don't know what accounts or policies existed. Close to ₹1 lakh crore sits unclaimed. Virasat helps them find it." |
-| 0:15–0:40 | Step 3 sped up: 11 files uploading, **Read …** appearing; the **someone else's name** flag; **Remove**; the **locked PDF** opened with the password | "A family uploads whatever they have – photos, passbooks, SMS. Gemini reads them live. A paper in someone else's name is flagged; a locked statement is opened, the password never stored." |
-| 0:40–1:00 | Step 6: recording the Hindi memory on **Documents**; **What we heard**, PIN shown as **[removed]** | "His wife can simply speak, in Hindi. What she remembers is matched against the statements and handed to the agent as a hint – and the PIN she mentioned is never stored." |
-| 1:00–1:15 | Step 7: **Find what might be missing**, the live activity panel (sped up) | "Then a Gemini agent, built on Google's Agent Development Kit, works through the case – every step logged, everything it proposes checked by code." |
+| 0:15–0:40 | Step 3 sped up: 11 files uploading, **Read …** appearing; the **someone else's name** flag; **Remove**; the **locked PDF** opened with the password | "A family uploads whatever they have: photos, passbooks, SMS. Gemini reads them live. A paper in someone else's name is flagged; a locked statement is opened, the password never stored." |
+| 0:40–1:00 | Step 6: recording the Hindi memory on **Documents**; **What we heard**, PIN shown as **[removed]** | "His wife can simply speak, in Hindi. What she remembers is matched against the statements and handed to the agent as a hint, and the PIN she mentioned is never stored." |
+| 1:00–1:15 | Step 7: **Find what might be missing**, the live activity panel (sped up) | "Then a Gemini agent, built on Google's Agent Development Kit, works through the case: every step logged, everything it proposes checked by code." |
 | 1:15–1:45 | Step 8: the **red after-death alert**, the total and bar, the **marigold "probably" cards** with their ledger rows (Kavach: "Your family remembers it too.") | "Money is still leaving his account after he died, including a twenty-thousand rupee ATM withdrawal. And things nobody had papers for: a life policy and a demat account, found in the transactions, with her memory as a hint. Never presented as fact." |
-| 1:45–2:10 | Step 11: the plan (step 1 Sahyadri with ₹61,600, the scam notice), the **name check** | "The plan is ordered by urgency and warns about name mismatches – S N Rao on one paper, Suresh Narayan Rao on another – before a bank delays the claim." |
+| 1:45–2:10 | Step 11: the plan (step 1 Sahyadri with ₹61,600, the scam notice), the **name check** | "The plan is ordered by urgency and warns about name mismatches (S N Rao on one paper, Suresh Narayan Rao on another) before a bank delays the claim." |
 | 2:10–2:35 | Steps 12–13: the **Kavach reply** confirming the policy and the checklist; the enquiry letter **rewritten as a claim**; the **scam message** warning | "When the insurer replies, the policy is confirmed and the enquiry becomes a claim letter with their policy number and nominee. When a fraudster asks for a release fee, Virasat refuses to act." |
 | 2:35–2:50 | Step 14–15: a letter, **Download PDF**, switch to **हिन्दी** and the Hindi PDF | "Letters are drafted, editable, and in English or Hindi." |
 | 2:50–3:00 | Step 17: the incognito "can't be opened here", then the logo | "Each case is locked to the family's device. Virasat: find and claim what your loved one left behind." |
 
-Tips: zoom in (or crop) on the alert, the ledger rows, the **[removed]** PIN and the scam warning – those are the
+Tips: zoom in (or crop) on the alert, the ledger rows, the **[removed]** PIN and the scam warning: those are the
 moments judges remember. Keep the cursor still while talking.
 
 ---
 
-## Part C — feature coverage
+## Part C: feature coverage
 
 | Feature | Where it shows |
 |---|---|

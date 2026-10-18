@@ -585,7 +585,7 @@ export function orgName(name) {
 }
 
 export function inr(value) {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined) return ""; // callers show nothing for an unknown amount
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
 }
 
