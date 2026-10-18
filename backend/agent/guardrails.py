@@ -99,11 +99,17 @@ def redact_secrets(text: str) -> str:
 
 # What a genuine bank or insurer never asks for in a claim. Checked in code on what Gemini read from a reply,
 # on top of the red flags Gemini itself reports.
+# Genuine letters mention fees and OTPs too ("duplicate passbook charges", "never share your OTP", "Aadhaar OTP
+# e-KYC"), so a signal needs the scam's shape: a fee to RELEASE the money, or a secret being ASKED FOR.
+_FEE_WORDS = r"(?:fee|charges?|amount|payment)"
 SCAM_SIGNALS = {
-    "fee": re.compile(_words(r"processing\s+(?:fee|charges?)", r"release\s+(?:fee|charges?)", r"clearance\s+(?:fee|charges?)",
-                             r"pay\s+(?:a\s+)?(?:fee|charges?)", r"advance\s+(?:fee|payment)", r"(?:gst|tax)\s+to\s+release",
-                             "शुल्क", "फ़ीस", "फीस"), re.I),
-    "secret": SECRET_TERMS,
+    "fee": re.compile("|".join([
+        _words(r"processing\s+(?:fee|charges?)", r"release\s+(?:fee|charges?)", r"clearance\s+(?:fee|charges?)",
+               r"advance\s+(?:fee|payment)", r"(?:gst|tax)\s+to\s+release",
+               _FEE_WORDS + r"\b[^.\n]{0,60}?\bto\s+(?:release|process|clear|unlock)"),
+        r"(?:शुल्क|फ़ीस|फीस)[^।\n]{0,40}जारी", r"जारी[^।\n]{0,40}(?:शुल्क|फ़ीस|फीस)",
+    ]), re.I),
+    "secret": SECRET_TERMS,  # only counts in a sentence that asks for it (see scam_signals)
     "remote_access": re.compile(_words(r"anydesk", r"teamviewer", r"quick\s*support", r"screen\s*shar\w*",
                                        r"remote\s+access", r"install\s+(?:the\s+)?app"), re.I),
     "personal_payment": re.compile(_words(r"upi\s+id", r"@ok\w+", r"@ybl", r"@paytm", r"@upi", r"pay\s+to\s+this",
@@ -118,7 +124,20 @@ SCAM_LABEL = {
 }
 
 
+# A warning, not a request: "never share your OTP", "do not give your PIN", "no password is needed", "OTP मत बताएँ".
+_NEGATION = re.compile(_words(r"never", r"not", r"don'?t", r"no", r"without") + "|" + _stems("नहीं", "मत", "कभी"), re.I)
+# Judged clause by clause, so "share the OTP now, no need to visit" is still caught by its first clause.
+_CLAUSE_BREAK = re.compile(r"[.!?।\n,;:]|\b(?:and|but|then)\b|(?:और|लेकिन|फिर)", re.I)
+
+
+def _asks_for_secret(text: str) -> bool:
+    """A clause that mentions a PIN, OTP or password, asks for it, and isn't a warning against sharing it."""
+    return any(SECRET_TERMS.search(c) and (ASK_TERMS.search(c) or USE_TERMS.search(c)) and not _NEGATION.search(c)
+               for c in _CLAUSE_BREAK.split(text))
+
+
 def scam_signals(*texts: str | None) -> list[str]:
     """Keys of SCAM_SIGNALS found in any of the texts."""
     joined = "\n".join(t for t in texts if t)
-    return [key for key, pattern in SCAM_SIGNALS.items() if pattern.search(joined)]
+    return [key for key, pattern in SCAM_SIGNALS.items()
+            if (_asks_for_secret(joined) if key == "secret" else pattern.search(joined))]

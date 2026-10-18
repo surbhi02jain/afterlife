@@ -137,3 +137,17 @@ def test_a_red_flag_only_gemini_spotted_still_blocks_changes():
     assert reply.red_flags == ["asks for something a genuine bank or insurer would not"]
     assert reply.red_flag_quotes == ["Call our agent on WhatsApp to speed up the claim"]
     assert reply.confirmed_item_id is None and task.board_status == "todo"
+
+
+def test_genuine_letter_with_the_usual_otp_warning_and_charges_still_confirms():
+    # Real bank letters say "never share your OTP", ask for Aadhaar OTP e-KYC, and charge for duplicates.
+    case = planned_case()
+    task = task_for(case, "kavach")
+    reading = parse_reply(recorded_raw("replies", "reply_kavach_life"))
+    reading.summary += " They remind you never to share your OTP or PIN with anyone."
+    reading.requirements[0].detail = "Complete Aadhaar OTP-based e-KYC of the nominee"
+    reading.requirements[1].detail = "Pay charges of Rs 100 for a duplicate policy bond"
+
+    reply = apply_reply(case, task.id, reading, "kavach.png", "t", TODAY)
+
+    assert reply.red_flags == [] and reply.confirmed_item_id is not None

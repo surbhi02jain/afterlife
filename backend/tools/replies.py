@@ -89,9 +89,9 @@ def respond_by(letter_date: str | None, days: int | None, received: date) -> str
 def red_flags(reading: ReplyReading, lang: str) -> list[str]:
     """Plain-language warnings: what code finds in the letter as read (and in Gemini's own flags). If Gemini flagged
     something code has no rule for, it still counts."""
+    # Not the summary: it is Gemini's note for the family and repeats the bank's own "never share your OTP" warnings.
     found = [pick(lang, *SCAM_LABEL[key]) for key in scam_signals(
-        reading.summary, *(r.document for r in reading.requirements), *(r.detail for r in reading.requirements),
-        *reading.red_flags)]
+        *(r.document for r in reading.requirements), *(r.detail for r in reading.requirements), *reading.red_flags)]
     if not found and any(f.strip() for f in reading.red_flags):
         found = [pick(lang, "asks for something a genuine bank or insurer would not",
                       "कुछ ऐसा माँगता है जो असली बैंक या बीमा कंपनी नहीं माँगती")]

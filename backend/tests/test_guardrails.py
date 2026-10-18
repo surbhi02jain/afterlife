@@ -72,6 +72,34 @@ def test_secrets_are_redacted(text, kept, gone):
     assert kept in out and (gone is None or gone not in out)
 
 
+@pytest.mark.parametrize("text", [
+    "They remind you never to share your OTP or PIN with anyone.",
+    "Complete Aadhaar OTP-based e-KYC of the nominee",
+    "Pay charges of Rs 100 for a duplicate passbook",
+    "Nominee to visit branch; no password or PIN is needed",
+    "Do not share your OTP, PIN or password with anyone claiming to be from the bank",
+    "बैंक कभी OTP नहीं माँगता",
+    "डुप्लिकेट पासबुक के लिए 100 रुपये शुल्क",
+])
+def test_genuine_letter_wording_is_not_a_scam_signal(text):
+    from agent.guardrails import scam_signals
+
+    assert scam_signals(text) == []
+
+
+@pytest.mark.parametrize("text", [
+    "Share the OTP now, no need to visit the branch",
+    "Pay a fee of Rs 2,950 to release your claim",
+    "Tell us the PIN to complete verification",
+    "दावा जारी करने के लिए 2950 रुपये शुल्क जमा करें",
+    "मुझे OTP बताइए",
+])
+def test_scam_wording_is_caught(text):
+    from agent.guardrails import scam_signals
+
+    assert scam_signals(text) != []
+
+
 def test_scam_signals():
     from agent.guardrails import scam_signals
 
