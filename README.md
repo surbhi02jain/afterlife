@@ -113,6 +113,7 @@ For UI development, run `(cd frontend && npm run dev)` as well (port 5173, proxi
 | `EXTRACTION_MODEL` | `gemini-3.8-flash` | Reads document images |
 | `REASONING_MODEL` | `gemini-4-argon` | Inference + agent. **Not on the free tier**; `.env.example` uses `gemini-3.6-flash` |
 | `GEMINI_RPM` | `0` | Client-side requests/minute per model. Use `5` on the free tier |
+| `GEMINI_DAILY_LIMIT` | `1500` | Gemini calls per day per instance (about 150 analyses); then a polite "try tomorrow". `0` = no limit. Also set a quota on the key in the Cloud Console |
 | `STORAGE_BACKEND` | `local` | `local` = JSON files on disk; `gcp` = Firestore + Cloud Storage |
 | `LOCAL_DATA_DIR` | `./data` | For `local` storage |
 | `GCP_PROJECT`, `GCS_BUCKET`, `FIRESTORE_DATABASE` | — | For `gcp` storage |

@@ -12,6 +12,7 @@ import re
 import threading
 import time
 from collections import defaultdict, deque
+from datetime import date
 from functools import lru_cache
 
 import httpx
@@ -32,6 +33,37 @@ class GeminiNotConfigured(RuntimeError):
 
 class GeminiUnreachable(RuntimeError):
     """The request never got a reply (timeout, connection reset). Message is safe to show the user."""
+
+
+class GeminiDailyLimitReached(GeminiUnreachable):
+    """This instance used today's Gemini allowance. A subclass so every caller already shows it to the family."""
+
+
+class DailyBudget:
+    """Gemini calls per calendar day; 0 = no limit. A public URL on a billed key must not have an open-ended bill.
+    shortcut: counted per instance in memory, so the real ceiling is the limit x max instances (3) and resets on
+    restart; for one shared ceiling, also set a daily quota on the API key in the Cloud Console."""
+
+    def __init__(self, limit: int):
+        self.limit, self._day, self._used = limit, None, 0
+        self._lock = threading.Lock()
+
+    def spend(self) -> None:
+        if self.limit <= 0:
+            return
+        with self._lock:
+            today = date.today()
+            if self._day != today:
+                self._day, self._used = today, 0
+            if self._used >= self.limit:
+                raise GeminiDailyLimitReached("Afterlife has reached today's limit for reading documents and looking "
+                                              "for what's missing. Please try again tomorrow; everything so far is saved.")
+            self._used += 1
+
+
+@lru_cache(maxsize=1)
+def get_daily_budget() -> DailyBudget:
+    return DailyBudget(get_settings().gemini_daily_limit)
 
 
 @lru_cache(maxsize=1)
@@ -95,6 +127,7 @@ def retry_delay_seconds(exc: errors.APIError) -> float | None:
 def generate(client, *, model: str, contents, config: types.GenerateContentConfig):
     limiter = get_rate_limiter()
     for attempt in range(MAX_429_RETRIES + 1):
+        get_daily_budget().spend()
         limiter.acquire(model)
         try:
             return client.models.generate_content(model=model, contents=contents, config=config)

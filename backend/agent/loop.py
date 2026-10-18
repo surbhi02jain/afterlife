@@ -165,6 +165,7 @@ def run_agent(storage: Storage, case_id: str, message: str = ANALYSE_MESSAGE, *,
 
     async def before_model(callback_context, llm_request):
         result.steps += 1
+        gemini.get_daily_budget().spend()  # ADK makes this call itself, so the agent counts here
         await asyncio.to_thread(gemini.get_rate_limiter().acquire, llm_request.model or "agent")  # via the module, so tests can swap it
 
     def unknown_tool(tool, args, tool_context):

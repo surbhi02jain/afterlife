@@ -22,6 +22,7 @@ EXTRACTION_MODEL="${EXTRACTION_MODEL:-gemini-3.8-flash}"
 # (one instance, because the throttle counts per instance while the free quota is per key)
 REASONING_MODEL="${REASONING_MODEL:-gemini-4-argon}"   # free-tier quota is 0: needs billing
 GEMINI_RPM="${GEMINI_RPM:-0}"                          # 0 = no client-side throttle (paid tier)
+GEMINI_DAILY_LIMIT="${GEMINI_DAILY_LIMIT:-1500}"       # Gemini calls/day per instance: a ceiling on the bill
 MIN_INSTANCES="${MIN_INSTANCES:-1}"                    # 1 avoids a cold start during the live demo
 MAX_INSTANCES="${MAX_INSTANCES:-3}"
 
@@ -96,7 +97,7 @@ gcloud run deploy "${SERVICE}" \
   --service-account "${SA_EMAIL}" \
   --allow-unauthenticated \
   --set-secrets "GEMINI_API_KEY=${SECRET_NAME}:latest" \
-  --set-env-vars "^|^STORAGE_BACKEND=gcp|GCP_PROJECT=${PROJECT_ID}|GCS_BUCKET=${BUCKET}|FIRESTORE_DATABASE=${FIRESTORE_DATABASE}|EXTRACTION_MODEL=${EXTRACTION_MODEL}|REASONING_MODEL=${REASONING_MODEL}|GEMINI_RPM=${GEMINI_RPM}" \
+  --set-env-vars "^|^STORAGE_BACKEND=gcp|GCP_PROJECT=${PROJECT_ID}|GCS_BUCKET=${BUCKET}|FIRESTORE_DATABASE=${FIRESTORE_DATABASE}|EXTRACTION_MODEL=${EXTRACTION_MODEL}|REASONING_MODEL=${REASONING_MODEL}|GEMINI_RPM=${GEMINI_RPM}|GEMINI_DAILY_LIMIT=${GEMINI_DAILY_LIMIT}" \
   --memory 1Gi --cpu 1 --timeout 300 --concurrency 20 \
   --min-instances "${MIN_INSTANCES}" --max-instances "${MAX_INSTANCES}" \
   --quiet

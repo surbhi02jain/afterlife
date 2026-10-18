@@ -47,6 +47,7 @@ def no_real_gemini(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "")
     gemini.get_client.cache_clear()
     monkeypatch.setattr(gemini, "get_rate_limiter", lambda: gemini.RateLimiter(0))
+    monkeypatch.setattr(gemini, "get_daily_budget", lambda: gemini.DailyBudget(0))
     yield
     gemini.get_client.cache_clear()
 
