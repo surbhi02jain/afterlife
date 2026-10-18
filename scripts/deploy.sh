@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy Afterlife to Google Cloud Run. Safe to re-run: every step checks before creating.
+# Deploy Virasat to Google Cloud Run. Safe to re-run: every step checks before creating.
 #
 #   gcloud auth login && gcloud config set project YOUR_PROJECT_ID
 #   GEMINI_API_KEY=... ./scripts/deploy.sh          # first deploy (stores the key in Secret Manager)
@@ -11,11 +11,11 @@ set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
 REGION="${REGION:-asia-south1}"                      # Mumbai
-SERVICE="${SERVICE:-afterlife}"
-BUCKET="${BUCKET:-${PROJECT_ID}-afterlife-uploads}"
+SERVICE="${SERVICE:-virasat}"
+BUCKET="${BUCKET:-${PROJECT_ID}-virasat-uploads}"
 FIRESTORE_DATABASE="(default)"
 SECRET_NAME="GEMINI_API_KEY"
-RUNTIME_SA="afterlife-run"
+RUNTIME_SA="virasat-run"
 EXTRACTION_MODEL="${EXTRACTION_MODEL:-gemini-3.8-flash}"
 # Defaults assume a billed Gemini key (the public demo). Free tier, for testing only:
 #   REASONING_MODEL=gemini-3.6-flash GEMINI_RPM=5 MAX_INSTANCES=1 ./scripts/deploy.sh
@@ -79,7 +79,7 @@ fi
 
 step "Runtime service account ${SA_EMAIL} (least privilege)"
 if ! gcloud iam service-accounts describe "${SA_EMAIL}" --project "${PROJECT_ID}" >/dev/null 2>&1; then
-  gcloud iam service-accounts create "${RUNTIME_SA}" --display-name="Afterlife Cloud Run" --project "${PROJECT_ID}"
+  gcloud iam service-accounts create "${RUNTIME_SA}" --display-name="Virasat Cloud Run" --project "${PROJECT_ID}"
 fi
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" --member="serviceAccount:${SA_EMAIL}" \
   --role=roles/datastore.user --condition=None >/dev/null

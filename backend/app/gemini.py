@@ -56,7 +56,7 @@ class DailyBudget:
             if self._day != today:
                 self._day, self._used = today, 0
             if self._used >= self.limit:
-                raise GeminiDailyLimitReached("Afterlife has reached today's limit for reading documents and looking "
+                raise GeminiDailyLimitReached("Virasat has reached today's limit for reading documents and looking "
                                               "for what's missing. Please try again tomorrow; everything so far is saved.")
             self._used += 1
 

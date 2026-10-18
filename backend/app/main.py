@@ -1,4 +1,4 @@
-"""Afterlife API. Also serves the built frontend (frontend/dist) so the app ships as one container."""
+"""Virasat API. Also serves the built frontend (frontend/dist) so the app ships as one container."""
 
 import hashlib
 import hmac
@@ -21,7 +21,7 @@ from tools.inference import InferenceError
 from tools.letters import letter_pdf
 from tools.questions import QuestionError
 
-app = FastAPI(title="Afterlife", version="0.3.0")
+app = FastAPI(title="Virasat", version="0.3.0")
 
 
 def _key_cookie(case_id: str) -> str:
@@ -256,7 +256,7 @@ def _agent_response(storage: Storage, case_id: str, message: str):
 
 @app.post("/api/cases/{case_id}/analyse")
 def analyse(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
-    """Run the Afterlife agent over the whole case: extract, infer, look up procedures, ask, plan, draft letters."""
+    """Run the Virasat agent over the whole case: extract, infer, look up procedures, ask, plan, draft letters."""
     return _agent_response(storage, case.id, ANALYSE_MESSAGE)
 
 
@@ -335,7 +335,7 @@ def download_letter(letter_id: str, case: Case = Depends(load_case)):
     letter = case.get_letter(letter_id)
     if letter is None:
         raise HTTPException(404, "Letter not found")
-    filename = "afterlife-letter-" + "".join(ch for ch in letter.institution.lower() if ch.isalnum())[:30] + ".pdf"
+    filename = "virasat-letter-" + "".join(ch for ch in letter.institution.lower() if ch.isalnum())[:30] + ".pdf"
     return Response(letter_pdf(letter), media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 

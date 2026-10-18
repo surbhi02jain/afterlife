@@ -232,7 +232,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.title = lang === "hi" ? "आफ्टरलाइफ़" : "Afterlife";
+    document.title = lang === "hi" ? "विरासत" : "Virasat";
   }, [lang]);
 
   if (route.name === "case") return <CaseShell id={route.id} screen={route.screen} lang={lang} setLang={setLang} />;

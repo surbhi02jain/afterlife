@@ -1,8 +1,8 @@
-# Afterlife — bereavement financial navigator (hackathon project)
+# Virasat — find and claim what your loved one left behind (hackathon project)
 
-Afterlife helps a grieving Indian family find and claim the deceased's financial assets.
+Virasat helps a grieving Indian family find and claim the deceased's financial assets.
 The family uploads whatever documents they have (statement photos, SMS/UPI screenshots,
-policy receipts). Afterlife (1) extracts structured data, (2) infers assets that probably exist
+policy receipts). Virasat (1) extracts structured data, (2) infers assets that probably exist
 but weren't uploaded, (3) builds a per-institution action plan, and (4) drafts claim letters.
 
 Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo path must be rock solid.
@@ -51,7 +51,7 @@ Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo pa
 backend/
   app/        FastAPI app (main.py), config.py, models.py (all Pydantic models), gemini.py (client)
   tools/      model-backed + deterministic tools (extraction.py, ...)
-  agent/      Afterlife agent on Google ADK (Agent Development Kit), tools, guardrails
+  agent/      Virasat agent on Google ADK (Agent Development Kit), tools, guardrails
   kb/         procedures.json knowledge base (Phase 3)
   storage/    base.py interface, local.py, gcp.py
   tests/      pytest (no network)

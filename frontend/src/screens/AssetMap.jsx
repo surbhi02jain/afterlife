@@ -223,7 +223,7 @@ export default function AssetMap({ c, lang, refresh, agentReply }) {
 
       {agentReply && (
         <Card className="mb-6 border-brand/30 bg-brand-soft/50">
-          <p className="font-semibold text-brand-dark">{t(lang, "fromAfterlife")}</p>
+          <p className="font-semibold text-brand-dark">{t(lang, "fromVirasat")}</p>
           <p className="mt-2 whitespace-pre-line">{agentReply}</p>
         </Card>
       )}

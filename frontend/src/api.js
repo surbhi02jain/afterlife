@@ -1,4 +1,4 @@
-// Thin wrapper over the Afterlife API. Errors carry the server's plain-language `detail`.
+// Thin wrapper over the Virasat API. Errors carry the server's plain-language `detail`.
 
 async function request(method, path, body) {
   const options = { method, headers: {} };
@@ -12,7 +12,7 @@ async function request(method, path, body) {
   try {
     response = await fetch(path, options);
   } catch {
-    throw new Error("We couldn't reach Afterlife. Please check your internet connection.");
+    throw new Error("We couldn't reach Virasat. Please check your internet connection.");
   }
   if (response.status === 204) return null;
   const data = await response.json().catch(() => ({}));
