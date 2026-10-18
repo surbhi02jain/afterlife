@@ -43,18 +43,6 @@ export default function Start({ lang }) {
     }
   }
 
-  async function demo() {
-    setBusy("demo");
-    setError(null);
-    try {
-      const c = await api.demo();
-      go(`/case/${c.id}/upload`);
-    } catch (err) {
-      setError(err);
-      setBusy(null);
-    }
-  }
-
   return (
     <>
       <StartBackdrop className="pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-[48vh] w-full" />
@@ -77,12 +65,6 @@ export default function Start({ lang }) {
         )}
         <h1 className="font-serif text-[2rem] leading-tight text-balance sm:text-[2.25rem]">{t(lang, "startTitle")}</h1>
         <p className="mt-4 text-ink-soft">{t(lang, "startBody")}</p>
-        <Card className="mt-6 bg-brand-soft/60">
-          <p className="text-ink-soft">{t(lang, "demoHint")}</p>
-          <Button variant="secondary" className="mt-3 w-full sm:w-auto" busy={busy === "demo"} onClick={demo}>
-            {t(lang, "tryDemo")}
-          </Button>
-        </Card>
         {previous && (
           <a href={`#/case/${previous}/upload`} className="mt-4 inline-block font-semibold text-brand underline underline-offset-4">
             {t(lang, "continueCase")}

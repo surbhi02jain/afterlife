@@ -29,7 +29,6 @@ const c = (id) => `/api/cases/${id}`;
 
 export const api = {
   createCase: (body) => request("POST", "/api/cases", body),
-  demo: () => request("POST", "/api/demo"),
   getCase: (id) => request("GET", c(id)),
   patchCase: (id, body) => request("PATCH", c(id), body),
   deleteCase: (id) => request("DELETE", c(id)),

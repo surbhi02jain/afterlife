@@ -26,14 +26,16 @@ Everything works in **English and Hindi**, in warm, simple language, with a one-
 
 Built for the **Google Cloud AI Builder Cup**.
 
-**Live demo:** _add the Cloud Run URL here after deploying_ — press **"Try with a demo family"** on the start screen.
+**Live demo:** _add the Cloud Run URL here after deploying_.
 
 ---
 
 ## The 3-minute demo
 
 A fully synthetic family is built in: the late Mr. Suresh Narayan Rao, with 9 watermarked documents from
-fictional banks and insurers ([demo/README.md](demo/README.md) lists everything planted).
+fictional banks and insurers ([demo/README.md](demo/README.md) lists everything planted). The app no longer offers it
+on the start screen; the scripts and tests use it (`POST /api/demo`, `scripts/run_demo_case.py`), and its documents in
+`demo/docs/` can be uploaded like any others (they are then read live by Gemini).
 
 - **Confirmed from documents:** two savings accounts, an FD, a life policy, a mutual fund folio, EPF and a home loan.
   Overlapping documents (two statement pages, a UPI screenshot of the same payments) are de-duplicated.
