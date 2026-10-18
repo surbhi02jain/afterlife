@@ -77,6 +77,27 @@ def test_family_can_see_the_file_they_uploaded_but_no_one_else_can(api, storage)
     assert api.get(url).status_code == 404
 
 
+def test_thumbnail_is_a_small_jpeg_and_files_without_one_say_so(api, storage):
+    from io import BytesIO
+
+    from PIL import Image
+
+    case = make_case(api)
+    photo = BytesIO()
+    Image.new("RGB", (3000, 4000), "white").save(photo, "PNG")  # a phone-sized page
+    doc = upload(api, case["id"], data=photo.getvalue()).json()[0]
+    thumb = api.get(f"/api/cases/{case['id']}/documents/{doc['id']}/file?thumb=1")
+    assert thumb.status_code == 200 and thumb.headers["content-type"] == "image/jpeg"
+    assert max(Image.open(BytesIO(thumb.content)).size) <= 320
+
+    pdf = upload(api, case["id"], name="scan.pdf", data=b"%PDF-1.4", content_type="application/pdf").json()[0]
+    assert api.get(f"/api/cases/{case['id']}/documents/{pdf['id']}/file?thumb=1").status_code == 415
+
+    storage.delete_file(storage.get_case(case["id"]).documents[0].storage_key)  # e.g. the 24-hour rule
+    gone = api.get(f"/api/cases/{case['id']}/documents/{doc['id']}/file")
+    assert gone.status_code == 410 and gone.headers["content-type"].startswith("text/plain")
+
+
 def test_upload_guesses_type_from_extension(api, storage):
     case = make_case(api)
     response = upload(api, case["id"], name="scan.pdf", data=b"%PDF-1.4", content_type="application/octet-stream")

@@ -248,7 +248,8 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
         <ul className="mt-5 divide-y divide-sand-200 rounded-2xl border border-sand-200 bg-white" aria-live="polite">
           {c.documents.map((d) => (
             <li key={d.id} className="flex gap-4 px-5 py-4">
-              <FilePreview lang={lang} url={api.documentFileUrl(c.id, d.id)} name={d.filename} type={d.content_type} />
+              <FilePreview lang={lang} url={api.documentFileUrl(c.id, d.id)} thumb={`${api.documentFileUrl(c.id, d.id)}?thumb=1`}
+                           name={d.filename} type={d.content_type} />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="break-all font-semibold">{d.filename}</span>
                 <span className="flex flex-wrap items-center gap-3">

@@ -12,3 +12,4 @@ fpdf2==2.8.9
 pypdf==6.21.1  # unlock password-protected statement PDFs
 cryptography==50.0.2  # pypdf needs it for AES-encrypted PDFs
 uharfbuzz==0.56.3
+pillow==12.3.0  # document thumbnails (fpdf2 needs it too)

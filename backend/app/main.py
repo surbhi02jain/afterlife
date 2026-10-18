@@ -2,11 +2,13 @@
 
 import hashlib
 import hmac
+import io
 import mimetypes
 import secrets
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
+from PIL import Image, ImageOps
 from pydantic import BaseModel, Field
 
 import kb
@@ -205,18 +207,39 @@ class UnlockBody(BaseModel):
 
 
 @app.get("/api/cases/{case_id}/documents/{document_id}/file")
-def document_file(document_id: str, case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
-    """The uploaded file itself, so the family can see what they sent. Behind the same private case key."""
+def document_file(document_id: str, thumb: bool = False, case: Case = Depends(load_case),
+                  storage: Storage = Depends(get_storage)):
+    """The uploaded file itself, so the family can see what they sent. Behind the same private case key.
+    ?thumb=1 gives a small JPEG of a photo, so the document list doesn't download every full-size photo."""
     doc = case.get_document(document_id)
     if doc is None:
         raise HTTPException(404, "Document not found")
     try:
         data = storage.read_file(doc.storage_key)
-    except FileNotFoundError:
-        raise HTTPException(410, "This file is no longer stored (uploads are deleted after 24 hours).")
+    except FileNotFoundError:  # opened in a tab of its own, so a sentence, not JSON
+        return Response("This file is no longer stored (uploads are deleted after 24 hours).", status_code=410,
+                        media_type="text/plain; charset=utf-8")
+    media_type = doc.content_type
+    if thumb:
+        try:
+            data, media_type = _thumbnail(data, doc.content_type), "image/jpeg"
+        except (ValueError, OSError, Image.DecompressionBombError):  # PDF, HEIC or a broken photo: the app shows its type
+            return Response("No preview for this file.", status_code=415, media_type="text/plain; charset=utf-8")
     # content_type was checked against SUPPORTED_MIME_TYPES at upload; no-store keeps it out of a shared computer's cache
-    return Response(data, media_type=doc.content_type, headers={
+    return Response(data, media_type=media_type, headers={
         "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Content-Disposition": "inline"})
+
+
+def _thumbnail(data: bytes, content_type: str) -> bytes:
+    if content_type not in {"image/png", "image/jpeg", "image/webp"}:
+        raise ValueError(content_type)
+    img = Image.open(io.BytesIO(data))
+    img.draft("RGB", (480, 640))  # JPEGs decode at a fraction of full size: much faster for phone photos
+    img = ImageOps.exif_transpose(img).convert("RGB")  # phone photos stand the right way up
+    img.thumbnail((240, 320))
+    out = io.BytesIO()
+    img.save(out, "JPEG", quality=80)
+    return out.getvalue()
 
 
 @app.post("/api/cases/{case_id}/documents/{document_id}/unlock")
