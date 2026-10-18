@@ -153,13 +153,20 @@ Click **See your plan**. Show:
 - *Say:* "The plan is ordered by urgency, written in plain steps, and it warns them about name mismatches before a
   bank does."
 
-### 12. A genuine reply from the insurer
-- On the **Kavach Life** step, click **Got a reply from them? Upload it** and choose
+### 12. A genuine reply from the insurer, and the letter rewritten from it
+- **Before:** click **Letters** and open the **Kavach Life** letter. It is an **enquiry**: "Request to confirm any life
+  insurance policy…", quoting the three premium debits and asking for the policy number and nominee. (If there is no
+  Kavach letter, use **Make a letter for…** → Kavach Life.) Don't edit it: edited letters are never rewritten.
+- Back on **Plan**, on the **Kavach Life** step, click **Got a reply from them? Upload it** and choose
   `demo/samples/reply_kavach_life.png`.
 - You'll see: **Reply from Kavach Life…** – **"They confirmed it exists. It is now in your confirmed list."**, **Please
   respond by** a date (worked out in code), **What they ask for (0 of 5 ready)** with ticks, and **Your covering letter
   is ready**. Tick one requirement.
-- *Say:* "The hidden policy we found from three debits is now confirmed in writing by the insurer."
+- **After:** click **Letters** again. The same Kavach letter is now a **claim letter**: "Intimation of the death… policy
+  no. XXXX0894", nominee **Kamala S. Rao**, and the documents to enclose, all taken from their reply. Next to it is the
+  new **Reply to KAVACH LIFE INSURANCE CO. LTD.** quoting their reference (masked) and listing the 5 things they asked for.
+- *Say:* "The hidden policy we found from three debits is now confirmed in writing by the insurer. The enquiry we sent
+  has become a claim with their policy number and nominee, and the reply lists exactly what they asked for."
 
 ### 13. A scam message
 - On the **Sahyadri National Bank** step, upload `demo/samples/message_fake_bank.png`.
@@ -171,8 +178,7 @@ Click **See your plan**. Show:
 ### 14. Letters
 - Click **Letters** (or **See letters**). Show:
   - a **Claim letter** (full account number from the family's own document, the nominee, the documents to enclose),
-  - the **Enquiry** letter for a probable item ("please confirm whether any policy exists…"),
-  - the **covering letter** for Kavach Life listing what they asked for,
+  - the **Enquiry** letter for a probable item, such as the PPF from the memory ("please confirm whether any … exists"),
   - the line asking the institution to **verify the sender against its nominee records**,
   - **Make a letter for…** → choose another item to draft one.
 - Edit a word, **Save changes**, then **Download PDF** and open it.
@@ -208,7 +214,7 @@ captions.
 | 0:55–1:25 | Step 7: the **red after-death alert**, the total and bar, the two **marigold "probably" cards** with their ledger rows | "Money is still leaving his account after he died, including a twenty-thousand rupee ATM withdrawal. And two things nobody had papers for: a life policy and a demat account, found from the transactions themselves. Never presented as fact." |
 | 1:25–1:45 | Step 9: recording the Hindi memory; **What we heard**, PIN shown as **[removed]** | "His wife can simply speak, in Hindi. What she remembers is matched against the statements – and the PIN she mentioned is never stored." |
 | 1:45–2:10 | Step 11: the plan (step 1 Sahyadri with ₹61,600, the scam notice), the **name check** | "The plan is ordered by urgency and warns about name mismatches – S N Rao on one paper, Suresh Narayan Rao on another – before a bank delays the claim." |
-| 2:10–2:35 | Steps 12–13: the **Kavach reply** confirming the policy and the checklist; the **scam message** warning | "When the insurer replies, the hidden policy is confirmed and their checklist appears. When a fraudster asks for a release fee, Virasat refuses to act." |
+| 2:10–2:35 | Steps 12–13: the **Kavach reply** confirming the policy and the checklist; the enquiry letter **rewritten as a claim**; the **scam message** warning | "When the insurer replies, the policy is confirmed and the enquiry becomes a claim letter with their policy number and nominee. When a fraudster asks for a release fee, Virasat refuses to act." |
 | 2:35–2:50 | Step 14–15: a letter, **Download PDF**, switch to **हिन्दी** and the Hindi PDF | "Letters are drafted, editable, and in English or Hindi." |
 | 2:50–3:00 | Step 17: the incognito "can't be opened here", then the logo | "Each case is locked to the family's device. Virasat: find and claim what your loved one left behind." |
 
@@ -236,6 +242,7 @@ moments judges remember. Keep the cursor still while talking.
 | Urgency-ordered plan, knowledge-base steps with sources, progress bar, scam notice | Step 11 |
 | Name check across papers (Gemini + verified in code) with guidance | Step 11 |
 | Institution reply: confirmation, requirements checklist, respond-by date, covering letter | Step 12 |
+| Letter rewritten from the institution's reply (enquiry → claim with their policy no. and nominee; edited letters kept) | Step 12 |
 | Scam message detection: nothing changes | Step 13 |
 | Claim, enquiry and covering letters; verify-the-sender line; edit; PDF | Step 14 |
 | Hindi throughout, Hindi PDF, read aloud | Step 15 |
