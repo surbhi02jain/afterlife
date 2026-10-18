@@ -149,6 +149,48 @@ function AssetMix({ lang, assets, totals, probableCount }) {
   );
 }
 
+// Money that left an account after the death: the one thing on this page that needs action today.
+function AfterDeathAlert({ lang, name, moved }) {
+  if (!moved.length) return null;
+  return (
+    <section role="alert" className="mb-10 rounded-3xl border border-rose-ink/30 bg-rose-soft p-5 text-rose-ink sm:p-6">
+      <h2 className="font-serif text-xl leading-snug">{t(lang, "afterDeathTitle", { name })}</h2>
+      <p className="mt-1">{t(lang, "afterDeathBody")}</p>
+      <p className="mt-3 font-semibold">
+        {t(lang, "afterDeathTotal", { n: moved.length, total: inr(moved.reduce((s, f) => s + f.amount, 0)) })}
+      </p>
+      <ol className="mt-3 border-t border-rose-ink/20">
+        {moved.slice(0, 4).map((f, n) => (
+          <li key={n} className="flex flex-wrap justify-between gap-x-4 border-b border-rose-ink/20 py-2.5">
+            <span className="min-w-0">
+              <span className="tabular-nums">{niceDate(f.date, lang)}</span>
+              <span className="block break-words text-sm">{f.description}</span>
+              <span className="block text-sm opacity-80" data-no-read>{f.document_name}</span>
+            </span>
+            <span className="font-semibold tabular-nums">− {inr(f.amount)}</span>
+          </li>
+        ))}
+      </ol>
+      {moved.length > 4 && (
+        <details className="mt-2">
+          <summary className="cursor-pointer py-1 font-semibold">{t(lang, "afterDeathMore", { n: moved.length - 4 })}</summary>
+          <ol className="border-t border-rose-ink/20">
+            {moved.slice(4).map((f, n) => (
+              <li key={n} className="flex flex-wrap justify-between gap-x-4 border-b border-rose-ink/20 py-2.5">
+                <span className="min-w-0">
+                  <span className="tabular-nums">{niceDate(f.date, lang)}</span>
+                  <span className="block break-words text-sm">{f.description}</span>
+                </span>
+                <span className="font-semibold tabular-nums">− {inr(f.amount)}</span>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+    </section>
+  );
+}
+
 export default function AssetMap({ c, lang, refresh, agentReply }) {
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
@@ -174,6 +216,8 @@ export default function AssetMap({ c, lang, refresh, agentReply }) {
   return (
     <div className="fade-in">
       <PageTitle title={t(lang, "mapTitle")} body={t(lang, "mapBody")} />
+
+      <AfterDeathAlert lang={lang} name={c.deceased_name} moved={map.after_death || []} />
 
       <AssetMix lang={lang} assets={map.assets.confirmed} totals={totals} probableCount={probable.length} />
 

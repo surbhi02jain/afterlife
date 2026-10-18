@@ -2,7 +2,7 @@ from datetime import date
 
 from app.models import InferenceResult
 from tests.helpers import add_doc, extracted, loan_sms, new_case, premium_receipt, recorded
-from tools.asset_map import sync_documents
+from tools.asset_map import debits_after_death, sync_documents
 from tools.inference import apply_proposals, build_prompt, collect_transactions
 
 TODAY = date(2026, 10, 16)
@@ -311,3 +311,43 @@ def test_family_decisions_survive_forgetting_a_document():
     forget_document(case, p1.id, TODAY)
     forget_document(case, p2.id, TODAY)
     assert len(case.assets) == 1
+
+
+def _statement_with_late_debits():
+    return extracted(
+        institution="SAHYADRI NATIONAL BANK", document_type="bank_statement", identifier="30218847201931",
+        transactions=[
+            {"date": "2026-08-20", "description": "ATM WDL", "amount": 2000, "direction": "debit"},  # before: fine
+            {"date": "2026-09-02", "description": "UPI/grocer", "amount": 300, "direction": "debit"},  # same day: fine
+            {"date": "2026-09-10", "description": "SALARY CREDIT", "amount": 50000, "direction": "credit"},  # money in
+            {"date": "2026-09-15", "description": "UPI/9876543210/transfer", "amount": 10000, "direction": "debit"},
+            {"date": "2026-10-01", "description": "NACH DR-KAVACH LIFE", "amount": 3150, "direction": "debit"},
+        ])
+
+
+def test_debits_after_the_date_of_death_are_found_and_masked():
+    case = new_case()
+    add_doc(case, _statement_with_late_debits(), "statement.png")
+    add_doc(case, extracted(institution="PayDost", document_type="upi_history", transactions=[  # same payment
+        {"date": "2026-09-15", "description": "Paid to Ramesh", "amount": 10000, "direction": "debit"}]), "upi.png")
+    sync_documents(case)
+
+    found = debits_after_death(case)
+    assert [(f["date"], f["amount"]) for f in found] == [("2026-09-15", 10000), ("2026-10-01", 3150)]
+    assert found[0]["description"] == "UPI/XXXX3210/transfer"
+    account = next(i for i in case.assets if i.type == "savings_account")
+    assert {f["item_id"] for f in found} == {account.id}
+
+
+def test_account_with_money_out_after_death_goes_first_in_the_plan():
+    from tools.plan import build_plan
+
+    case = new_case()
+    add_doc(case, loan_sms(), "loan.png")  # an EMI due soon would normally come first
+    add_doc(case, _statement_with_late_debits(), "statement.png")
+    sync_documents(case, date(2026, 10, 16))
+
+    first = build_plan(case, today=date(2026, 10, 16)).tasks[0]
+    assert "Sahyadri" in first.institution.title()
+    assert first.time_sensitive[0].startswith("₹13,150.00 left this account in 2 payments")
+    assert first.why_this_order.startswith("Money has already left this account after the death")

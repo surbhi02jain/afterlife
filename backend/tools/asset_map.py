@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 
-from app.models import Asset, Case, Confidence, Document, DocumentType, Evidence, Liability
+from app.models import Asset, Case, Confidence, Document, DocumentType, Evidence, Liability, mask_long_numbers
 from tools.finance import (
     check_identifier,
     identifier_digits,
@@ -344,6 +344,28 @@ def forget_document(case: Case, document_id: str, today: date | None = None) -> 
     return removed
 
 
+def debits_after_death(case: Case) -> list[dict]:
+    """Money that left an account after the date of death: an auto-debit to stop, or someone using the account.
+    Deterministic, from transactions already read. One payment often shows in two documents (the bank statement and a
+    UPI screenshot), so a date-and-amount pair counts once, keeping the entry from a document tied to an account."""
+    died = case.date_of_death.isoformat()
+    owner = {doc_id: item for item in [*case.assets, *case.liabilities] for doc_id in item.source_document_ids}
+    found, seen = [], set()
+    for doc in sorted(case.documents, key=lambda d: d.id not in owner):  # account documents first
+        if doc.status != "extracted" or not doc.extraction:
+            continue
+        item = owner.get(doc.id)
+        for t in doc.extraction.transactions:
+            key = (t.date, t.amount)
+            if t.direction != "debit" or not t.date or t.date <= died or key in seen:
+                continue
+            seen.add(key)
+            found.append({"date": t.date, "amount": t.amount, "description": mask_long_numbers(t.description),
+                          "document_name": doc.filename, "item_id": item.id if item else None,
+                          "institution": item.institution if item else doc.extraction.institution})
+    return sorted(found, key=lambda f: f["date"])
+
+
 def asset_map_view(case: Case) -> dict:
     from tools.finance import totals
 
@@ -356,4 +378,5 @@ def asset_map_view(case: Case) -> dict:
         "liabilities": group(case.liabilities),
         "totals": totals(case),
         "last_inference": case.inference_runs[-1].model_dump(mode="json") if case.inference_runs else None,
+        "after_death": debits_after_death(case),
     }

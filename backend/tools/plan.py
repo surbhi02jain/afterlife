@@ -8,6 +8,7 @@ from datetime import date, timedelta
 
 import kb
 from app.models import ActionPlan, Asset, Case, Liability, PlanItemRef, PlanTask
+from tools.asset_map import debits_after_death
 from tools.finance import institution_tokens, parse_date, same_institution
 from tools.i18n import inr, label, nice_date, pick
 
@@ -43,9 +44,13 @@ def _task_id(group) -> str:
     return "task-" + ("-".join(tokens) if tokens else group[0].id)
 
 
-def _why(lang: str, urgent_date: date | None, priority_key: str | None, needs_confirmation: bool) -> str:
+def _why(lang: str, urgent_date: date | None, priority_key: str | None, needs_confirmation: bool,
+         moved_after_death: bool = False) -> str:
     reasons = []
-    if urgent_date:
+    if moved_after_death:
+        reasons.append(pick(lang, "Money has already left this account after the death, so tell them first, today.",
+                            "मृत्यु के बाद इस खाते से पैसा निकल चुका है, इसलिए सबसे पहले, आज ही बताएँ।"))
+    elif urgent_date:
         reasons.append(pick(lang, f"An auto-debit is expected on {nice_date(urgent_date)}, so telling them soon stops "
                                   "money leaving the account.",
                             f"{nice_date(urgent_date, 'hi')} को पैसा अपने आप कटने वाला है, इसलिए जल्दी बताने से "
@@ -79,6 +84,7 @@ def build_plan(case: Case, today: date | None = None) -> ActionPlan:
     lang = case.language
     previous = {t.id: t.board_status for t in case.plan.tasks} if case.plan else {}
     items = [i for i in [*case.assets, *case.liabilities] if i.status != "rejected"]
+    after_death = debits_after_death(case)
 
     drafts = []
     for group in _group_by_institution(items):
@@ -99,6 +105,17 @@ def build_plan(case: Case, today: date | None = None) -> ActionPlan:
                                          f"{nice_date(nxt)}.",
                                    f"{label(i.type, 'hi')} के लिए {inr(amount)} का ऑटो-डेबिट {nice_date(nxt, 'hi')} "
                                    "को होने की संभावना है।"))
+        moved = [f for f in after_death if f["item_id"] in {i.id for i in group}]
+        if moved:
+            urgent.append(today)  # money is leaving now: this institution goes first
+            total_out, latest = sum(f["amount"] for f in moved), nice_date(moved[-1]["date"])
+            time_sensitive.insert(0, pick(
+                lang, f"{inr(total_out)} left this account in {len(moved)} payment{'s' if len(moved) != 1 else ''} after "
+                      f"{case.deceased_name} passed away (latest on {latest}). Tell them today: it may be an auto-debit "
+                      "to stop, or someone using the account.",
+                f"{case.deceased_name} के निधन के बाद इस खाते से {len(moved)} भुगतान में {inr(total_out)} निकले "
+                f"(आख़िरी {nice_date(moved[-1]['date'], 'hi')} को)। आज ही बताएँ: यह रुकवाने वाला ऑटो-डेबिट हो सकता है, "
+                "या कोई खाते का उपयोग कर रहा हो सकता है।"))
         time_sensitive += list(dict.fromkeys(p["time_sensitive"] for p in found if p["time_sensitive"]))
 
         steps = list(dict.fromkeys(step for p in found for step in p["steps"])) or [kb.NOT_FOUND[lang]]
@@ -124,7 +141,7 @@ def build_plan(case: Case, today: date | None = None) -> ActionPlan:
             typical_timeline=primary["typical_timeline"] if primary else None,
             time_sensitive=time_sensitive,
             why_this_order=_why(lang, min(urgent) if urgent else None, primary["key"] if primary else None,
-                                needs_confirmation),
+                                needs_confirmation, moved_after_death=bool(moved)),
             source_names=list(dict.fromkeys(p["source_name"] for p in found)),
             verified=bool(found) and all(p["verified"] for p in found),
             board_status=previous.get(_task_id(group), "todo"),

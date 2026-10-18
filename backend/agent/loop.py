@@ -25,6 +25,7 @@ from app.config import get_settings
 from app.gemini import GeminiNotConfigured
 from app.models import Case, new_id
 from storage import Storage
+from tools.asset_map import debits_after_death
 from tools.i18n import inr, nice_date
 
 log = logging.getLogger("afterlife.agent")
@@ -82,9 +83,12 @@ def case_context(case: Case) -> str:
                       for i in [*case.assets, *case.liabilities]) or "- nothing yet"
     questions = "\n".join(f"- {q.status}: {q.text}" for q in case.questions) or "- none"
     gaps = "\n".join(f"- {g['gap_id']}: {g['about']}" for g in gap_summary(case)) or "- none"
+    moved = "\n".join(f"- {f['date']} | {inr(f['amount'])} | {f['institution'] or 'unknown'} | {f['description']}"
+                      for f in debits_after_death(case)) or "- none"
     return (f"CASE\nDeceased: {case.deceased_name}, died {nice_date(case.date_of_death)} ({days} days ago). "
             f"Writing to you: their {case.relationship}.\n\nDOCUMENTS (id | file | status | type | institution)\n{docs}"
             f"\n\nASSET MAP (id | status | type | institution | number | amount | nominee)\n{items}"
+            f"\n\nMONEY THAT LEFT AN ACCOUNT AFTER THE DEATH (mention this first: the family should tell the bank today)\n{moved}"
             f"\n\nQUESTIONS ALREADY ASKED\n{questions}\n\nOPEN GAPS YOU MAY ASK ABOUT\n{gaps}"
             f"\n\nPLAN: {'built with ' + str(len(case.plan.tasks)) + ' tasks' if case.plan else 'not built yet'}"
             f"\nLETTERS: {len(case.letters)} drafted")
