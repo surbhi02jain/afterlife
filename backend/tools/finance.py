@@ -107,6 +107,39 @@ def same_institution(a: str | None, b: str | None) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# People
+# ---------------------------------------------------------------------------
+
+_TITLES = {"mr", "mrs", "ms", "miss", "shri", "sri", "smt", "kumari", "km", "dr", "late", "lt", "md", "mohd"}
+
+
+def _name_words(name: str) -> list[str]:
+    return [w for w in re.findall(r"[a-z]+", name.lower()) if w not in _TITLES]
+
+
+def could_be_same_person(holder: str | None, deceased: str) -> bool:
+    """Whether a document's holder can be the deceased. A flag for the family to check, never a block, so it is
+    lenient: 'S. N. Rao', 'Mr. Suresh Narayan Rao' (family typed 'Suresh Rao'), 'N. Suresh' and joint holders pass.
+    It catches a clearly different person: another given name ('Ramesh Rao') or another surname ('Suresh Kumar').
+    Known limit: a relative whose name includes the deceased's ('Kamala Suresh Rao') passes."""
+    target = _name_words(deceased)
+    if not holder or not target:
+        return True
+    comparable = False
+    for person in re.split(r"\s*(?:&|/|,|\band\b|\bjointly with\b)\s*", holder, flags=re.I):
+        words = _name_words(person)
+        if not words:
+            continue  # e.g. a Devanagari name: nothing to compare
+        comparable = True
+        full = [w for w in words if len(w) > 1]
+        given = target[0] in full or (len(words[0]) == 1 and target[0].startswith(words[0]))
+        surname = not full or full[-1] in target or target[-1] in full
+        if given and surname:
+            return True
+    return not comparable
+
+
+# ---------------------------------------------------------------------------
 # Dates
 # ---------------------------------------------------------------------------
 

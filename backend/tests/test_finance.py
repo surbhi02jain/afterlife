@@ -7,6 +7,7 @@ from tests.helpers import new_case
 from tools.finance import (
     add_months,
     check_identifier,
+    could_be_same_person,
     mask_identifier,
     next_expected,
     recurring_cadence,
@@ -124,3 +125,22 @@ def test_evidence_masks_long_numbers(text, masked):
     from app.models import Evidence
 
     assert Evidence(document_id="d", document_name="n", description=text).description == masked
+
+
+
+@pytest.mark.parametrize("holder", [
+    "SURESH NARAYAN RAO", "Mr. Suresh Narayan Rao", "S. N. Rao", "S N RAO", "Suresh Rao", "N. Suresh",
+    "Late Shri Suresh Narayan Rao", "SURESH N RAO & KAMALA RAO", "Kamala Rao / Suresh Narayan Rao",
+    "सुरेश नारायण राव", None, "",
+])
+def test_holder_names_that_can_be_the_deceased(holder):
+    assert could_be_same_person(holder, "Suresh Narayan Rao")
+
+
+@pytest.mark.parametrize("holder", ["Ramesh Sharma", "RAMESH RAO", "Suresh Kumar", "Priya Iyer"])
+def test_holder_names_of_someone_else_are_flagged(holder):
+    assert not could_be_same_person(holder, "Suresh Narayan Rao")
+
+
+def test_short_name_typed_by_the_family_still_matches_the_full_name_on_documents():
+    assert could_be_same_person("SURESH NARAYAN RAO", "Suresh Rao")

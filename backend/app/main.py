@@ -13,6 +13,7 @@ from app.models import BoardStatus, Case, CaseCreate, CaseUpdate, Document, Infe
 from storage import CaseNotFound, Storage, get_storage
 from tools.asset_map import asset_map_view
 from tools.extraction import SUPPORTED_MIME_TYPES, ExtractionError
+from tools.finance import could_be_same_person
 from tools.inference import InferenceError
 from tools.letters import letter_pdf
 from tools.questions import QuestionError
@@ -27,12 +28,15 @@ def load_case(case_id: str, storage: Storage = Depends(get_storage)) -> Case:
         raise HTTPException(404, "Case not found")
 
 
-def document_view(d: Document) -> dict:
+def document_view(d: Document, deceased_name: str) -> dict:
     e = d.extraction
+    # a flag for the family to check (wrong file, or someone else's papers), never a block
+    other_holder = e.holder_name if e and not could_be_same_person(e.holder_name, deceased_name) else None
     return {"id": d.id, "filename": d.filename, "status": d.status, "error": d.error, "size_bytes": d.size_bytes,
             "document_type": e.document_type.value if e else None, "institution": e.institution if e else None,
             "transactions": len(e.transactions) if e else 0, "confidence": e.confidence if e else None,
-            "saved_reading": bool(d.extracted_with_model and d.extracted_with_model.endswith("(recorded)"))}
+            "saved_reading": bool(d.extracted_with_model and d.extracted_with_model.endswith("(recorded)")),
+            "other_holder": other_holder}
 
 
 def case_view(case: Case) -> dict:
@@ -41,7 +45,7 @@ def case_view(case: Case) -> dict:
         "id": case.id, "deceased_name": case.deceased_name, "date_of_death": case.date_of_death.isoformat(),
         "relationship": case.relationship, "language": case.language, "is_demo": case.is_demo,
         "created_at": case.created_at, "updated_at": case.updated_at, "share_token": case.share_token,
-        "documents": [document_view(d) for d in case.documents],
+        "documents": [document_view(d, case.deceased_name) for d in case.documents],
         "asset_map": asset_map_view(case),
         "facts": case.facts.model_dump(),
         "questions": [q.model_dump(mode="json") for q in case.questions],
@@ -127,12 +131,12 @@ def upload_documents(
         if not data:
             raise HTTPException(400, f"{upload.filename} is empty.")
         prepared.append((upload.filename or "upload", content_type, data))
-    return [document_view(services.add_document(storage, case.id, *item)) for item in prepared]
+    return [document_view(services.add_document(storage, case.id, *item), case.deceased_name) for item in prepared]
 
 
 @app.get("/api/cases/{case_id}/documents")
 def list_documents(case: Case = Depends(load_case)):
-    return [document_view(d) for d in case.documents]
+    return [document_view(d, case.deceased_name) for d in case.documents]
 
 
 @app.delete("/api/cases/{case_id}/documents/{document_id}")
@@ -151,7 +155,7 @@ def extract_one(document_id: str, case: Case = Depends(load_case), storage: Stor
     if case.get_document(document_id) is None:
         raise HTTPException(404, "Document not found")
     try:
-        return document_view(services.extract_case_document(storage, case.id, document_id))
+        return document_view(services.extract_case_document(storage, case.id, document_id), case.deceased_name)
     except ExtractionError as exc:
         raise HTTPException(502, str(exc))
 

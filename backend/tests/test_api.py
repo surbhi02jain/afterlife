@@ -91,6 +91,16 @@ def test_extract_success(api, monkeypatch, fake_client):
     assert "extraction" not in body
 
 
+def test_document_in_someone_elses_name_is_flagged(api, monkeypatch, fake_client):
+    # the fake statement belongs to SURESH NARAYAN RAO
+    monkeypatch.setattr(extraction, "get_client", lambda: fake_client)
+    for name, flagged in (("Demo Person", "SURESH NARAYAN RAO"), ("Suresh Rao", None)):
+        case = api.post("/api/cases", json={**CASE, "deceased_name": name}).json()
+        doc = upload(api, case["id"]).json()[0]
+        api.post(f"/api/cases/{case['id']}/documents/{doc['id']}/extract")
+        assert api.get(f"/api/cases/{case['id']}").json()["documents"][0]["other_holder"] == flagged
+
+
 def test_extract_failure_is_recorded_not_hidden(api, monkeypatch):
     monkeypatch.setattr(extraction, "get_client", lambda: FakeClient(text="not json"))
     case = make_case(api)

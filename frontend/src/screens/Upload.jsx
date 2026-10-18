@@ -182,6 +182,11 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
                   </Button>
                 )}
               </span>
+              {d.other_holder && (
+                <span className="text-sm text-rose-ink">
+                  {t(lang, "otherHolder", { holder: d.other_holder, name: c.deceased_name })}
+                </span>
+              )}
               {d.status === "failed" && d.error && (
                 <span className="text-sm text-rose-ink sm:basis-full" data-no-read>
                   {d.error.slice(0, 220)}
