@@ -18,7 +18,7 @@ from google.adk.runners import InMemoryRunner
 from google.adk.tools import BaseTool
 from google.genai import errors, types
 
-from agent.guardrails import REFUSAL, asks_to_use_credentials, touches_legal_topic, with_legal_note
+from agent.guardrails import REFUSAL, asks_to_use_credentials, plain_dashes, touches_legal_topic, with_legal_note
 from agent.tools import DECLARATIONS, ToolContext, dispatch, gap_summary
 from app import gemini, services
 from app.config import get_settings
@@ -211,6 +211,7 @@ def run_agent(storage: Storage, case_id: str, message: str = ANALYSE_MESSAGE, *,
     if not result.reply:
         result.reply = "Everything is saved. Please look at the plan and the questions in the app." if lang == "en" else \
             "सब सहेजा गया है। कृपया ऐप में योजना और प्रश्न देखें।"
+    result.reply = plain_dashes(result.reply)
     if touches_legal_topic(message, result.reply):
         result.reply = with_legal_note(result.reply, lang)
     services.record(storage, case_id, "agent_reply", "Wrote a summary for you", "आपके लिए सारांश लिखा", run_id=run_id,

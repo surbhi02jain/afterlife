@@ -43,6 +43,22 @@ def test_kavach_letter_confirms_the_inferred_policy_and_lists_what_to_send():
     assert "0048817" not in reply.reference_masked  # their reference is masked like any long number
 
 
+def test_reply_fills_in_the_policy_number_even_after_the_family_confirmed_it():
+    from tools.letters import draft_letter
+
+    case = planned_case()
+    task = task_for(case, "kavach")
+    policy = case.get_item(task.items[0].item_id)
+    policy.status, policy.decided_by_user = "confirmed", True  # the family answered "Yes" before the reply came
+
+    reply = apply_reply(case, task.id, parse_reply(recorded_raw("replies", "reply_kavach_life")), "kavach.png", "t",
+                        TODAY)
+
+    assert reply.confirmed_item_id == policy.id
+    assert policy.identifier_masked == "XXXX0894" and policy.nominee == "Kamala S. Rao"
+    assert "XXXX0894" in draft_letter(case, policy.id).body  # the claim letter no longer says [number]
+
+
 def test_scam_message_changes_nothing_even_though_it_claims_to_confirm_an_account():
     case = planned_case()
     task = task_for(case, "sahyadri")

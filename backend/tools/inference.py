@@ -47,7 +47,7 @@ Rules:
 - confidence: high = several consistent transactions that clearly name the institution; medium = one clear
   transaction or a less direct clue; low = a weak hint.
 - reason: one or two short, warm, plain sentences for a family member who is not a finance expert. Say
-  "probably" or "looks like"; never state it as a fact. Write it in {language}.
+  "probably" or "looks like"; never state it as a fact. Write it in {language}. Use commas or colons, never em dashes.
 - THE FAMILY REMEMBERS lists what the family told us, in their words. Use it as a hint for reading the
   narrations (e.g. "he had shares with some broker" makes a DP charge easier to place), never as proof: propose
   something only when transactions point to it, exactly as above. If no transaction does, leave it out; the

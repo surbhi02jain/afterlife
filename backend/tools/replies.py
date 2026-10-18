@@ -34,7 +34,7 @@ A family in India wrote to banks, insurers and other institutions after {name} d
 - red_flags: list anything a genuine bank or insurer would not ask: a fee, charge or tax to release the money, an
   OTP/PIN/password, installing an app or sharing the screen, paying to a personal UPI id, QR code or account,
   threats or pressure to act within hours. Quote the words briefly. Empty list if none.
-- summary: two or three warm, plain sentences in {language}, for a grieving family member who is not a finance expert.
+- summary: two or three warm, plain sentences in {language}, for a grieving family member who is not a finance expert. Use commas or colons, never em dashes.
 """
 
 
@@ -137,12 +137,13 @@ def apply_reply(case: Case, task_id: str, reading: ReplyReading, filename: str, 
 
 
 def _confirm_item(case: Case, task, reading: ReplyReading, reply: InstitutionReply, filename: str) -> str | None:
-    """The institution confirmed in writing that the account or policy exists: the probable item becomes confirmed."""
+    """The institution confirmed in writing that the account or policy exists: the probable item becomes confirmed.
+    One the family already confirmed (e.g. answering "Yes" to a question) still gets the number and nominee they give."""
     items = [case.get_item(ref.item_id) for ref in task.items]
-    items = [i for i in items if i is not None]
-    same_type = [i for i in items if reading.item_type and i.type == reading.item_type]
-    item = next((i for i in [*same_type, *items] if i.status == "probable"), None)
-    if item is None or item.decided_by_user:
+    candidates = [*(i for i in items if i and reading.item_type and i.type == reading.item_type), *filter(None, items)]
+    item = (next((i for i in candidates if i.status == "probable"), None)
+            or next((i for i in candidates if i.status == "confirmed"), None))
+    if item is None or (item.status == "probable" and item.decided_by_user):
         return None
     item.status, item.confidence = "confirmed", "high"
     item.evidence.append(Evidence(

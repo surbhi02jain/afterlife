@@ -35,7 +35,7 @@ Report:
 - not_the_deceased: a document's holder looks like a different person altogether (another first name or surname).
 Ignore differences of letter case, punctuation, spacing, and titles (Mr., Shri, Smt., Late), and relationship notes
 in brackets like "(Wife)". If nothing differs, return an empty list.
-Copy each name exactly as it is given in the list. Write explanations in {language}: warm, plain, one or two
+Copy each name exactly as it is given in the list. Write explanations in {language} (use commas or colons, never em dashes): warm, plain, one or two
 sentences, saying which papers differ (say what the paper is, e.g. "the EPF passbook", not its ref). Do not give legal
 advice and do not tell them what to file.
 """

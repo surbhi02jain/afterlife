@@ -107,3 +107,10 @@ def test_scam_signals():
         ["fee", "secret", "personal_payment"]
     assert scam_signals("Please install AnyDesk so we can help") == ["remote_access"]
     assert scam_signals("Please send the original policy bond and a cancelled cheque") == []
+
+
+def test_agent_reply_loses_em_dashes_but_keeps_ranges():
+    from agent.guardrails import plain_dashes
+
+    text = "₹61,600 left — including an ATM withdrawal—and auto-debits – please call 10–15 Sep."
+    assert plain_dashes(text) == "₹61,600 left, including an ATM withdrawal, and auto-debits, please call 10–15 Sep."

@@ -93,6 +93,11 @@ _SECRET_WITH_DIGITS = re.compile("(" + SECRET_TERMS.pattern + r"[^\d\n]{0,25})\d
 _CARD_NUMBER = re.compile(r"(?<!\d)\d(?:[\s-]?\d){14,15}(?!\d)")
 
 
+def plain_dashes(text: str) -> str:
+    """Em dashes (and spaced en dashes) read as machine-written; the app's own text uses commas and colons."""
+    return re.sub(r"\s*\u2014\s*|\s+\u2013\s+", ", ", text)
+
+
 def redact_secrets(text: str) -> str:
     return _CARD_NUMBER.sub("[removed]", _SECRET_WITH_DIGITS.sub(r"\1[removed]", text))
 

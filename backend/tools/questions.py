@@ -82,7 +82,7 @@ Pick the {n} most useful gaps below (earlier ones matter more) and write one que
 - Be gentle, short and concrete. No jargon; explain any term in a few words.
 - Refer to the deceased by name. Never ask for passwords, PINs, OTPs or card numbers.
 - Something we only THINK exists must be asked as a question, never stated as fact.
-- Write in {language}. Use only the gap ids given.
+- Write in {language}. Use only the gap ids given. Use commas or colons, never em dashes.
 """
 
 
