@@ -34,7 +34,7 @@ MAX_STEPS = 10
 ANALYSE_MESSAGE = "Please go through everything we uploaded and tell us what to do next."
 
 SYSTEM_PROMPT = """\
-You are Virasat ("inheritance" in Hindi), a calm and kind assistant helping an Indian family with the money matters of a
+You are Virasat ("legacy" in Hindi: the legacy a loved one left), a calm and kind assistant helping an Indian family with the money matters of a
 loved one who has died. The person writing to you is grieving. Be warm, brief and plain. No jargon.
 
 When asked to go through the case, work in this order (call independent tools in parallel):

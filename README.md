@@ -1,6 +1,6 @@
 # Virasat — find and claim what your loved one left behind
 
-> *Virasat* (विरासत) means "inheritance" or "legacy" in Hindi.
+> *Virasat* (विरासत) means "legacy" in Hindi: the legacy your loved one left.
 
 When someone dies in India, their family often doesn't know what accounts, policies or investments existed. Money
 sits unclaimed because nobody knew to ask. Virasat helps a grieving family find those assets and claim them.
