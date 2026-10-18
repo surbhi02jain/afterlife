@@ -66,6 +66,7 @@ Times are rough; "Find what might be missing" depends on Gemini.
 
 ### 3. Upload everything at once
 - Click **Choose photos or PDFs**, select **all 9 files in `demo/docs/`** and **both files in `demo/video/`** (11 files).
+- Each file appears at once with a thumbnail and **Uploading…**; click any thumbnail to open it full size.
 - Each file uploads separately and Gemini reads two at a time: **Reading…** then **Read: bank statement, Sahyadri
   National Bank**, and so on (about 40–60 seconds).
 - Watch for three things:
@@ -118,7 +119,8 @@ The app moves to **What we found**. Show, top to bottom:
    *Say:* "He died on the 2nd. Someone withdrew twenty thousand rupees a week later. That goes straight to the top."
 2. **Confirmed so far** – the total, the coloured bar and the legend (savings, FD, life insurance, mutual fund, EPF).
 3. **"We may have found 3 more things"** – marigold cards: **Kavach Life** (life insurance), **Anand Stockbroking**
-   (demat) and the **PPF** from the memory. Open Kavach: its ledger rows are the three premium debits, and its reason
+   (demat) and the **PPF** from the memory. Open Kavach: its ledger rows are the three premium debits (click a file
+   name to open that statement), and its reason
    ends "Your family remembers it too." The PPF has only the family's words, so it is "not very sure".
    *Say:* "Nobody had papers for these. Gemini spotted the pattern, using what the family remembered as a hint; code
    checked that every transaction it cited is real. They stay 'probable' until confirmed, and never count in the
@@ -233,6 +235,7 @@ moments judges remember. Keep the cursor still while talking.
 | Bilingual start, form, lotus branding | Step 1 |
 | Upload guide (what to upload, where to find it, no passwords) | Step 2 |
 | One-file-per-request upload, live Gemini extraction (photos, passbook, SMS, UPI, PDF) | Step 3 |
+| File previews: thumbnails while uploading and in the list, replies on the plan, source documents on What we found | Steps 3, 8, 12–13 |
 | Name flag on a document in someone else's name; Remove a document | Steps 3–4 |
 | Password-protected PDF unlock (password never stored) | Step 5 |
 | ADK agent, live activity log in English and Hindi | Step 7 |

@@ -4,6 +4,7 @@ import { docTypeLabel, orgName, t } from "../i18n";
 import { go } from "../nav";
 import { ActivityList, ActivitySummary } from "../components/ActivityPanel";
 import { PapersArt, TypeIcon } from "../components/Art";
+import FilePreview from "../components/FilePreview";
 import MemoryCard from "../components/MemoryCard";
 import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, Spinner, field } from "../components/ui";
 
@@ -86,6 +87,7 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
   const input = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [queue, setQueue] = useState([]); // files on their way up: { key, name, type, url (local preview), sent }
   const [reading, setReading] = useState(new Set());
   const [removing, setRemoving] = useState(null); // { id, busy } while asking "remove this file?"
   const [error, setError] = useState(null);
@@ -140,17 +142,27 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
     setError(null);
     if (files.length > MAX_FILES) return setError(new Error(t(lang, "tooManyFiles", { n: MAX_FILES })));
     setUploading(true);
+    const queued = files.map((f) => ({ key: `${Date.now()}-${Math.random()}`, name: f.name, type: f.type,
+                                       url: URL.createObjectURL(f), sent: false }));
+    setQueue((q) => [...q, ...queued]);
+    const settle = (key, sent) => setQueue((q) => (sent ? q.map((x) => (x.key === key ? { ...x, sent } : x))
+                                                        : q.filter((x) => x.key !== key)));
     // One file per request: Cloud Run refuses any request over 32 MiB, and a few phone photos together pass that.
     const docs = [];
-    for (const file of files) {
+    for (const [n, file] of files.entries()) {
       try {
         docs.push(...(await api.upload(c.id, [file])));
+        settle(queued[n].key, true);
       } catch (e) {
+        settle(queued[n].key, false);
         setError(e); // the server names the file; the other files still upload
       }
     }
     setUploading(false);
-    await refresh();
+    await refresh(); // the uploaded files now come from the case, with the server's copy as their preview
+    const done = new Set(queued.map((x) => x.key));
+    setQueue((q) => q.filter((x) => !done.has(x.key)));
+    queued.forEach((x) => URL.revokeObjectURL(x.url));
     readDocuments(docs.filter((d) => d.status !== "locked").map((d) => d.id)); // locked PDFs wait for a password
   }
 
@@ -232,58 +244,71 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
 
       <ErrorNote lang={lang} error={error} />
 
-      {c.documents.length > 0 && (
+      {(c.documents.length > 0 || queue.length > 0) && (
         <ul className="mt-5 divide-y divide-sand-200 rounded-2xl border border-sand-200 bg-white" aria-live="polite">
           {c.documents.map((d) => (
-            <li key={d.id} className="flex flex-col gap-1 px-5 py-4">
-              <span className="break-all font-semibold">{d.filename}</span>
-              <span className="flex flex-wrap items-center gap-3">
-                <StatusChip lang={lang} doc={d} reading={reading.has(d.id)} />
-                {d.status === "failed" && !reading.has(d.id) && (
-                  <Button variant="quiet" onClick={() => readDocuments([d.id])}>
-                    {t(lang, "retry")}
-                  </Button>
+            <li key={d.id} className="flex gap-4 px-5 py-4">
+              <FilePreview lang={lang} url={api.documentFileUrl(c.id, d.id)} name={d.filename} type={d.content_type} />
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="break-all font-semibold">{d.filename}</span>
+                <span className="flex flex-wrap items-center gap-3">
+                  <StatusChip lang={lang} doc={d} reading={reading.has(d.id)} />
+                  {d.status === "failed" && !reading.has(d.id) && (
+                    <Button variant="quiet" onClick={() => readDocuments([d.id])}>
+                      {t(lang, "retry")}
+                    </Button>
+                  )}
+                  {!reading.has(d.id) && !analysing && removing?.id !== d.id && (
+                    <Button variant="quiet" onClick={() => setRemoving({ id: d.id, busy: false })}>
+                      {t(lang, "removeDoc")}
+                    </Button>
+                  )}
+                </span>
+                {d.other_holder && (
+                  <span className="text-sm text-rose-ink">
+                    {t(lang, "otherHolder", { holder: d.other_holder, name: c.deceased_name })}
+                  </span>
                 )}
-                {!reading.has(d.id) && !analysing && removing?.id !== d.id && (
-                  <Button variant="quiet" onClick={() => setRemoving({ id: d.id, busy: false })}>
-                    {t(lang, "removeDoc")}
-                  </Button>
+                {d.status === "locked" && !analysing && removing?.id !== d.id && (
+                  <UnlockForm
+                    lang={lang}
+                    caseId={c.id}
+                    doc={d}
+                    isDemo={c.is_demo}
+                    onUnlocked={async (id) => {
+                      await refresh();
+                      readDocuments([id]);
+                    }}
+                  />
                 )}
-              </span>
-              {d.other_holder && (
-                <span className="text-sm text-rose-ink">
-                  {t(lang, "otherHolder", { holder: d.other_holder, name: c.deceased_name })}
-                </span>
-              )}
-              {d.status === "locked" && !analysing && removing?.id !== d.id && (
-                <UnlockForm
-                  lang={lang}
-                  caseId={c.id}
-                  doc={d}
-                  isDemo={c.is_demo}
-                  onUnlocked={async (id) => {
-                    await refresh();
-                    readDocuments([id]);
-                  }}
-                />
-              )}
-              {d.status === "failed" && d.error && (
-                <span className="text-sm text-rose-ink sm:basis-full" data-no-read>
-                  {d.error.slice(0, 220)}
-                </span>
-              )}
-              {removing?.id === d.id && (
-                <span role="alertdialog" aria-label={t(lang, "removeDocConfirm")}
-                      className="flex flex-col gap-2 sm:basis-full sm:flex-row sm:items-center" data-no-read>
-                  <span>{t(lang, "removeDocConfirm")}</span>
-                  <Button variant="danger" busy={removing.busy} onClick={() => removeDocument(d.id)} autoFocus>
-                    {t(lang, "removeYes")}
-                  </Button>
-                  <Button variant="secondary" onClick={() => setRemoving(null)}>
-                    {t(lang, "cancel")}
-                  </Button>
-                </span>
-              )}
+                {d.status === "failed" && d.error && (
+                  <span className="text-sm text-rose-ink sm:basis-full" data-no-read>
+                    {d.error.slice(0, 220)}
+                  </span>
+                )}
+                {removing?.id === d.id && (
+                  <span role="alertdialog" aria-label={t(lang, "removeDocConfirm")}
+                        className="flex flex-col gap-2 sm:basis-full sm:flex-row sm:items-center" data-no-read>
+                    <span>{t(lang, "removeDocConfirm")}</span>
+                    <Button variant="danger" busy={removing.busy} onClick={() => removeDocument(d.id)} autoFocus>
+                      {t(lang, "removeYes")}
+                    </Button>
+                    <Button variant="secondary" onClick={() => setRemoving(null)}>
+                      {t(lang, "cancel")}
+                    </Button>
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+          {queue.map((f) => (
+            <li key={f.key} className="flex gap-4 px-5 py-4">
+              <FilePreview lang={lang} url={f.url} name={f.name} type={f.type} />
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="break-all font-semibold">{f.name}</span>
+                {f.sent ? <span className="text-ink-soft">{t(lang, "st_uploaded")}</span>
+                        : <Spinner label={t(lang, "st_uploading")} />}
+              </div>
             </li>
           ))}
         </ul>

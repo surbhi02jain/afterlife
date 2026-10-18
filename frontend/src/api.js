@@ -38,6 +38,7 @@ export const api = {
     for (const f of files) form.append("files", f);
     return request("POST", `${c(id)}/documents`, form);
   },
+  documentFileUrl: (id, docId) => `${c(id)}/documents/${docId}/file`,
   removeDocument: (id, docId) => request("DELETE", `${c(id)}/documents/${docId}`),
   unlock: (id, docId, password) => request("POST", `${c(id)}/documents/${docId}/unlock`, { password }),
   extract: (id, docId) => request("POST", `${c(id)}/documents/${docId}/extract`),

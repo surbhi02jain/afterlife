@@ -20,6 +20,18 @@ function Amount({ lang, item }) {
   );
 }
 
+// The document a row was read from, opened in a new tab. Rows from a memory or a reply ("memory:…") have no file.
+function SourceLink({ lang, caseId, id, name, className }) {
+  if (!id || id.includes(":")) return <span className={className} data-no-read>{name}</span>;
+  return (
+    <a href={api.documentFileUrl(caseId, id)} target="_blank" rel="noopener noreferrer" data-no-read
+       title={t(lang, "openFile", { name })}
+       className={`${className} underline decoration-dotted underline-offset-2 hover:text-brand`}>
+      {name}
+    </a>
+  );
+}
+
 function ConfirmedCard({ lang, item }) {
   return (
     <Card className="flex flex-col gap-2">
@@ -45,7 +57,7 @@ function ConfirmedCard({ lang, item }) {
 }
 
 // A found item reads like a page from the family's own passbook: the clue transactions, each marked in marigold.
-function ProbableCard({ lang, item, onDecide, busy }) {
+function ProbableCard({ lang, caseId, item, onDecide, busy }) {
   const evidence = item.evidence.filter((e) => e.date).sort((a, b) => a.date.localeCompare(b.date));
   const remembered = item.evidence.filter((e) => e.document_id.startsWith("memory:"));
   return (
@@ -85,7 +97,8 @@ function ProbableCard({ lang, item, onDecide, busy }) {
                 </span>
                 <span className="col-start-2 break-words">
                   {e.description}
-                  <span className="ml-2 text-sm text-ink-soft" data-no-read>{e.document_name}</span>
+                  <SourceLink lang={lang} caseId={caseId} id={e.document_id} name={e.document_name}
+                              className="ml-2 text-sm text-ink-soft" />
                 </span>
               </li>
             ))}
@@ -160,7 +173,7 @@ function AssetMix({ lang, assets, totals, probableCount }) {
 }
 
 // Money that left an account after the death: the one thing on this page that needs action today.
-function AfterDeathAlert({ lang, name, moved }) {
+function AfterDeathAlert({ lang, caseId, name, moved }) {
   if (!moved.length) return null;
   return (
     <section role="alert" className="mb-10 rounded-3xl border border-rose-ink/30 bg-rose-soft p-5 text-rose-ink sm:p-6">
@@ -175,7 +188,8 @@ function AfterDeathAlert({ lang, name, moved }) {
             <span className="min-w-0">
               <span className="tabular-nums">{niceDate(f.date, lang)}</span>
               <span className="block break-words text-sm">{f.description}</span>
-              <span className="block text-sm opacity-80" data-no-read>{f.document_name}</span>
+              <SourceLink lang={lang} caseId={caseId} id={f.document_id} name={f.document_name}
+                          className="block text-sm opacity-80" />
             </span>
             <span className="font-semibold tabular-nums">− {inr(f.amount)}</span>
           </li>
@@ -227,7 +241,7 @@ export default function AssetMap({ c, lang, refresh, agentReply }) {
     <div className="fade-in">
       <PageTitle title={t(lang, "mapTitle")} body={t(lang, "mapBody")} />
 
-      <AfterDeathAlert lang={lang} name={c.deceased_name} moved={map.after_death || []} />
+      <AfterDeathAlert lang={lang} caseId={c.id} name={c.deceased_name} moved={map.after_death || []} />
 
       <AssetMix lang={lang} assets={map.assets.confirmed} totals={totals} probableCount={probable.length} />
 
@@ -249,7 +263,7 @@ export default function AssetMap({ c, lang, refresh, agentReply }) {
           <p className="mt-1 text-ink-soft">{t(lang, "discoveryBody")}</p>
           <div className="mt-5 space-y-5">
             {probable.map((item) => (
-              <ProbableCard key={item.id} lang={lang} item={item} onDecide={decide} busy={busy} />
+              <ProbableCard key={item.id} lang={lang} caseId={c.id} item={item} onDecide={decide} busy={busy} />
             ))}
           </div>
         </section>

@@ -361,7 +361,7 @@ def debits_after_death(case: Case) -> list[dict]:
                 continue
             seen.add(key)
             found.append({"date": t.date, "amount": t.amount, "description": mask_long_numbers(t.description),
-                          "document_name": doc.filename, "item_id": item.id if item else None,
+                          "document_id": doc.id, "document_name": doc.filename, "item_id": item.id if item else None,
                           "institution": item.institution if item else doc.extraction.institution})
     return sorted(found, key=lambda f: f["date"])
 

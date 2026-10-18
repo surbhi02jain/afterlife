@@ -66,6 +66,17 @@ def test_upload_and_list(api, storage):
     assert len(api.get(f"/api/cases/{case['id']}/documents").json()) == 1
 
 
+def test_family_can_see_the_file_they_uploaded_but_no_one_else_can(api, storage):
+    case = make_case(api)
+    doc = upload(api, case["id"]).json()[0]
+    url = f"/api/cases/{case['id']}/documents/{doc['id']}/file"
+    response = api.get(url)
+    assert response.status_code == 200 and response.content == PNG
+    assert response.headers["content-type"] == "image/png" and "no-store" in response.headers["cache-control"]
+    api.cookies.clear()  # another browser, without this case's key
+    assert api.get(url).status_code == 404
+
+
 def test_upload_guesses_type_from_extension(api, storage):
     case = make_case(api)
     response = upload(api, case["id"], name="scan.pdf", data=b"%PDF-1.4", content_type="application/octet-stream")

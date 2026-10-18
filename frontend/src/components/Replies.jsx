@@ -2,25 +2,40 @@ import { useRef, useState } from "react";
 import { api } from "../api";
 import { niceDate, orgName, t } from "../i18n";
 import { go } from "../nav";
+import FilePreview from "./FilePreview";
 import { Button, ErrorNote } from "./ui";
 
-function ScamWarning({ lang, reply }) {
+// What they sent, beside the reading of it. Replies are not stored on the server, so after a reload only the
+// sample letters (served from the app) still have a preview.
+function Sent({ lang, preview, children }) {
+  if (!preview) return children;
   return (
-    <div role="alert" className="mt-4 rounded-2xl border border-rose-ink/30 bg-rose-soft p-4 text-rose-ink">
-      <p className="font-semibold">{t(lang, "replyScamTitle")}</p>
-      <ul className="mt-2 list-disc space-y-1 pl-5">
-        {reply.red_flags.map((flag) => <li key={flag}>{flag}</li>)}
-      </ul>
-      {reply.red_flag_quotes?.length > 0 && (
-        <p className="mt-2 text-sm">{t(lang, "replyTheirWords")}: {reply.red_flag_quotes.map((q) => `“${q}”`).join(", ")}</p>
-      )}
-      <p className="mt-2">{t(lang, "replyScamBody")}</p>
-      <p className="mt-2 text-sm opacity-90" data-no-read>{reply.filename}</p>
+    <div className="flex gap-4">
+      <FilePreview lang={lang} {...preview} />
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }
 
-function ReplyCard({ c, lang, reply, refresh }) {
+function ScamWarning({ lang, reply, preview }) {
+  return (
+    <div role="alert" className="mt-4 rounded-2xl border border-rose-ink/30 bg-rose-soft p-4 text-rose-ink">
+      <Sent lang={lang} preview={preview}>
+        <p className="font-semibold">{t(lang, "replyScamTitle")}</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          {reply.red_flags.map((flag) => <li key={flag}>{flag}</li>)}
+        </ul>
+        {reply.red_flag_quotes?.length > 0 && (
+          <p className="mt-2 text-sm">{t(lang, "replyTheirWords")}: {reply.red_flag_quotes.map((q) => `“${q}”`).join(", ")}</p>
+        )}
+        <p className="mt-2">{t(lang, "replyScamBody")}</p>
+        <p className="mt-2 text-sm opacity-90" data-no-read>{reply.filename}</p>
+      </Sent>
+    </div>
+  );
+}
+
+function ReplyCard({ c, lang, reply, refresh, preview }) {
   const [busy, setBusy] = useState(null);
   const letter = c.letters.find((l) => l.reply_id === reply.id);
   const confirmed = reply.confirmed_item_id;
@@ -35,42 +50,44 @@ function ReplyCard({ c, lang, reply, refresh }) {
     }
   }
 
-  if (reply.red_flags.length) return <ScamWarning lang={lang} reply={reply} />;
+  if (reply.red_flags.length) return <ScamWarning lang={lang} reply={reply} preview={preview} />;
   const done = reply.requirements.filter((r) => r.done).length;
   return (
     <div className="mt-4 rounded-2xl border border-sand-200 bg-sand-50 p-4">
-      <p className="font-semibold">
-        {t(lang, "replyFrom", { institution: orgName(reply.institution) })}
-        {reply.letter_date && <span className="font-normal text-ink-soft"> · {niceDate(reply.letter_date, lang)}</span>}
-      </p>
-      {confirmed && <p className="mt-1 font-semibold text-sage-ink"><span aria-hidden="true">✓ </span>{t(lang, "replyConfirmed")}</p>}
-      <p className="mt-2">{reply.summary}</p>
-      {reply.respond_by && (
-        <p className="mt-2 font-semibold text-amber-ink">⏱ {t(lang, "replyRespondBy", { date: niceDate(reply.respond_by, lang) })}</p>
-      )}
-      {reply.requirements.length > 0 && (
-        <fieldset className="mt-3">
-          <legend className="font-semibold">{t(lang, "replyTheyAsk", { done, n: reply.requirements.length })}</legend>
-          <ul className="mt-2 space-y-1">
-            {reply.requirements.map((req) => (
-              <li key={req.id}>
-                <label className="flex min-h-11 cursor-pointer items-start gap-3 py-1">
-                  <input type="checkbox" className="mt-1 h-5 w-5 shrink-0" checked={req.done} disabled={busy === req.id}
-                         onChange={() => tick(req)} />
-                  <span className={req.done ? "text-ink-soft line-through" : ""}>
-                    {req.document}{req.detail && <span className="text-ink-soft">, {req.detail}</span>}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </fieldset>
-      )}
-      {letter && (
-        <Button variant="quiet" className="mt-2 -ml-2" onClick={() => go(`/case/${c.id}/letters?l=${letter.id}`)}>
-          {t(lang, "replyLetterReady")}
-        </Button>
-      )}
+      <Sent lang={lang} preview={preview}>
+        <p className="font-semibold">
+          {t(lang, "replyFrom", { institution: orgName(reply.institution) })}
+          {reply.letter_date && <span className="font-normal text-ink-soft"> · {niceDate(reply.letter_date, lang)}</span>}
+        </p>
+        {confirmed && <p className="mt-1 font-semibold text-sage-ink"><span aria-hidden="true">✓ </span>{t(lang, "replyConfirmed")}</p>}
+        <p className="mt-2">{reply.summary}</p>
+        {reply.respond_by && (
+          <p className="mt-2 font-semibold text-amber-ink">⏱ {t(lang, "replyRespondBy", { date: niceDate(reply.respond_by, lang) })}</p>
+        )}
+        {reply.requirements.length > 0 && (
+          <fieldset className="mt-3">
+            <legend className="font-semibold">{t(lang, "replyTheyAsk", { done, n: reply.requirements.length })}</legend>
+            <ul className="mt-2 space-y-1">
+              {reply.requirements.map((req) => (
+                <li key={req.id}>
+                  <label className="flex min-h-11 cursor-pointer items-start gap-3 py-1">
+                    <input type="checkbox" className="mt-1 h-5 w-5 shrink-0" checked={req.done} disabled={busy === req.id}
+                           onChange={() => tick(req)} />
+                    <span className={req.done ? "text-ink-soft line-through" : ""}>
+                      {req.document}{req.detail && <span className="text-ink-soft">, {req.detail}</span>}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </fieldset>
+        )}
+        {letter && (
+          <Button variant="quiet" className="mt-2 -ml-2" onClick={() => go(`/case/${c.id}/letters?l=${letter.id}`)}>
+            {t(lang, "replyLetterReady")}
+          </Button>
+        )}
+      </Sent>
     </div>
   );
 }
@@ -80,7 +97,11 @@ export default function Replies({ c, lang, task, refresh }) {
   const input = useRef(null);
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
+  const [previews, setPreviews] = useState({}); // reply id -> local preview of the file the family just sent
   const replies = c.replies.filter((r) => r.task_id === task.id);
+  const sampleNames = c.samples?.replies?.[task.id] || [];
+  const previewFor = (r) => previews[r.id]
+    || (sampleNames.includes(r.filename) ? { url: api.sampleUrl(r.filename), name: r.filename } : null);
   const used = new Set(replies.map((r) => r.filename));
   const samples = (c.samples?.replies?.[task.id] || []).filter((name) => !used.has(name));
 
@@ -88,7 +109,8 @@ export default function Replies({ c, lang, task, refresh }) {
     setBusy(label);
     setError(null);
     try {
-      await api.addReply(c.id, task.id, file);
+      const { reply } = await api.addReply(c.id, task.id, file);
+      setPreviews((p) => ({ ...p, [reply.id]: { url: URL.createObjectURL(file), name: file.name, type: file.type } }));
       await refresh();
     } catch (e) {
       setError(e);
@@ -107,7 +129,9 @@ export default function Replies({ c, lang, task, refresh }) {
 
   return (
     <div className="mt-5 border-t border-sand-200 pt-4">
-      {replies.map((reply) => <ReplyCard key={reply.id} c={c} lang={lang} reply={reply} refresh={refresh} />)}
+      {replies.map((reply) => (
+        <ReplyCard key={reply.id} c={c} lang={lang} reply={reply} refresh={refresh} preview={previewFor(reply)} />
+      ))}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input ref={input} type="file" accept="image/*,application/pdf" className="sr-only" tabIndex={-1}
                aria-hidden="true" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) send(f, "file"); }} />

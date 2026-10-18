@@ -66,7 +66,7 @@ def document_view(d: Document, deceased_name: str) -> dict:
     e = d.extraction
     # a flag for the family to check (wrong file, or someone else's papers), never a block
     other_holder = e.holder_name if e and not could_be_same_person(e.holder_name, deceased_name) else None
-    return {"id": d.id, "filename": d.filename, "status": d.status, "error": d.error, "size_bytes": d.size_bytes,
+    return {"id": d.id, "filename": d.filename, "content_type": d.content_type, "status": d.status, "error": d.error, "size_bytes": d.size_bytes,
             "document_type": e.document_type.value if e else None, "institution": e.institution if e else None,
             "transactions": len(e.transactions) if e else 0, "confidence": e.confidence if e else None,
             "saved_reading": bool(d.extracted_with_model and d.extracted_with_model.endswith("(recorded)")),
@@ -202,6 +202,21 @@ def remove_document(document_id: str, case: Case = Depends(load_case), storage: 
 
 class UnlockBody(BaseModel):
     password: str = Field(min_length=1, max_length=200)
+
+
+@app.get("/api/cases/{case_id}/documents/{document_id}/file")
+def document_file(document_id: str, case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    """The uploaded file itself, so the family can see what they sent. Behind the same private case key."""
+    doc = case.get_document(document_id)
+    if doc is None:
+        raise HTTPException(404, "Document not found")
+    try:
+        data = storage.read_file(doc.storage_key)
+    except FileNotFoundError:
+        raise HTTPException(410, "This file is no longer stored (uploads are deleted after 24 hours).")
+    # content_type was checked against SUPPORTED_MIME_TYPES at upload; no-store keeps it out of a shared computer's cache
+    return Response(data, media_type=doc.content_type, headers={
+        "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Content-Disposition": "inline"})
 
 
 @app.post("/api/cases/{case_id}/documents/{document_id}/unlock")
