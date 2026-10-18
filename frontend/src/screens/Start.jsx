@@ -84,12 +84,9 @@ export default function Start({ lang }) {
           </Button>
         </Card>
         {previous && (
-          <p className="mt-4">
-            <a href={`#/case/${previous}/upload`} className="font-semibold text-brand underline underline-offset-4">
-              {t(lang, "continueCase")}
-            </a>
-            <span className="mt-1 block text-sm text-ink-soft">{t(lang, "sharedComputerHint")}</span>
-          </p>
+          <a href={`#/case/${previous}/upload`} className="mt-4 inline-block font-semibold text-brand underline underline-offset-4">
+            {t(lang, "continueCase")}
+          </a>
         )}
       </section>
 

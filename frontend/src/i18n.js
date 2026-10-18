@@ -44,7 +44,6 @@ const en = {
   continueCase: "Continue where you left off",
   deletedNotice: "Everything has been deleted.",
   leftNotice: "You have left the case on this computer. Nobody using it can open the case now.",
-  sharedComputerHint: "On a shared computer? When you finish, use \"Leave this case\" on the Privacy page.",
   unavailableNotice:
     "That case can't be opened here. For privacy, a case opens only on the device where it was started. Family members can follow progress through the read-only link the family shares.",
 
@@ -262,7 +261,6 @@ const hi = {
   continueCase: "जहाँ छोड़ा था वहीं से जारी रखें",
   deletedNotice: "सब कुछ हटा दिया गया है।",
   leftNotice: "आपने इस कंप्यूटर पर मामला छोड़ दिया है। अब इसका उपयोग करने वाला कोई भी मामला नहीं खोल सकता।",
-  sharedComputerHint: "साझा कंप्यूटर पर हैं? काम पूरा होने पर गोपनीयता पेज पर \"यह मामला छोड़ें\" चुनें।",
   unavailableNotice:
     "यह मामला यहाँ नहीं खुल सकता। गोपनीयता के लिए, मामला केवल उसी डिवाइस पर खुलता है जहाँ उसे शुरू किया गया था। परिवार के लोग परिवार द्वारा साझा किए गए केवल-देखने वाले लिंक से प्रगति देख सकते हैं।",
 
