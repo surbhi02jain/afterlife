@@ -213,7 +213,7 @@ captions.
 
 | Time | Show | Say (about 25 words per 10 seconds) |
 |---|---|---|
-| 0:00–0:15 | Start screen, then the form being filled | "When someone dies in India, families often don't know what accounts or policies existed. Close to ₹1 lakh crore sits unclaimed. Virasat helps them find it." |
+| 0:00–0:15 | Start screen, then the form being filled | "When someone dies in India, families often don't know what accounts or policies existed. Over ₹1.8 lakh crore sits unclaimed, by the government's own count. Virasat helps them find it." |
 | 0:15–0:40 | Step 3 sped up: 11 files uploading, **Read …** appearing; the **someone else's name** flag; **Remove**; the **locked PDF** opened with the password | "A family uploads whatever they have: photos, passbooks, SMS. Gemini reads them live. A paper in someone else's name is flagged; a locked statement is opened, the password never stored." |
 | 0:40–1:00 | Step 6: recording the Hindi memory on **Documents**; **What we heard**, PIN shown as **[removed]** | "His wife can simply speak, in Hindi. What she remembers is matched against the statements and handed to the agent as a hint, and the PIN she mentioned is never stored." |
 | 1:00–1:15 | Step 7: **Find what might be missing**, the live activity panel (sped up) | "Then a Gemini agent, built on Google's Agent Development Kit, works through the case: every step logged, everything it proposes checked by code." |
@@ -227,6 +227,82 @@ Tips: zoom in (or crop) on the alert, the ledger rows, the **[removed]** PIN and
 moments judges remember. Keep the cursor still while talking.
 
 ---
+
+## Part D: one take, talking as you go
+
+Record everything in one continuous take, explaining as you click. About 4½ minutes; skip the beats marked
+*(can skip)* and the *If time* lines to come in near 4. When the AI is working, keep talking with the
+*While it works* lines; if it finishes first, move on. The same script is published as a phone teleprompter page.
+
+### Before you press record
+- Server running, one full dry run done, then Privacy → Delete my data so you start clean.
+- Chrome on the Virasat start screen, 1440×900, zoom 100%, bookmarks bar hidden, microphone allowed.
+- An incognito window open in the background for the last beat.
+- Files ready: demo/docs/ (9), demo/video/ (2), demo/samples/ (2 replies).
+- Speak slowly. Where it says "While it works", keep talking; if the AI finishes first, stop and move on.
+
+### 0:00 What Virasat is
+- *Do:* Stay on the start screen. Let the lotus and the line "Find and claim what your loved one left behind" show.
+- **Say:** "Hi, I'm [your name], and this is Virasat. Virasat means legacy: what a loved one leaves behind. When someone dies in India, the family rarely knows every account, policy or investment they had. The papers are scattered across a phone, a drawer and an email inbox. By the government's own count, over one point eight lakh crore rupees sits unclaimed with banks, insurers and funds. Virasat helps a grieving family find what was left behind and claim it, safely, in English or Hindi. Let me show you with a sample family. Everything you'll see is made up."
+
+### 0:35 Start a case
+- *Do:* Type the name and date. You are their → Son. Language → English. Click Begin.
+- **Say:** "Suresh Narayan Rao passed away on the second of September. I'm playing his son, Arjun. That's all it takes to start. No login, and we never ask for anyone's bank passwords."
+
+### 0:50 Upload what the family has
+- *Do:* Choose photos or PDFs → select all 9 files in demo/docs and both in demo/video (11 files).
+- **Say:** "I'm uploading what a family actually finds: photos of bank statements, a co-op passbook, an FD receipt, a home-loan SMS, a UPI screenshot and a locked mutual fund statement. Gemini 3.8 Flash reads each one, photos and all, into a strict structure, and our code checks every field."
+- **While it works:** "Each file goes up on its own, and you can see a preview of every one. Gemini reads two at a time. Dates are read day first, amounts as plain rupees, and account numbers are masked to the last four digits before anything is shown."
+
+### 1:20 Two catches
+- *Do:* Point at the red line on 11_passbook_other_person.png → Remove → Yes, remove.
+- *Do:* On 08_mf_statement.pdf type the password → Open file.
+- **Say:** "Two catches already. This passbook belongs to someone else, a Ramesh Sharma, so Virasat flags it, and I remove it. And this statement is password-protected, like most bank statements. I type the password once; Virasat opens the file and never stores the password."
+
+### 1:40 What his wife remembers
+- *Do:* Tell us what you remember → Record a memory → read the Hindi below → Stop and send.
+- **Say:** "Some things are on no paper at all. His wife can simply say what she remembers, in Hindi."
+- **Read aloud:** "मुझे याद है, वो हर महीने कवच लाइफ़ इंश्योरेंस का प्रीमियम भरते थे। और जब अर्जुन पैदा हुआ था, तब उन्होंने पोस्ट ऑफ़िस में एक पीपीएफ़ खाता खुलवाया था। उनका ATM पिन 4412 था।"
+- **Then:** "Virasat heard a Kavach Life policy and a PPF account, and found three premium payments that back the first. And the ATM PIN she mentioned? Removed. Never stored."
+
+### 2:05 The agent takes over
+- *Do:* Click Find what might be missing. The activity panel fills in live.
+- **Say:** "Now the agent takes over. It's built on Google's Agent Development Kit, runs on Gemini, and has nine tools: reading documents, finding hidden assets, checking names, looking up claim procedures, asking questions, planning and drafting letters. It decides what to do next, and every step is logged right here."
+- **While it works:** "The rule throughout is simple: Gemini proposes, code verifies. A hidden asset must cite real transactions or it's thrown out. Totals, deadlines and number masking are always computed in code, never by the model. It all runs as one container on Cloud Run, with cases in Firestore, uploads in Cloud Storage that are deleted after a day, and the key in Secret Manager."
+
+### 2:40 Money after the death
+- *Do:* It lands on What we found. Point at the red box.
+- **Say:** "First, an alarm. Suresh died on the second, but money kept leaving his account: five payments, sixty-one thousand six hundred rupees, including a twenty-thousand-rupee ATM withdrawal a week later. That goes straight to the top of the plan: tell the bank today."
+
+### 2:55 What nobody had papers for
+- *Do:* Scroll to the marigold cards. Open Kavach Life to show its ledger rows.
+- *Do:* On Anand Stockbroking click Yes, this is right.
+- **Say:** "And here's what nobody had papers for. A Kavach Life policy, found from three monthly premiums, and his wife remembered it too. A demat account at Anand Stockbroking, found from dividends and DP charges. Each one cites the exact transactions and stays probable, outside the total, until the family confirms. I know about the shares, so I confirm it, and the total updates. The PPF has only her words, so it's marked not very sure."
+
+### 3:25 The plan
+- *Do:* Click the Plan tab. (If it asks, click See your plan.)
+- *Do:* Optional: scroll to Check names across the papers.
+- **Say:** "Virasat also asks a few questions about real gaps; I'll skip ahead to the plan. It's ordered by urgency: the bank first, then the next loan EMI."
+- *If time:* "And it noticed his EPF passbook says S N Rao, and his wife's name is spelled differently on another paper. Mismatches like that stall claims for months, so it says what to do before the bank does."
+
+### 3:45 The insurer replies
+- *Do:* Letters → open the Kavach Life letter (an enquiry). Don't edit it.
+- *Do:* Plan → Kavach Life step → Got a reply from them? Upload it → demo/samples/reply_kavach_life.png.
+- *Do:* Letters again: show the claim letter and the new covering letter.
+- **Say:** "We wrote to Kavach Life asking whether a policy exists. Here's their reply. Virasat reads it: the policy is confirmed, fifteen lakh rupees, nominee Kamala, five documents they need, and a deadline worked out in code. And our enquiry has been rewritten into a claim letter with their policy number, plus a covering letter listing exactly what they asked for."
+
+### 4:15 A scam message
+- *Do:* On the Sahyadri step, upload demo/samples/message_fake_bank.png.
+- **Say:** "Now the kind of message fraudsters send grieving families: pay a release fee, share an OTP. Virasat flags it, in code as well as with Gemini, and changes nothing in the case."
+
+### 4:30 Hindi *(can skip)*
+- *Do:* Click हिन्दी, show the plan or a letter for a moment, then click English.
+- **Say:** "And everything works in Hindi too: the screens, the plan and the letters."
+
+### 4:40 Privacy, and goodbye
+- *Do:* Copy the case address, paste it in the incognito window. It opens nothing.
+- *Do:* Stay on the start screen for the last line.
+- **Say:** "Finally, privacy. If this link is forwarded, or a scammer guesses it, it opens nothing. A case opens only on the device that started it. That's Virasat: find and claim what your loved one left behind. Thank you."
 
 ## Part C: feature coverage
 
