@@ -3,7 +3,7 @@ import { api } from "../api";
 import { docTypeLabel, orgName, t } from "../i18n";
 import { go } from "../nav";
 import { ActivityList, ActivitySummary } from "../components/ActivityPanel";
-import { PapersArt } from "../components/Art";
+import { PapersArt, TypeIcon } from "../components/Art";
 import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, Spinner } from "../components/ui";
 
 const READ_AT_ONCE = 2;
@@ -143,6 +143,25 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
         </div>
       )}
 
+      {/* Open until the first upload, then tucked away; the family can still open it. */}
+      <details open={c.documents.length === 0} className="mt-5 rounded-2xl border border-sand-200 bg-white px-5 py-4">
+        <summary className="cursor-pointer font-semibold text-brand">{t(lang, "guideTitle")}</summary>
+        <p className="mt-3 text-ink-soft">{t(lang, "guideIntro")}</p>
+        <ul className="mt-4 space-y-4">
+          {t(lang, "guideItems").map((g) => (
+            <li key={g.icon} className="flex gap-3">
+              <TypeIcon type={g.icon} />
+              <div className="min-w-0">
+                <p className="font-semibold">{g.what}</p>
+                <p>{g.where}</p>
+                {g.missing && <p className="mt-1 text-sm text-ink-soft">{g.missing}</p>}
+              </div>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 rounded-2xl bg-brand-soft px-4 py-3 text-sm text-brand-dark">{t(lang, "guideSafety")}</p>
+      </details>
+
       <ErrorNote lang={lang} error={error} />
 
       {c.documents.length > 0 && (
@@ -171,7 +190,7 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
               {removing?.id === d.id && (
                 <span role="alertdialog" aria-label={t(lang, "removeDocConfirm")}
                       className="flex flex-col gap-2 sm:basis-full sm:flex-row sm:items-center" data-no-read>
-                  <span className="text-[0.95rem]">{t(lang, "removeDocConfirm")}</span>
+                  <span>{t(lang, "removeDocConfirm")}</span>
                   <Button variant="danger" busy={removing.busy} onClick={() => removeDocument(d.id)} autoFocus>
                     {t(lang, "removeYes")}
                   </Button>
