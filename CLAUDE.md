@@ -18,8 +18,8 @@ Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo pa
     through `gemini.generate()` (per-model RPM throttle via `GEMINI_RPM`, honours 429 retry delays). The one
     exception is the agent: Google ADK makes its model calls, with the same throttle applied in a before-model callback.
   - **Quota (found 2026-10-16):** the free tier allows ~5 RPM and **20 requests/day per model**, and
-    `gemini-4-argon` has a free-tier limit of **0**. Local `.env` therefore sets `REASONING_MODEL=gemini-3.6-flash`
-    until billing is enabled (a different free model from extraction, so each gets its own daily quota; free models
+    `gemini-4-argon` has a free-tier limit of **0**. Billing was enabled on 2026-10-18: `.env` now uses
+    `REASONING_MODEL=gemini-4-argon`, `GEMINI_RPM=0`, `GEMINI_DAILY_LIMIT=300` (free-tier fallback: 3.6-flash, RPM 5) (a different free model from extraction, so each gets its own daily quota; free models
     per the pricing page on 2026-10-17: 3.8-flash, 3.6-flash, 3.5-flash-lite, 3.1-flash-lite, 3-flash-preview). Don't burn quota: use `--replay` / `--missing` flags and recorded fixtures.
 - **Deployable to Google Cloud Run** as ONE container: a multi-stage Dockerfile builds the frontend and FastAPI serves it.
 - **No real personal data anywhere.** Demo data is synthetic, uses fictional institutions, and is watermarked.

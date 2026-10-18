@@ -44,5 +44,5 @@ def get_settings() -> Settings:
         firestore_database=os.getenv("FIRESTORE_DATABASE", "(default)"),
         max_upload_bytes=int(os.getenv("MAX_UPLOAD_BYTES", str(15 * 1024 * 1024))),
         gemini_rpm=int(os.getenv("GEMINI_RPM", "0")),  # 0 = no client-side throttle
-        gemini_daily_limit=int(os.getenv("GEMINI_DAILY_LIMIT", "1500")),  # Gemini calls/day per instance; 0 = none
+        gemini_daily_limit=int(os.getenv("GEMINI_DAILY_LIMIT", "300")),  # Gemini calls/day per instance; 0 = none
     )
