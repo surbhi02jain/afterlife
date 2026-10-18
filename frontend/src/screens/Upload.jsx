@@ -7,6 +7,7 @@ import { PapersArt, TypeIcon } from "../components/Art";
 import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, Spinner } from "../components/ui";
 
 const READ_AT_ONCE = 2;
+const MAX_FILES = 20; // same cap as the server, which now sees one file per request
 
 function StatusChip({ lang, doc, reading }) {
   if (reading) return <Spinner label={t(lang, "st_extracting")} />;
@@ -73,17 +74,21 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
 
   async function addFiles(files) {
     if (!files?.length) return;
-    setUploading(true);
     setError(null);
-    try {
-      const docs = await api.upload(c.id, files);
-      await refresh();
-      readDocuments(docs.map((d) => d.id));
-    } catch (e) {
-      setError(e);
-    } finally {
-      setUploading(false);
+    if (files.length > MAX_FILES) return setError(new Error(t(lang, "tooManyFiles", { n: MAX_FILES })));
+    setUploading(true);
+    // One file per request: Cloud Run refuses any request over 32 MiB, and a few phone photos together pass that.
+    const docs = [];
+    for (const file of files) {
+      try {
+        docs.push(...(await api.upload(c.id, [file])));
+      } catch (e) {
+        setError(e); // the server names the file; the other files still upload
+      }
     }
+    setUploading(false);
+    await refresh();
+    readDocuments(docs.map((d) => d.id));
   }
 
   async function analyse() {
