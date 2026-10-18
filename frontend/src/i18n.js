@@ -74,7 +74,13 @@ const en = {
       missing: "Missing? Ask the lender for the amount still owed." },
   ],
   guideSafety:
-    "Please don't use their passwords, PINs or OTPs to log in and download anything. Use only papers and messages the family already has, or ask the institution.",
+    "Please don't use their passwords, PINs or OTPs to log in and download anything. Use only papers and messages the family already has, or ask the institution. Banks and insurers share details only with the nominee or legal heir, after checking the death certificate and ID.",
+  scamTitle: "Stay safe from scams",
+  scamPoints: [
+    "Afterlife will never call, message or email you.",
+    "Banks and insurers never ask for an OTP, PIN or password, and never ask you to pay to release a claim.",
+    "If anyone offers to get the money faster for a fee, it is a scam. Go to the branch or office yourself.",
+  ],
   st_uploaded: "Waiting to be read",
   st_extracting: "Reading…",
   st_extracted: "Read",
@@ -267,7 +273,13 @@ const hi = {
       missing: "नहीं मिल रहा? लेंडर से बकाया राशि पूछें।" },
   ],
   guideSafety:
-    "कृपया उनके पासवर्ड, PIN या OTP से लॉग इन करके कुछ भी डाउनलोड न करें। केवल वही कागज़ और संदेश इस्तेमाल करें जो परिवार के पास पहले से हैं, या संस्था से माँगें।",
+    "कृपया उनके पासवर्ड, PIN या OTP से लॉग इन करके कुछ भी डाउनलोड न करें। केवल वही कागज़ और संदेश इस्तेमाल करें जो परिवार के पास पहले से हैं, या संस्था से माँगें। बैंक और बीमा कंपनियाँ मृत्यु प्रमाण पत्र और पहचान पत्र जाँचने के बाद ही नॉमिनी या कानूनी वारिस को जानकारी देती हैं।",
+  scamTitle: "धोखाधड़ी से सावधान रहें",
+  scamPoints: [
+    "आफ्टरलाइफ़ आपको कभी फ़ोन, संदेश या ईमेल नहीं करेगा।",
+    "बैंक और बीमा कंपनियाँ कभी OTP, PIN या पासवर्ड नहीं माँगतीं, और दावा जारी करने के लिए कभी पैसे नहीं माँगतीं।",
+    "अगर कोई फ़ीस लेकर पैसा जल्दी दिलाने की बात करे, तो यह धोखा है। ख़ुद शाखा या दफ़्तर जाएँ।",
+  ],
   st_uploaded: "पढ़े जाने की प्रतीक्षा में",
   st_extracting: "पढ़ा जा रहा है…",
   st_extracted: "पढ़ लिया",

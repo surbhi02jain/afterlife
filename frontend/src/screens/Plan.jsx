@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../api";
 import { orgName, t, typeLabel } from "../i18n";
 import { go } from "../nav";
-import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar } from "../components/ui";
+import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, ScamNotice } from "../components/ui";
 
 function TaskCard({ lang, task, onLetter, busy }) {
   return (
@@ -129,6 +129,7 @@ export default function Plan({ c, lang, refresh }) {
   return (
     <div className="fade-in">
       <PageTitle title={t(lang, "planTitle")} body={plan ? t(lang, "planBody") : null} />
+      {plan && <ScamNotice lang={lang} />}
       <ErrorNote lang={lang} error={error} />
       {!plan ? (
         <PrimaryBar>

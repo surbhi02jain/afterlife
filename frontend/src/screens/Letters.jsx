@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { orgName, t, typeLabel } from "../i18n";
-import { Button, ErrorNote, PageTitle, PrimaryBar, field } from "../components/ui";
+import { Button, ErrorNote, PageTitle, PrimaryBar, ScamNotice, field } from "../components/ui";
 
 function selectedFromHash() {
   const match = window.location.hash.match(/[?&]l=([a-f0-9]+)/);
@@ -62,6 +62,7 @@ export default function Letters({ c, lang, refresh }) {
   return (
     <div className="fade-in">
       <PageTitle title={t(lang, "lettersTitle")} body={t(lang, "lettersBody")} />
+      <ScamNotice lang={lang} />
       <ErrorNote lang={lang} error={error} />
 
       {c.letters.length === 0 && <p className="text-ink-soft">{t(lang, "noLetters")}</p>}

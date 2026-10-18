@@ -180,6 +180,14 @@ def test_enquiry_letter_for_probable_item_never_claims_it_exists():
     assert "policy no." not in letter.body
 
 
+def test_every_letter_asks_the_institution_to_verify_the_sender():
+    # an impersonator's copy then asks the bank to check them against the nominee records
+    for lang, phrase in (("en", "verifying me against your nominee"), ("hi", "कानूनी वारिस के रिकॉर्ड से मेरी पुष्टि")):
+        case = full_case(lang)
+        for item_id in (item(case, "life_insurance", "jeevan").id, item(case, "life_insurance", "kavach").id):
+            assert phrase in draft_letter(case, item_id, TODAY).body
+
+
 def test_hindi_letter_and_pdf():
     case = full_case("hi")
     letter = draft_letter(case, item(case, "demat_account").id, TODAY)

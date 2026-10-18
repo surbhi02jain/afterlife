@@ -56,6 +56,20 @@ export function SectionTitle({ id, className = "", children }) {
 // The one style for text inputs, selects and text areas.
 export const field = "block w-full min-h-12 rounded-2xl border-2 border-sand-300 bg-white px-4 py-3 text-base focus:border-brand";
 
+// Shown where families act on claims (plan, letters): the frauds that target grieving families.
+export function ScamNotice({ lang }) {
+  return (
+    <aside className="mb-6 rounded-2xl border border-brand/20 bg-brand-soft px-5 py-4 text-brand-dark" aria-label={t(lang, "scamTitle")}>
+      <p className="font-semibold">{t(lang, "scamTitle")}</p>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+        {t(lang, "scamPoints").map((point) => (
+          <li key={point}>{point}</li>
+        ))}
+      </ul>
+    </aside>
+  );
+}
+
 export function Badge({ tone = "neutral", children }) {
   const tones = {
     neutral: "bg-sand-100 text-ink-soft",

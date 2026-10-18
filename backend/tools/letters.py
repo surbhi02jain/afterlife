@@ -45,6 +45,11 @@ def draft_letter(case: Case, item_id: str, today: date | None = None) -> Letter:
     kind_label = label(item.type, lang)
     header = pick(lang, f"To,\nThe Branch Manager / Claims Department\n{institution}\n\nDate: {nice_date(today)}",
                   f"सेवा में,\nशाखा प्रबंधक / क्लेम विभाग\n{institution}\n\nदिनांक: {nice_date(today, 'hi')}")
+    # Every letter asks the institution to verify the sender: a copy sent by an impersonator works against them.
+    verify = pick(lang, "For the family's safety, please share details only after verifying me against your nominee and "
+                        "legal-heir records, and reply only to the address you hold on record.",
+                  "परिवार की सुरक्षा के लिए, कृपया अपने नॉमिनी और कानूनी वारिस के रिकॉर्ड से मेरी पुष्टि करने के बाद ही "
+                  "जानकारी दें, और उत्तर केवल अपने रिकॉर्ड में दर्ज पते पर भेजें।")
     closing = pick(lang, "Thank you for your help at this difficult time.\n\nYours faithfully,",
                    "इस कठिन समय में आपकी सहायता के लिए धन्यवाद।\n\nभवदीय,")
 
@@ -101,7 +106,7 @@ def draft_letter(case: Case, item_id: str, today: date | None = None) -> Letter:
         title = pick(lang, f"Claim letter to {institution}", f"{institution} को क्लेम पत्र")
 
     subject_label = pick(lang, "Subject", "विषय")
-    text = f"{header}\n\n{subject_label}: {subject}\n\n{body}\n\n{closing}\n\n{_signature(case, lang)}"
+    text = f"{header}\n\n{subject_label}: {subject}\n\n{body}\n\n{verify}\n\n{closing}\n\n{_signature(case, lang)}"
     return Letter(item_id=item.id, institution=institution, kind=kind, title=title, body=text, language=lang)
 
 
