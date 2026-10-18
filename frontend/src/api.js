@@ -50,5 +50,6 @@ export const api = {
   editLetter: (id, letterId, title, body) => request("PUT", `${c(id)}/letters/${letterId}`, { title, body }),
   letterPdfUrl: (id, letterId) => `${c(id)}/letters/${letterId}/pdf`,
   share: (id) => request("POST", `${c(id)}/share`),
+  unshare: (id) => request("DELETE", `${c(id)}/share`),
   shared: (token) => request("GET", `/api/share/${token}`),
 };

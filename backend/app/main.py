@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from agent.loop import ANALYSE_MESSAGE, AgentError, run_agent
 from app import services
 from app.config import REPO_ROOT, get_settings
-from app.models import BoardStatus, Case, CaseCreate, CaseUpdate, Document, InferenceRun, ItemStatus, Letter
+from app.models import BoardStatus, Case, CaseCreate, CaseUpdate, Document, InferenceRun, ItemStatus, Letter, utc_now
 from storage import CaseNotFound, Storage, get_storage
 from tools.asset_map import asset_map_view
 from tools.extraction import SUPPORTED_MIME_TYPES, ExtractionError
@@ -74,6 +74,7 @@ def case_view(case: Case) -> dict:
         "id": case.id, "deceased_name": case.deceased_name, "date_of_death": case.date_of_death.isoformat(),
         "relationship": case.relationship, "language": case.language, "is_demo": case.is_demo,
         "created_at": case.created_at, "updated_at": case.updated_at, "share_token": case.share_token,
+        "share_expires_at": case.share_expires_at,
         "documents": [document_view(d, case.deceased_name) for d in case.documents],
         "asset_map": asset_map_view(case),
         "facts": case.facts.model_dump(),
@@ -334,22 +335,28 @@ def download_letter(letter_id: str, case: Case = Depends(load_case)):
 
 @app.post("/api/cases/{case_id}/share")
 def create_share_link(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
-    return {"share_token": services.ensure_share_token(storage, case.id)}
+    case = services.ensure_share_token(storage, case.id)
+    return {"share_token": case.share_token, "share_expires_at": case.share_expires_at}
+
+
+@app.delete("/api/cases/{case_id}/share")
+def turn_off_share_link(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    return case_view(services.turn_off_share_link(storage, case.id))
 
 
 @app.get("/api/share/{token}")
 def shared_board(token: str, storage: Storage = Depends(get_storage)):
-    """Read-only family board: plan progress and masked asset names. No documents, letters or evidence."""
+    """Read-only family board: institutions, account types and step progress. No documents, letters, evidence,
+    account numbers or nominees, since a forwarded link must not give a caller details to sound convincing."""
     case = storage.find_by_share_token(token)
-    if case is None:
+    if case is None or not case.share_expires_at or case.share_expires_at <= utc_now():
         raise HTTPException(404, "This link is not valid any more")
     tasks = case.plan.tasks if case.plan else []
     return {
         "deceased_name": case.deceased_name, "language": case.language,
         "tasks": [{"id": t.id, "order": t.order, "institution": t.institution, "first_step": t.first_step,
                    "board_status": t.board_status, "needs_confirmation": t.needs_confirmation,
-                   "items": [{"type": i.type, "status": i.status, "identifier_masked": i.identifier_masked}
-                             for i in t.items]} for t in tasks],
+                   "items": [{"type": i.type, "status": i.status} for i in t.items]} for t in tasks],
         "updated_at": case.updated_at,
     }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { orgName, t, typeLabel } from "../i18n";
+import { niceDate, orgName, t, typeLabel } from "../i18n";
 import { go } from "../nav";
 import { Button, Card, ErrorNote, PageTitle, Spinner } from "../components/ui";
 
@@ -89,6 +89,19 @@ export default function Board({ c, lang, refresh }) {
     }
   }
 
+  async function turnOff() {
+    setBusy("unshare");
+    setError(null);
+    try {
+      await api.unshare(c.id);
+      await refresh();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -115,12 +128,20 @@ export default function Board({ c, lang, refresh }) {
             <h2 className="font-serif text-xl">{t(lang, "shareTitle")}</h2>
             <p className="mt-1 text-ink-soft">{t(lang, "shareBody")}</p>
             {shareUrl ? (
+              <>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <input readOnly value={shareUrl} aria-label={t(lang, "shareTitle")}
                        className="min-h-12 flex-1 rounded-2xl border-2 border-sand-300 bg-sand-50 px-4 text-sm"
                        onFocus={(e) => e.target.select()} />
                 <Button onClick={copy}>{copied ? `✓ ${t(lang, "copied")}` : t(lang, "copy")}</Button>
               </div>
+              <p className="mt-3 text-sm text-ink-soft">
+                {t(lang, "shareUntil", { date: niceDate(c.share_expires_at, lang) })}
+              </p>
+              <Button variant="quiet" className="mt-1 -ml-2" busy={busy === "unshare"} onClick={turnOff}>
+                {t(lang, "turnOffLink")}
+              </Button>
+              </>
             ) : (
               <Button className="mt-4" busy={busy === "share"} onClick={share}>
                 {t(lang, "createLink")}

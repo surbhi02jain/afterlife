@@ -390,3 +390,30 @@ def test_cases_from_before_keys_still_open(api, storage):
 
     case = storage.create_case(new_case())
     assert api.get(f"/api/cases/{case.id}").status_code == 200
+
+
+def test_family_link_shows_no_numbers_expires_and_can_be_turned_off(api, storage):
+    from datetime import timedelta
+
+    from app.models import utc_now
+
+    case = api.post("/api/demo").json()  # the sample family: real accounts with numbers and nominees
+    api.post(f"/api/cases/{case['id']}/extract")
+    api.post(f"/api/cases/{case['id']}/plan")
+    first = api.post(f"/api/cases/{case['id']}/share").json()
+    assert api.post(f"/api/cases/{case['id']}/share").json()["share_token"] == first["share_token"]  # kept while valid
+
+    board = api.get(f"/api/share/{first['share_token']}").json()
+    assert len(board["tasks"]) >= 5  # there is real content to leak
+    assert "XXXX" not in str(board) and "Kamala" not in str(board)  # no account numbers, no nominee
+
+    # turned off: the old link stops working and a new one is different
+    api.delete(f"/api/cases/{case['id']}/share")
+    assert api.get(f"/api/share/{first['share_token']}").status_code == 404
+    second = api.post(f"/api/cases/{case['id']}/share").json()["share_token"]
+    assert second != first["share_token"] and api.get(f"/api/share/{second}").status_code == 200
+
+    # expired: the link stops working, and asking again issues a fresh one
+    storage.update_case(case["id"], lambda c: setattr(c, "share_expires_at", utc_now() - timedelta(minutes=1)))
+    assert api.get(f"/api/share/{second}").status_code == 404
+    assert api.post(f"/api/cases/{case['id']}/share").json()["share_token"] != second

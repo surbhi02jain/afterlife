@@ -347,6 +347,7 @@ class Case(CaseFields):
     updated_at: datetime = Field(default_factory=utc_now)
     is_demo: bool = False
     share_token: str | None = None
+    share_expires_at: datetime | None = None  # the read-only family link stops working after this
     owner_key_hash: str | None = None  # sha256 of the private key held by the creating browser; never sent out
     documents: list[Document] = Field(default_factory=list)
     assets: list[Asset] = Field(default_factory=list)

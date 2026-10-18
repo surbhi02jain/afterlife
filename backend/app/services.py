@@ -6,7 +6,7 @@ Every operation records a plain-language entry (English + Hindi) in the case's a
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, timedelta
 
 import kb
 from app import demo
@@ -349,11 +349,26 @@ def edit_letter(storage: Storage, case_id: str, letter_id: str, title: str | Non
     return storage.update_case(case_id, mutate).get_letter(letter_id)
 
 
-def ensure_share_token(storage: Storage, case_id: str) -> str:
-    def mutate(c: Case):
-        c.share_token = c.share_token or new_id()
+SHARE_LINK_DAYS = 30
 
-    return storage.update_case(case_id, mutate).share_token
+
+def ensure_share_token(storage: Storage, case_id: str) -> Case:
+    """The read-only family link: kept while it is valid, otherwise a new one that works for SHARE_LINK_DAYS."""
+    from app.models import utc_now
+
+    def mutate(c: Case):
+        if not (c.share_token and c.share_expires_at and c.share_expires_at > utc_now()):
+            c.share_token, c.share_expires_at = new_id(), utc_now() + timedelta(days=SHARE_LINK_DAYS)
+
+    return storage.update_case(case_id, mutate)
+
+
+def turn_off_share_link(storage: Storage, case_id: str) -> Case:
+    def mutate(c: Case):
+        c.share_token = c.share_expires_at = None
+        log(c, "share_link", "Turned off the family link", "परिवार लिंक बंद किया")
+
+    return storage.update_case(case_id, mutate)
 
 
 def activity_summary(case: Case) -> list[dict]:
