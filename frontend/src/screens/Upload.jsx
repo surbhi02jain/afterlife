@@ -130,8 +130,10 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
     await Promise.all(Array.from({ length: READ_AT_ONCE }, worker));
   }
 
-  async function addFiles(files) {
-    if (!files?.length) return;
+  async function addFiles(fileList) {
+    // Copy now: the browser empties a FileList once the input is reset or the drop event ends.
+    const files = [...(fileList || [])];
+    if (!files.length) return;
     setError(null);
     if (files.length > MAX_FILES) return setError(new Error(t(lang, "tooManyFiles", { n: MAX_FILES })));
     setUploading(true);
