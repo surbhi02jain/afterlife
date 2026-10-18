@@ -23,6 +23,7 @@ export default function Start({ lang }) {
   const previous = lastCase();
   const deleted = window.location.hash.includes("deleted");
   const unavailable = window.location.hash.includes("unavailable");
+  const left = window.location.hash.includes("left");
   const today = new Date().toISOString().slice(0, 10);
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
@@ -64,6 +65,11 @@ export default function Start({ lang }) {
             {t(lang, "deletedNotice")}
           </p>
         )}
+        {left && (
+          <p role="status" className="mb-4 rounded-2xl bg-sage-soft px-4 py-3 text-sage-ink">
+            {t(lang, "leftNotice")}
+          </p>
+        )}
         {unavailable && (
           <p role="status" className="mb-4 rounded-2xl bg-brand-soft px-4 py-3 text-brand-dark">
             {t(lang, "unavailableNotice")}
@@ -78,9 +84,12 @@ export default function Start({ lang }) {
           </Button>
         </Card>
         {previous && (
-          <a href={`#/case/${previous}/upload`} className="mt-4 inline-block font-semibold text-brand underline underline-offset-4">
-            {t(lang, "continueCase")}
-          </a>
+          <p className="mt-4">
+            <a href={`#/case/${previous}/upload`} className="font-semibold text-brand underline underline-offset-4">
+              {t(lang, "continueCase")}
+            </a>
+            <span className="mt-1 block text-sm text-ink-soft">{t(lang, "sharedComputerHint")}</span>
+          </p>
         )}
       </section>
 

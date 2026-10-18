@@ -33,6 +33,7 @@ export const api = {
   getCase: (id) => request("GET", c(id)),
   patchCase: (id, body) => request("PATCH", c(id), body),
   deleteCase: (id) => request("DELETE", c(id)),
+  leaveCase: (id) => request("POST", `${c(id)}/leave`),
   upload: (id, files) => {
     const form = new FormData();
     for (const f of files) form.append("files", f);

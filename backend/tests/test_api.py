@@ -417,3 +417,44 @@ def test_family_link_shows_no_numbers_expires_and_can_be_turned_off(api, storage
     storage.update_case(case["id"], lambda c: setattr(c, "share_expires_at", utc_now() - timedelta(minutes=1)))
     assert api.get(f"/api/share/{second}").status_code == 404
     assert api.post(f"/api/cases/{case['id']}/share").json()["share_token"] != second
+
+
+def test_daily_gemini_limit_stops_spending_and_says_so(api, monkeypatch, fake_client):
+    from datetime import date, timedelta
+
+    from app import gemini
+
+    budget = gemini.DailyBudget(1)
+    monkeypatch.setattr(gemini, "get_daily_budget", lambda: budget)
+    monkeypatch.setattr(extraction, "get_client", lambda: fake_client)
+    case = make_case(api)
+    first, second = upload(api, case["id"], name="a.png").json()[0], upload(api, case["id"], name="b.png").json()[0]
+
+    assert api.post(f"/api/cases/{case['id']}/documents/{first['id']}/extract").status_code == 200
+    response = api.post(f"/api/cases/{case['id']}/documents/{second['id']}/extract")
+    assert response.status_code == 502 and "today's limit" in response.json()["detail"]
+    assert len(fake_client.models.calls) == 1  # the second request never reached Gemini
+
+    budget._day = date.today() - timedelta(days=1)  # a new day: allowed again
+    assert api.post(f"/api/cases/{case['id']}/documents/{second['id']}/extract").status_code == 200
+
+
+def test_agent_stops_cleanly_at_the_daily_limit(storage, monkeypatch):
+    import pytest as _pytest
+
+    from agent.loop import AgentError, run_agent
+    from app import gemini
+    from tests.test_agent import ScriptedLlm, uploaded_case
+
+    budget = gemini.DailyBudget(1)
+    monkeypatch.setattr(gemini, "get_daily_budget", lambda: budget)
+    case, _ = uploaded_case(storage)
+    with _pytest.raises(AgentError, match="today's limit"):
+        run_agent(storage, case.id, model=ScriptedLlm())  # keeps calling tools, so a second model call is needed
+    assert storage.get_case(case.id).activity[-1].tool == "agent_error"
+
+
+def test_leaving_a_case_on_a_shared_computer_locks_this_browser_out(api):
+    case = api.post("/api/cases", json=CASE).json()
+    assert api.post(f"/api/cases/{case['id']}/leave").status_code == 204
+    assert api.get(f"/api/cases/{case['id']}").status_code == 404  # the next person at this computer sees nothing

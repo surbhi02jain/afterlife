@@ -123,6 +123,15 @@ def update_case(body: CaseUpdate, case: Case = Depends(load_case), storage: Stor
     return case_view(services.update_case_details(storage, case.id, changes))
 
 
+@app.post("/api/cases/{case_id}/leave", status_code=204)
+def leave_case(case: Case = Depends(load_case)):
+    """'Leave this case on this device' (a shared computer): this browser forgets the key. The case stays, but since
+    only the creating browser held the key, nobody can open it again; the screen says so before asking."""
+    response = Response(status_code=204)
+    response.delete_cookie(_key_cookie(case.id), path=f"/api/cases/{case.id}", httponly=True, samesite="strict")
+    return response
+
+
 @app.delete("/api/cases/{case_id}", status_code=204)
 def delete_case(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
     """'Delete my data': removes the case record and every uploaded file. Only the case's own browser can."""
