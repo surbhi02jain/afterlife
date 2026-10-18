@@ -4,7 +4,7 @@ import { docTypeLabel, orgName, t } from "../i18n";
 import { go } from "../nav";
 import { ActivityList, ActivitySummary } from "../components/ActivityPanel";
 import { PapersArt, TypeIcon } from "../components/Art";
-import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, Spinner } from "../components/ui";
+import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, Spinner, field } from "../components/ui";
 
 const READ_AT_ONCE = 2;
 const MAX_FILES = 20; // same cap as the server, which now sees one file per request
@@ -21,7 +21,64 @@ function StatusChip({ lang, doc, reading }) {
       </span>
     );
   if (doc.status === "failed") return <span className="text-rose-ink">{t(lang, "st_failed")}</span>;
+  if (doc.status === "locked")
+    return (
+      <span className="font-semibold text-brand-dark">
+        <span aria-hidden="true">🔒 </span>
+        {t(lang, "st_locked")}
+      </span>
+    );
   return <span className="text-ink-soft">{t(lang, "st_uploaded")}</span>;
+}
+
+// The password goes to the server once, to open this file; it is never kept in the app or on the server.
+function UnlockForm({ lang, caseId, doc, isDemo, onUnlocked }) {
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function submit(e) {
+    e.preventDefault();
+    if (!password) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.unlock(caseId, doc.id, password);
+      setPassword("");
+      onUnlocked(doc.id);
+    } catch (err) {
+      setError(err);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-2 flex flex-col gap-2 sm:basis-full" data-no-read>
+      <p className="text-sm text-ink-soft">{t(lang, "unlockHint")}</p>
+      {isDemo && <p className="text-sm font-semibold text-brand-dark">{t(lang, "demoPassword")}</p>}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <label className="block flex-1 font-semibold">
+          {t(lang, "pdfPassword")}
+          <input
+            type="password"
+            autoComplete="off"
+            maxLength={200}
+            className={`mt-2 ${field}`}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+        <Button variant="secondary" type="submit" busy={busy} disabled={!password}>
+          {t(lang, "unlock")}
+        </Button>
+      </div>
+      {error && (
+        <p role="alert" className="text-sm text-rose-ink">
+          {String(error.message || error)}
+        </p>
+      )}
+    </form>
+  );
 }
 
 export default function Upload({ c, lang, refresh, setCase, analysing, setAnalysing, setAgentReply }) {
@@ -32,8 +89,9 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
   const [removing, setRemoving] = useState(null); // { id, busy } while asking "remove this file?"
   const [error, setError] = useState(null);
 
-  const pending = c.documents.filter((d) => d.status !== "extracted");
-  const allRead = c.documents.length > 0 && pending.length === 0;
+  const locked = c.documents.filter((d) => d.status === "locked");
+  const pending = c.documents.filter((d) => d.status !== "extracted" && d.status !== "locked");
+  const allRead = c.documents.length > 0 && pending.length === 0 && locked.length === 0;
   // Analysed = the hidden-asset search ran after the documents last changed (a file read or removed).
   const lastChange = c.activity.findLastIndex((a) => a.tool === "remove_document" || (a.tool === "extract_document" && a.ok));
   const analysed = c.activity.findLastIndex((a) => a.tool === "infer_hidden_assets" && a.ok) > lastChange;
@@ -88,7 +146,7 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
     }
     setUploading(false);
     await refresh();
-    readDocuments(docs.map((d) => d.id));
+    readDocuments(docs.filter((d) => d.status !== "locked").map((d) => d.id)); // locked PDFs wait for a password
   }
 
   async function analyse() {
@@ -192,6 +250,18 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
                   {t(lang, "otherHolder", { holder: d.other_holder, name: c.deceased_name })}
                 </span>
               )}
+              {d.status === "locked" && !analysing && removing?.id !== d.id && (
+                <UnlockForm
+                  lang={lang}
+                  caseId={c.id}
+                  doc={d}
+                  isDemo={c.is_demo}
+                  onUnlocked={async (id) => {
+                    await refresh();
+                    readDocuments([id]);
+                  }}
+                />
+              )}
               {d.status === "failed" && d.error && (
                 <span className="text-sm text-rose-ink sm:basis-full" data-no-read>
                   {d.error.slice(0, 220)}
@@ -230,6 +300,8 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
       <PrimaryBar>
         {c.documents.length === 0 ? (
           <p className="text-ink-soft">{t(lang, "noDocsYet")}</p>
+        ) : pending.length === 0 && locked.length > 0 ? (
+          <p className="text-ink-soft">{t(lang, "unlockFirst")}</p>
         ) : !allRead ? (
           <Button busy={busyReading} onClick={() => readDocuments(pending.map((d) => d.id))}>
             {busyReading ? t(lang, "reading") : t(lang, "readDocs", { n: pending.length })}

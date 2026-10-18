@@ -7,15 +7,28 @@ Two assets are PLANTED: they have no document of their own, but they can be infe
   1. A demat account at "Anand Stockbroking" (dividend credits + DP AMC charge + UPI 'add funds').
   2. A second life policy with "Kavach Life Insurance" (monthly NACH premium debit).
 
-Usage:  .venv/bin/python scripts/make_demo_docs.py   -> writes demo/docs/*.png and demo/README.md
+The mutual fund statement is a password-protected PDF (like real fund statements) to show unlocking.
+
+Usage:  .venv/bin/python scripts/make_demo_docs.py   -> writes demo/docs/*.png, *.pdf and demo/README.md
 """
 
+import io
+import shutil
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
+from fpdf import FPDF
 from PIL import Image, ImageDraw, ImageFont
+from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "demo" / "docs"
+sys.path.insert(0, str(ROOT / "backend"))
+
+from app.demo import DEMO_PDF_PASSWORD  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # The synthetic family
@@ -29,6 +42,16 @@ DATE_OF_DEATH = "2026-09-02"
 
 BANK = "Sahyadri National Bank"
 SAVINGS_AC = "30218847201931"
+
+# PLANTED name differences, as real papers often have them (for the name check):
+EPF_NAME = "S N RAO"                 # EPFO records often carry initials only
+PASSBOOK_NOMINEE = "Smt. Kamla Rao"  # a spelling variant, middle name missing
+
+SAMPLES_DIR = ROOT / "demo" / "samples"
+# What Kamala remembers, in Hindi: the Kavach premiums (which the statements back up) and a PPF account at the post
+# office (which no paper shows). Spoken by the macOS Hindi voice, so it is synthetic too.
+MEMORY_HI = ("मुझे याद है, वो हर महीने कवच लाइफ़ इंश्योरेंस का प्रीमियम भरते थे। "
+             "और जब अर्जुन पैदा हुआ था, तब उन्होंने पोस्ट ऑफ़िस में एक पीपीएफ़ खाता खुलवाया था। उसकी पासबुक मुझे नहीं मिल रही।")
 
 # ---------------------------------------------------------------------------
 # Fonts and drawing helpers
@@ -121,6 +144,21 @@ def save(img: Image.Image, name: str) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     watermark(img).save(OUT_DIR / name, optimize=True)
     print("wrote", (OUT_DIR / name).relative_to(ROOT))
+
+
+def save_locked_pdf(img: Image.Image, name: str) -> None:
+    """One page holding the image, locked with DEMO_PDF_PASSWORD. Fixed creation date: the unlocked copy is
+    byte-identical on every run, so its recorded Gemini reply keeps matching."""
+    doc = FPDF(unit="pt", format=img.size)
+    doc.set_creation_date(datetime(2026, 9, 1, tzinfo=timezone.utc))
+    doc.add_page()
+    doc.image(watermark(img), 0, 0, img.size[0], img.size[1])
+    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(bytes(doc.output()))))
+    writer.encrypt(user_password=DEMO_PDF_PASSWORD, owner_password=DEMO_PDF_PASSWORD + "-owner", algorithm="AES-256")
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    with open(OUT_DIR / name, "wb") as f:
+        writer.write(f)
+    print("wrote", (OUT_DIR / name).relative_to(ROOT), f"(password {DEMO_PDF_PASSWORD})")
 
 
 # ---------------------------------------------------------------------------
@@ -228,7 +266,7 @@ def passbook() -> Image.Image:
     d.rectangle([40, 50, 1560, 1060], outline="#8a7a55", width=3)
     text(d, (800, 95), "DECCAN GRAMIN CO-OPERATIVE BANK LTD.", size=36, kind="serif", fill="#5a2d0c", anchor="ma")
     text(d, (800, 145), "Paud Road Branch, Pune  -  SAVINGS BANK PASS BOOK (fictional bank)", size=22, kind="serif", fill="#5a2d0c", anchor="ma")
-    info = [("A/c No.", "SB/004417"), ("Name", PERSON_TITLE), ("Nominee", WIFE), ("Joint holder", "-")]
+    info = [("A/c No.", "SB/004417"), ("Name", PERSON_TITLE), ("Nominee", PASSBOOK_NOMINEE), ("Joint holder", "-")]
     for i, (k, v) in enumerate(info):
         text(d, (90 + (i % 2) * 740, 200 + (i // 2) * 40), f"{k}: {v}", size=24, kind="mono", fill="#222")
     rows = [
@@ -451,7 +489,7 @@ def epf_passbook() -> Image.Image:
     text(d, (620, 70), "MEMBER PASSBOOK - EMPLOYEES' PROVIDENT FUND", size=30, kind="bold", fill="#183a6b", anchor="ma")
     text(d, (620, 115), "(SYNTHETIC SAMPLE - layout for demo only)", size=20, fill="#b42318", anchor="ma")
     info = [("Establishment ID / Name", "MHPUN0048213000 / KALPATARU ENGINEERING WORKS PVT LTD (fictional)"),
-            ("Member ID / Name", f"MHPUN00482130000001127 / {PERSON}"),
+            ("Member ID / Name", f"MHPUN00482130000001127 / {EPF_NAME}"),
             ("UAN", "100987654321"), ("Date of Birth", "12-03-1968")]
     y = 170
     for k, v in info:
@@ -481,6 +519,87 @@ def epf_passbook() -> Image.Image:
 
 
 # ---------------------------------------------------------------------------
+# Samples for the demo buttons: replies from institutions, and a voice memory
+# ---------------------------------------------------------------------------
+def reply_kavach_life() -> Image.Image:
+    """Kavach Life confirms the policy the app only inferred, and lists what it needs for the claim."""
+    img = Image.new("RGB", (1240, 1180), "white")
+    d = ImageDraw.Draw(img)
+    logo(d, (120, 120), "KL", "#0b6e4f", r=46)
+    text(d, (190, 88), "KAVACH LIFE INSURANCE CO. LTD.", size=34, kind="bold", fill="#0b6e4f")
+    text(d, (190, 132), "Claims Department, Pune Regional Office  (fictional insurer)", size=21, fill="#444")
+    d.line([60, 190, 1180, 190], fill="#0b6e4f", width=3)
+    y = 225
+    for line in ["Ref: KL/CLM/2026/0048817", "Date: 06/10/2026", "", f"To,  Smt. {WIFE}",
+                 *ADDRESS, "", "Subject: Policy No. KL55120894 - Life Assured: Late Shri Suresh Narayan Rao"]:
+        text(d, (80, y), line, size=23, kind="bold" if line.startswith("Subject") else "regular")
+        y += 36
+    body = ("Dear Madam, we are sorry for your loss. In reply to your letter, we confirm that policy no. KL55120894 "
+            "on the life of Shri Suresh Narayan Rao was in force on the date of death. Sum assured: Rs 15,00,000. "
+            "Nominee as per our records: Kamala S. Rao. To process the death claim, please send the following "
+            "within 30 days of the date of this letter:")
+    y += 20
+    for line in wrap(body, font("regular", 23), 1080):
+        text(d, (80, y), line, size=23)
+        y += 36
+    needs = ["Claim form A (claimant's statement), signed by the nominee",
+             "Attested copy of the death certificate",
+             "Original policy bond (an indemnity bond if it is lost)",
+             "Nominee's photo ID and address proof (PAN or Aadhaar)",
+             "Cancelled cheque of the nominee's bank account"]
+    y += 14
+    for n, need in enumerate(needs, start=1):
+        text(d, (100, y), f"{n}.  {need}", size=23)
+        y += 40
+    y += 20
+    for line in wrap("Kavach Life never asks for any fee, OTP or password to settle a claim. Claim payments are made "
+                     "only to the nominee's own bank account.", font("bold", 21), 1080):
+        text(d, (80, y), line, size=21, kind="bold", fill="#0b6e4f")
+        y += 32
+    text(d, (80, y + 50), "Yours faithfully,", size=23)
+    text(d, (80, y + 90), "Claims Officer, Kavach Life Insurance Co. Ltd.", size=23)
+    return img
+
+
+def message_fake_bank() -> Image.Image:
+    """A scam that targets grieving families: a fee to 'release' the money, an OTP, a personal UPI id."""
+    img, d = phone_frame("+91 90000 00000", "#075e54")
+    text(d, (540, 300), "Today", size=28, fill="#777", anchor="ma")
+    body = ("Dear Kamala ji, deepest condolences from Sahyadri National Bank Claims Cell. Rs 4,85,210 in late Suresh "
+            "Rao a/c XX1931 is ready to release to nominee. To avoid freezing of funds, pay one-time processing fee "
+            "Rs 2,950 to UPI id snb.claimcell@okdemo within 24 hours, and share the OTP you receive for "
+            "verification. - SNB Claims Desk")
+    lines = wrap(body, font("regular", 34), 820)
+    h = 60 + len(lines) * 46
+    d.rounded_rectangle([50, 370, 930, 370 + h], radius=34, fill="#e7f6dd")
+    for i, line in enumerate(lines):
+        text(d, (90, 400 + i * 46), line, size=34)
+    text(d, (540, 1880), "A SAMPLE SCAM MESSAGE for the demo. The number and UPI id are fictional.", size=26,
+         fill="#888", anchor="ma")
+    return img
+
+
+def save_sample(img: Image.Image, name: str) -> None:
+    SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+    watermark(img).save(SAMPLES_DIR / name, optimize=True)
+    print("wrote", (SAMPLES_DIR / name).relative_to(ROOT))
+
+
+def save_memory(name: str) -> None:
+    """16 kHz mono WAV, like the app records. Needs macOS (`say` with the Hindi voice Lekha, and `afconvert`)."""
+    if not (shutil.which("say") and shutil.which("afconvert")):
+        print("skipped", name, "(needs macOS say/afconvert)")
+        return
+    SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        aiff = Path(tmp) / "memory.aiff"
+        subprocess.run(["say", "-v", "Lekha", "-r", "150", "-o", str(aiff), MEMORY_HI], check=True)
+        subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", str(aiff),
+                        str(SAMPLES_DIR / name)], check=True)
+    print("wrote", (SAMPLES_DIR / name).relative_to(ROOT))
+
+
+# ---------------------------------------------------------------------------
 # README of what is planted (generated from the same data, so it can't drift)
 # ---------------------------------------------------------------------------
 def readme() -> str:
@@ -495,6 +614,9 @@ def readme() -> str:
 **Deceased:** {PERSON_TITLE} (fictional), date of death {DATE_OF_DEATH}. Family: {WIFE} (wife), {SON} (son).
 Every institution name is fictional and every image is watermarked "SYNTHETIC DEMO DOCUMENT".
 
+The mutual fund statement is locked like a real one: the family types its password (`{DEMO_PDF_PASSWORD}`: first 4
+letters of the name + day and month of birth, 15 March) on the Documents screen before it can be read.
+
 Regenerate with `.venv/bin/python scripts/make_demo_docs.py`.
 
 ## Uploaded documents (`docs/`)
@@ -508,8 +630,19 @@ Regenerate with `.venv/bin/python scripts/make_demo_docs.py`.
 | 05_upi_history.png | PayDost UPI app screenshot, Aug 2026 | (same txns as statement, dedup test) |
 | 06_premium_receipt.png | Jeevan Raksha life policy premium receipt | Policy ...2093, SA Rs 5,00,000 |
 | 07_loan_emi_sms.png | Griha Setu home loan EMI SMS | LIABILITY: home loan ...7782 |
-| 08_mf_statement.png | Navodaya Mutual Fund statement | Folio 1048832/57 |
+| 08_mf_statement.pdf | Navodaya Mutual Fund statement, **password-protected PDF** (password `{DEMO_PDF_PASSWORD}`) | Folio 1048832/57 |
 | 09_epf_passbook.png | EPF member passbook | UAN ...4321 (no nominee shown, a gap) |
+
+## PLANTED: names written differently (for the name check)
+- `09_epf_passbook.png` gives the member's name as **"{EPF_NAME}"**; every other paper says Suresh Narayan Rao.
+- `03_coop_passbook.png` gives the nominee as **"{PASSBOOK_NOMINEE}"**; the other papers say {WIFE}.
+
+## Samples for the demo buttons (`samples/`)
+| File | What it is | What should happen |
+|---|---|---|
+| memory_hi.wav | Kamala's voice memo in Hindi (macOS synthetic voice): monthly Kavach Life premiums, and a PPF account at the post office | Kavach backed by 3 statement debits (high); PPF added as probable, *not very sure*, no transactions |
+| reply_kavach_life.png | Kavach Life confirms policy KL...0894 (sum assured Rs 15,00,000) and asks for 5 documents within 30 days | The probable Kavach policy becomes confirmed; checklist; respond by 5 Nov 2026; covering letter |
+| message_fake_bank.png | A fake "Sahyadri National Bank Claims Cell" message asking for a Rs 2,950 fee to a UPI id and an OTP | Flagged as a scam; nothing in the case changes |
 
 ## PLANTED: assets with NO document, inferable only from transactions
 
@@ -531,7 +664,7 @@ A fixed monthly NACH premium debit to an insurer with no matching policy documen
 
 ## Inferable but ALSO uploaded (should be deduplicated, not reported as new)
 - EMI debits `EMI DR-GRIHA SETU HFL-HL0098817782` -> home loan, already in `07_loan_emi_sms.png`
-- SIP debits `ACH DR-NAVODAYA MF-SIP-1048832` -> mutual fund, already in `08_mf_statement.png`
+- SIP debits `ACH DR-NAVODAYA MF-SIP-1048832` -> mutual fund, already in `08_mf_statement.pdf`
 - `JEEVAN RAKSHA LIC-PREM-POL 784512093` -> policy already in `06_premium_receipt.png`
 - Salary credits from Kalpataru Engg Works -> EPF, already in `09_epf_passbook.png`
 
@@ -549,8 +682,12 @@ def main():
     save(upi_history(), "05_upi_history.png")
     save(premium_receipt(), "06_premium_receipt.png")
     save(loan_sms(), "07_loan_emi_sms.png")
-    save(mf_statement(), "08_mf_statement.png")
+    save_locked_pdf(mf_statement(), "08_mf_statement.pdf")
+    (OUT_DIR / "08_mf_statement.png").unlink(missing_ok=True)  # replaced by the locked PDF
     save(epf_passbook(), "09_epf_passbook.png")
+    save_sample(reply_kavach_life(), "reply_kavach_life.png")
+    save_sample(message_fake_bank(), "message_fake_bank.png")
+    save_memory("memory_hi.wav")
     (ROOT / "demo" / "README.md").write_text(readme())
     print("wrote demo/README.md")
 

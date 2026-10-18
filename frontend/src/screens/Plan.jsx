@@ -3,8 +3,10 @@ import { api } from "../api";
 import { orgName, t, typeLabel } from "../i18n";
 import { go } from "../nav";
 import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, ScamNotice } from "../components/ui";
+import NameCheck from "../components/NameCheck";
+import Replies from "../components/Replies";
 
-function TaskCard({ lang, task, onLetter, busy }) {
+function TaskCard({ c, lang, task, onLetter, busy, refresh }) {
   return (
     <Card className="fade-in">
       <div className="flex gap-4">
@@ -76,6 +78,7 @@ function TaskCard({ lang, task, onLetter, busy }) {
           <Button variant="secondary" className="mt-4" busy={busy === task.id} onClick={() => onLetter(task)}>
             {t(lang, "prepareLetter")}
           </Button>
+          <Replies c={c} lang={lang} task={task} refresh={refresh} />
         </div>
       </div>
     </Card>
@@ -130,6 +133,7 @@ export default function Plan({ c, lang, refresh }) {
     <div className="fade-in">
       <PageTitle title={t(lang, "planTitle")} body={plan ? t(lang, "planBody") : null} />
       {plan && <ScamNotice lang={lang} />}
+      <NameCheck c={c} lang={lang} refresh={refresh} />
       <ErrorNote lang={lang} error={error} />
       {!plan ? (
         <PrimaryBar>
@@ -150,7 +154,7 @@ export default function Plan({ c, lang, refresh }) {
           </Card>
           <div className="space-y-5">
             {plan.tasks.map((task) => (
-              <TaskCard key={task.id} lang={lang} task={task} onLetter={letter} busy={busy} />
+              <TaskCard key={task.id} c={c} lang={lang} task={task} onLetter={letter} busy={busy} refresh={refresh} />
             ))}
           </div>
           <p className="mt-6 text-ink-soft">{plan.disclaimer}</p>

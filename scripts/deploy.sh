@@ -89,6 +89,15 @@ gcloud secrets add-iam-policy-binding "${SECRET_NAME}" --member="serviceAccount:
   --role=roles/secretmanager.secretAccessor --project "${PROJECT_ID}" >/dev/null
 echo "roles granted: datastore.user (project), storage.objectAdmin (bucket), secretAccessor (secret)"
 
+# Newer projects run Cloud Build as the Compute Engine default service account, which can't read the uploaded
+# source or push the image until it has Cloud Run Builder ("storage.objects.get access ... denied" otherwise).
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+BUILD_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+step "Build service account ${BUILD_SA}"
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" --member="serviceAccount:${BUILD_SA}" \
+  --role=roles/run.builder --condition=None >/dev/null
+echo "role granted: run.builder (project)"
+
 step "Building and deploying to Cloud Run (Cloud Build uses the Dockerfile)"
 gcloud run deploy "${SERVICE}" \
   --source . \

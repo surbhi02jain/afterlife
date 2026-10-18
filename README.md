@@ -13,6 +13,14 @@ receipt. Virasat then:
    account; a monthly NACH debit to an insurer implies a policy nobody has found yet.
 3. **Builds a plan** for each institution: what to do first, which documents to carry, and in what order.
 4. **Drafts the letters**: claim intimations for known assets, and polite "please confirm" enquiries for probable ones.
+5. **Listens to what the family remembers.** A widow can say, in Hindi, *"he paid an insurance premium every month"*.
+   Gemini turns the recording into clues; code checks them against the statements. Memory plus matching payments
+   raises confidence; a memory alone becomes a low-confidence lead with an enquiry letter, never a fact.
+6. **Catches name mismatches before they stall a claim.** "Suresh Narayan Rao" on the bank statement, "S N RAO" on
+   the EPF passbook: Gemini spots the variants, code checks every quoted name, and the knowledge base says what to do.
+7. **Reads the institution's reply and closes the loop.** Upload the insurer's letter: the probable policy becomes
+   confirmed, the documents they want become a checklist with a respond-by date, and a covering letter is drafted.
+   A reply asking for a fee, an OTP or a UPI payment is flagged as a scam and changes nothing.
 
 Everything works in **English and Hindi**, in warm, simple language, with a one-tap read-aloud option.
 
@@ -33,6 +41,13 @@ fictional banks and insurers ([demo/README.md](demo/README.md) lists everything 
   and a second life policy with "Kavach Life" (from monthly premium debits). Both are shown as **probable**, with
   the exact transactions as evidence. They are never presented as facts.
 - **Gaps flagged:** the EPF passbook shows no nominee, so Virasat asks the family a follow-up question.
+- **Kamala remembers (in Hindi):** on *What we found*, "Use this recording" plays a 15-second synthetic voice memo. The
+  Kavach premiums she remembers match three statement debits; the PPF account at the post office she mentions has no
+  paper at all, so it is added as *not very sure*, with an enquiry letter.
+- **Names differ:** on *Plan*, the EPF passbook says "S N RAO" and the co-op passbook's nominee is "Smt. Kamla Rao".
+- **Replies:** on the Kavach task, "Try the sample reply" uploads the insurer's letter: the policy the app had only
+  inferred is now confirmed (₹15,00,000, nominee on record), with 5 documents to send by 5 Nov and a covering letter.
+  On the bank's task, "Try a sample scam message" shows a fee-and-OTP message being blocked.
 
 ---
 
@@ -47,7 +62,10 @@ flowchart LR
     M --> A[Agent<br/>Google ADK + Gemini]
     A -->|tools| T[lookup_procedure · ask_user<br/>build_action_plan · generate_letter]
     KB[(procedures.json)] --> T
-    T --> P[Plan · Letters · Shared board]
+    T --> P[Plan · Letters · Board]
+    V[Family's voice memory] --> R[Gemini listens: clues] --> M
+    X --> N[Name check<br/>Gemini compares,<br/>code verifies quotes] --> P
+    L[Institution's reply] --> Y[Gemini reads it] --> Z[Code: confirm item, checklist,<br/>deadline, cover letter<br/>or scam block] --> P
 ```
 
 | Step | Who does it | Where |
@@ -59,6 +77,9 @@ flowchart LR
 | Procedures | Looked up only from a knowledge base, each with a `source_name` | [backend/kb/procedures.json](backend/kb/procedures.json) |
 | Plan, letters, PDFs | **Deterministic code** | [backend/tools/plan.py](backend/tools/plan.py), [backend/tools/letters.py](backend/tools/letters.py) |
 | Totals, dates, masking, ID checks | **Deterministic code**, never the model | [backend/tools/finance.py](backend/tools/finance.py) |
+| Family memories | Gemini listens to the recording (or reads typed text) and lists clues; **code** matches them to transactions and sets confidence from the evidence (memory alone = low) | [backend/tools/memories.py](backend/tools/memories.py) |
+| Name check | Gemini compares how names are written; **code** drops any finding whose quoted name isn't on the cited document; guidance from the knowledge base | [backend/tools/names.py](backend/tools/names.py) |
+| Institution replies | Gemini reads the letter; **code** checks for scam signals, confirms the item, works out the respond-by date, moves the task and drafts the covering letter | [backend/tools/replies.py](backend/tools/replies.py) |
 
 All AI goes through one place, [backend/app/gemini.py](backend/app/gemini.py), using the official `google-genai`
 SDK with `response_json_schema`. It throttles requests per model and honours 429 retry delays. If a call fails or a
@@ -80,16 +101,22 @@ These run **in code**, not just in prompts:
   delete the whole case at any time.
 - **A case opens only on the device that started it.** The creating browser gets a random private key (an HttpOnly,
   SameSite=strict cookie scoped to that case's API routes); only its SHA-256 hash is stored. A forwarded link alone
-  gets the same 404 as a missing case. Relatives follow progress through the read-only family link, which shows only
-  institutions, account types and step progress (no numbers or nominees), expires after 30 days and can be turned off.
+  gets the same 404 as a missing case. There is no share link: nothing about a case can be opened by anyone else.
+- **Memories and replies are never facts by themselves.** A memory with no matching payment is a low-confidence
+  probable item. A number heard in a recording is never used as an account number. Secrets said aloud (PINs,
+  passwords, card numbers) are removed in code before anything is stored, and recordings and reply letters are read
+  once and not kept.
+- **Scam replies change nothing.** A reply is checked in code for fee requests, OTP/PIN/password requests, remote-access
+  apps and payments to UPI ids or QR codes, on top of Gemini's own red flags. Any flag blocks every change: no item is
+  confirmed, no task moves, no letter is drafted, and the family sees a plain warning with the sender's own words.
 - **Scam protection.** A money-after-death alert puts an account first in the plan when debits continue after the
   death; documents in someone else's name are flagged; every letter asks the institution to verify the sender
   against its nominee records; Plan and Letters warn that banks never ask for OTPs or fees.
 
 ## Screens
 
-Start → **Upload** → **Asset map** → **Questions** → **Plan** → **Letters** → **Board** (a read-only link to share
-with relatives) · **Privacy**. Each screen has one primary action, an 18px base font, and an English/Hindi toggle.
+Start → **Upload** → **Asset map** → **Questions** → **Plan** → **Letters** → **Board** (track each step) ·
+**Privacy**. Each screen has one primary action, an 18px base font, and an English/Hindi toggle.
 
 ---
 
@@ -137,7 +164,9 @@ predictable. It is labelled "sample reading" in the activity log. Real uploads a
 .venv/bin/python scripts/run_agent_demo.py           # live agent: activity log, plan, a letter (--hi for Hindi)
 .venv/bin/python scripts/run_extraction.py           # live extraction on the demo docs
 .venv/bin/python scripts/run_extraction.py --record --missing   # record replies for docs without a fixture
-.venv/bin/python scripts/make_demo_docs.py           # regenerate the synthetic demo images
+.venv/bin/python scripts/make_demo_docs.py           # regenerate the synthetic demo images, samples and voice memo
+.venv/bin/python scripts/record_samples.py --record  # record real Gemini replies for the voice memo, the two sample
+                                                     # replies and the name check (replayed for the demo family)
 ```
 
 ## Tests

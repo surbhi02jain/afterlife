@@ -3,6 +3,9 @@
 **Deceased:** Mr. Suresh Narayan Rao (fictional), date of death 2026-09-02. Family: Kamala Suresh Rao (wife), Arjun Suresh Rao (son).
 Every institution name is fictional and every image is watermarked "SYNTHETIC DEMO DOCUMENT".
 
+The mutual fund statement is locked like a real one: the family types its password (`SURE1503`: first 4
+letters of the name + day and month of birth, 15 March) on the Documents screen before it can be read.
+
 Regenerate with `.venv/bin/python scripts/make_demo_docs.py`.
 
 ## Uploaded documents (`docs/`)
@@ -16,8 +19,19 @@ Regenerate with `.venv/bin/python scripts/make_demo_docs.py`.
 | 05_upi_history.png | PayDost UPI app screenshot, Aug 2026 | (same txns as statement, dedup test) |
 | 06_premium_receipt.png | Jeevan Raksha life policy premium receipt | Policy ...2093, SA Rs 5,00,000 |
 | 07_loan_emi_sms.png | Griha Setu home loan EMI SMS | LIABILITY: home loan ...7782 |
-| 08_mf_statement.png | Navodaya Mutual Fund statement | Folio 1048832/57 |
+| 08_mf_statement.pdf | Navodaya Mutual Fund statement, **password-protected PDF** (password `SURE1503`) | Folio 1048832/57 |
 | 09_epf_passbook.png | EPF member passbook | UAN ...4321 (no nominee shown, a gap) |
+
+## PLANTED: names written differently (for the name check)
+- `09_epf_passbook.png` gives the member's name as **"S N RAO"**; every other paper says Suresh Narayan Rao.
+- `03_coop_passbook.png` gives the nominee as **"Smt. Kamla Rao"**; the other papers say Kamala Suresh Rao.
+
+## Samples for the demo buttons (`samples/`)
+| File | What it is | What should happen |
+|---|---|---|
+| memory_hi.wav | Kamala's voice memo in Hindi (macOS synthetic voice): monthly Kavach Life premiums, and a PPF account at the post office | Kavach backed by 3 statement debits (high); PPF added as probable, *not very sure*, no transactions |
+| reply_kavach_life.png | Kavach Life confirms policy KL...0894 (sum assured Rs 15,00,000) and asks for 5 documents within 30 days | The probable Kavach policy becomes confirmed; checklist; respond by 5 Nov 2026; covering letter |
+| message_fake_bank.png | A fake "Sahyadri National Bank Claims Cell" message asking for a Rs 2,950 fee to a UPI id and an OTP | Flagged as a scam; nothing in the case changes |
 
 ## PLANTED: assets with NO document, inferable only from transactions
 
@@ -45,7 +59,7 @@ A fixed monthly NACH premium debit to an insurer with no matching policy documen
 
 ## Inferable but ALSO uploaded (should be deduplicated, not reported as new)
 - EMI debits `EMI DR-GRIHA SETU HFL-HL0098817782` -> home loan, already in `07_loan_emi_sms.png`
-- SIP debits `ACH DR-NAVODAYA MF-SIP-1048832` -> mutual fund, already in `08_mf_statement.png`
+- SIP debits `ACH DR-NAVODAYA MF-SIP-1048832` -> mutual fund, already in `08_mf_statement.pdf`
 - `JEEVAN RAKSHA LIC-PREM-POL 784512093` -> policy already in `06_premium_receipt.png`
 - Salary credits from Kalpataru Engg Works -> EPF, already in `09_epf_passbook.png`
 

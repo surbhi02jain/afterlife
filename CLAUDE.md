@@ -77,6 +77,7 @@ GEMINI_API_KEY=... ./scripts/deploy.sh                     # Cloud Run deploy (u
 .venv/bin/python scripts/run_extraction.py                 # live extraction on demo docs (needs key)
 .venv/bin/python scripts/run_extraction.py --record        # ...and save responses as test fixtures
 .venv/bin/python scripts/run_extraction.py --record --missing   # ...only docs without a fixture
+.venv/bin/python scripts/record_samples.py --record   # record replies for the voice memo, sample replies, name check
 .venv/bin/python scripts/run_demo_case.py --replay         # full demo case: recorded extraction + live inference,
                                                            # then checks both planted assets are found (exit 1 if not)
 .venv/bin/python scripts/run_agent_demo.py                 # Phase 3: live agent on the demo case; prints activity
@@ -96,12 +97,18 @@ GEMINI_API_KEY=... ./scripts/deploy.sh                     # Cloud Run deploy (u
   code: credential requests are refused before any model call; legal topics get "guidance, not legal advice".
 - Plan (`tools/plan.py`), letters (`tools/letters.py`) and procedure lookup (`kb/`) are deterministic. Procedural
   text comes only from `backend/kb/procedures.json` (all `verified: false` placeholders for now).
-- Frontend (`frontend/src`): React + Tailwind v4, hash routes `#/case/<id>/<screen>` and `#/share/<token>`, every
+- Frontend (`frontend/src`): React + Tailwind v4, hash routes `#/case/<id>/<screen>`, every
   string in `i18n.js` (en + hi), 18px base font, one primary action per screen (`PrimaryBar`). The API returns
   `case_view()` (no raw extractions or storage keys). If the npm cache errors with EACCES, set `npm_config_cache`
   to a writable folder.
 - Demo cases replay the REAL recorded extraction for byte-identical demo docs (`app/demo.py`,
-  `DEMO_REPLAY_EXTRACTION`), logged as a "saved reading". Real uploads always go live.
+  `DEMO_REPLAY_EXTRACTION`), logged as a "saved reading". Real uploads always go live. The same holds for the sample
+  voice memo, the two sample replies (`demo/samples/`) and the demo name check: `demo.recorded(kind, input_bytes)`
+  replays `demo/recorded/{memory,replies,names}/*.json`, written by `scripts/record_samples.py --record`.
+- Memories (`tools/memories.py`), name check (`tools/names.py`), institution replies (`tools/replies.py`): Gemini
+  reads/listens/compares; code decides. Memory confidence comes from matched transactions (none = low); name findings
+  must quote names exactly as on the cited document; a reply with any scam signal (`guardrails.scam_signals`, plus
+  Gemini's red flags) changes nothing in the case. Recordings and reply files are read once and never stored.
 - Evidence descriptions mask any 6+ digit run to the last 4 (`Evidence.mask_numbers`).
 - Asset map (`tools/asset_map.py`): confirmed items come deterministically from extracted documents; inferred items
   (`tools/inference.py`) are only ever `probable`, must cite real transaction ids, and merge through the same

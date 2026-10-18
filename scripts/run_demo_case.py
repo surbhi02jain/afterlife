@@ -19,14 +19,13 @@ from types import SimpleNamespace
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from app import services  # noqa: E402
+from app import demo, services  # noqa: E402
 from app.config import get_settings  # noqa: E402
 from app.models import Case  # noqa: E402
 from storage import get_storage  # noqa: E402
 from tools.asset_map import asset_map_view  # noqa: E402
 from tools.inference import InferenceError  # noqa: E402
 
-DEMO_DIR = ROOT / "demo" / "docs"
 FIXTURE_DIR = ROOT / "demo" / "recorded" / "extraction"
 
 
@@ -35,10 +34,10 @@ class ReplayClient:
 
     def __init__(self):
         self.replies = {}
-        for png in DEMO_DIR.glob("*.png"):
-            fixture = FIXTURE_DIR / f"{png.stem}.json"
+        for path in demo.demo_documents():
+            fixture = FIXTURE_DIR / f"{path.stem}.json"
             if fixture.exists():
-                self.replies[hashlib.sha256(png.read_bytes()).hexdigest()] = json.loads(fixture.read_text())
+                self.replies[hashlib.sha256(demo.readable_bytes(path)).hexdigest()] = json.loads(fixture.read_text())
         self.models = self
 
     def generate_content(self, *, model, contents, config):
@@ -112,8 +111,11 @@ def main() -> int:
                                     relationship="son", language="en", is_demo=True))
     print(f"Case {case.id}  (storage={settings.storage_backend})")
 
-    for png in sorted(DEMO_DIR.glob("*.png")):
-        services.add_document(storage, case.id, png.name, "image/png", png.read_bytes())
+    for path in demo.demo_documents():
+        doc = services.add_document(storage, case.id, path.name, demo.content_type(path), path.read_bytes())
+        if doc.status == "locked":  # the mutual fund statement, opened as the family would
+            services.unlock_document(storage, case.id, doc.id, demo.DEMO_PDF_PASSWORD)
+            print(f"Unlocked {path.name} with the demo password")
     mode = "replaying recorded replies" if args.replay else f"live with {settings.extraction_model}"
     print(f"Uploaded 9 documents; extracting ({mode})...")
     case = services.extract_pending(storage, case.id, client=ReplayClient() if args.replay else None)

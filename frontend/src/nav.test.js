@@ -12,8 +12,8 @@ test("a query after the screen does not change the screen", () => {
   assert.equal(parseRoute("#/case/abc/letters?l=deadbeef").screen, "letters");
 });
 
-test("share links and the start page", () => {
-  assert.deepEqual(parseRoute("#/share/tok123"), { name: "share", token: "tok123" });
+test("the start page, including old family links", () => {
+  assert.deepEqual(parseRoute("#/share/tok123"), { name: "start" });
   assert.deepEqual(parseRoute(""), { name: "start" });
   assert.deepEqual(parseRoute("#/deleted"), { name: "start" });
 });

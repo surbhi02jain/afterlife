@@ -9,4 +9,6 @@ google-cloud-firestore==2.34.1
 google-cloud-storage==3.17.1
 python-dotenv==1.2.4
 fpdf2==2.8.9
+pypdf==6.21.1  # unlock password-protected statement PDFs
+cryptography==50.0.2  # pypdf needs it for AES-encrypted PDFs
 uharfbuzz==0.56.3

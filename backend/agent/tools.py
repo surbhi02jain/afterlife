@@ -12,6 +12,7 @@ from app.models import AssetType, Case, LiabilityType
 from storage import Storage
 from tools.extraction import ExtractionError
 from tools.inference import InferenceError
+from tools.names import NameCheckError
 from tools.questions import QuestionDraft, find_gaps
 
 ASSET_TYPES = list(AssetType.__args__)
@@ -32,6 +33,13 @@ DECLARATIONS = [
         name="infer_hidden_assets",
         description="Look through all extracted transactions for assets or loans that probably exist but have no "
                     "document. Adds them as PROBABLE items with evidence. Call once after documents are read.",
+        parameters_json_schema=_obj(),
+    ),
+    types.FunctionDeclaration(
+        name="check_names",
+        description="Compare how the deceased's and nominees' names are written across the documents. Institutions "
+                    "often delay claims over differences, so the family should know early. Call once after documents "
+                    "are read.",
         parameters_json_schema=_obj(),
     ),
     types.FunctionDeclaration(
@@ -131,6 +139,13 @@ def dispatch(ctx: ToolContext, name: str, args: dict) -> dict:
                     "merged_into_existing": len(run.merged), "discarded": run.discarded,
                     "open_gaps": gap_summary(case)}
 
+        if name == "check_names":
+            check = services.check_names(s, cid, client=ctx.client, run_id=rid)
+            return {"names_compared": check.compared,
+                    "differences": [{"kind": i.kind, "names": [n["name"] for n in i.names], "explanation": i.explanation}
+                                    for i in check.issues],
+                    "note": "The Plan screen shows these with what to do (from the knowledge base)."}
+
         if name in ("add_asset", "add_liability"):
             item_type = str(args.get("type", ""))
             allowed = ASSET_TYPES if name == "add_asset" else LIABILITY_TYPES
@@ -165,7 +180,7 @@ def dispatch(ctx: ToolContext, name: str, args: dict) -> dict:
             return {"letter_id": letter.id, "title": letter.title, "kind": letter.kind}
 
         return {"error": f"Unknown tool {name}"}
-    except (ExtractionError, InferenceError) as exc:
+    except (ExtractionError, InferenceError, NameCheckError) as exc:
         return {"error": str(exc)}
     except (KeyError, ValueError) as exc:
         services.record(s, cid, name, f"A step ({name}) didn't work", f"एक चरण ({name}) पूरा नहीं हुआ", ok=False,

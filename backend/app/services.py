@@ -6,18 +6,21 @@ Every operation records a plain-language entry (English + Hindi) in the case's a
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, timedelta
+from datetime import date
 
 import kb
 from app import demo
 from app.gemini import GeminiNotConfigured
-from app.models import ActivityEntry, Case, Document, InferenceRun, ItemStatus, Letter, Question, new_id
+from app.models import (ActivityEntry, Case, Document, InferenceRun, InstitutionReply, ItemStatus, Letter, Memory,
+                        NameCheck, Question)
 from storage import Storage
 from tools.asset_map import forget_document, refresh_recurring, sync_documents
 from tools.extraction import ExtractionError, extract_document, parse_extraction
 from tools.i18n import label
 from tools.inference import InferenceError, apply_proposals, collect_transactions, propose
-from tools.letters import draft_letter
+from tools import pdf
+from tools.letters import draft_letter, draft_reply_letter, redraft
+from tools import memories, names, replies
 from tools.plan import build_plan
 from tools.questions import (QuestionError, add_questions, apply_answer, confirm_drafts_first, draft_questions,
                              find_gaps)
@@ -34,16 +37,46 @@ def record(storage: Storage, case_id: str, tool: str, en: str, hi: str, **kwargs
 # --- documents ---------------------------------------------------------------------------------------
 
 def add_document(storage: Storage, case_id: str, filename: str, content_type: str, data: bytes) -> Document:
-    doc = Document(filename=filename, content_type=content_type, size_bytes=len(data), storage_key="")
+    locked = False
+    if content_type == "application/pdf":
+        data, locked = pdf.prepare(data)
+    doc = Document(filename=filename, content_type=content_type, size_bytes=len(data), storage_key="",
+                   status="locked" if locked else "uploaded")
     doc.storage_key = storage.save_file(case_id, doc.id, data, content_type)
     storage.update_case(case_id, lambda case: case.documents.append(doc))
     return doc
 
 
+def unlock_document(storage: Storage, case_id: str, document_id: str, password: str) -> Document:
+    """Open a password-protected PDF and keep only the unlocked copy. Raises pdf.WrongPassword, KeyError, or
+    FileNotFoundError (upload expired). The password is used here only and never stored or logged."""
+    doc = storage.get_case(case_id).get_document(document_id)
+    if doc is None:
+        raise KeyError(document_id)
+    if doc.status != "locked":
+        return doc
+    data = pdf.unlock(storage.read_file(doc.storage_key), password)
+    storage.save_file(case_id, doc.id, data, doc.content_type)  # same key: replaces the locked copy
+
+    def mutate(c: Case):
+        target = c.get_document(document_id)
+        if target is None:
+            return  # the family removed it meanwhile
+        target.status, target.size_bytes, target.error = "uploaded", len(data), None
+        log(c, "unlock_document", f"Opened the password-protected {target.filename}",
+            f"पासवर्ड वाली फ़ाइल {target.filename} खोली", document_id=document_id)
+
+    updated = storage.update_case(case_id, mutate).get_document(document_id)
+    if updated is None:
+        storage.delete_file(doc.storage_key)
+        raise KeyError(document_id)
+    return updated
+
+
 def create_demo_case(storage: Storage) -> Case:
     case = storage.create_case(demo.new_demo_case())
     for path in demo.demo_documents():
-        add_document(storage, case.id, path.name, "image/png", path.read_bytes())
+        add_document(storage, case.id, path.name, demo.content_type(path), path.read_bytes())
     record(storage, case.id, "create_demo_case", "Loaded the sample family's 9 documents",
            "नमूना परिवार के 9 दस्तावेज़ लोड किए")
     return storage.get_case(case.id)
@@ -59,6 +92,8 @@ def extract_case_document(storage: Storage, case_id: str, document_id: str, *, c
     doc = case.get_document(document_id)
     if doc is None:
         raise KeyError(document_id)
+    if doc.status == "locked":  # stays locked: nothing went wrong, it just needs the family's password first
+        raise ExtractionError("This PDF is locked with a password. Please type its password in the app first.")
 
     def finish(**fields):
         def mutate(c: Case):
@@ -69,6 +104,7 @@ def extract_case_document(storage: Storage, case_id: str, document_id: str, *, c
                 setattr(target, key, value)
             if target.status == "extracted":
                 sync_documents(c)  # fold the new document into the asset map
+                c.name_check = None  # a new document can bring a new spelling: check again
                 saved = " (saved reading of the sample document)" if fields.get("extracted_with_model", "").endswith(
                     "(recorded)") else ""
                 log(c, "extract_document", f"Read {target.filename}{saved}", f"{target.filename} पढ़ा",
@@ -115,6 +151,7 @@ def remove_document(storage: Storage, case_id: str, document_id: str) -> Case:
             raise KeyError(document_id)
         removed_keys.append(doc.storage_key)
         gone = set(forget_document(c, document_id))
+        c.name_check = None
         c.questions = [q for q in c.questions if not (q.status == "open" and q.item_id in gone)]
         c.letters = [l for l in c.letters if l.edited or l.item_id not in gone]
         if c.plan:
@@ -132,8 +169,9 @@ def remove_document(storage: Storage, case_id: str, document_id: str) -> Case:
 
 
 def extract_pending(storage: Storage, case_id: str, *, client=None, max_workers: int = 4) -> Case:
-    """Extract every document that isn't extracted yet, a few at a time. Failures stay recorded per document."""
-    pending = [d.id for d in storage.get_case(case_id).documents if d.status != "extracted"]
+    """Extract every document that isn't extracted yet, a few at a time. Failures stay recorded per document.
+    Locked PDFs wait for their password."""
+    pending = [d.id for d in storage.get_case(case_id).documents if d.status not in ("extracted", "locked")]
 
     def run(document_id: str):
         try:
@@ -178,10 +216,8 @@ def run_inference(storage: Storage, case_id: str, *, client=None, run_id: str | 
 def refresh_letters(c: Case) -> None:
     """Redraft letters the family hasn't edited, so new answers and confirmations show up in them."""
     for n, letter in enumerate(c.letters):
-        if not letter.edited and c.get_item(letter.item_id):
-            fresh = draft_letter(c, letter.item_id)
-            fresh.id, fresh.created_at = letter.id, letter.created_at
-            c.letters[n] = fresh
+        if not letter.edited and (c.get_reply(letter.reply_id) if letter.reply_id else c.get_item(letter.item_id)):
+            c.letters[n] = redraft(c, letter)
 
 
 def update_case_details(storage: Storage, case_id: str, changes: dict) -> Case:
@@ -317,7 +353,7 @@ def make_letter(storage: Storage, case_id: str, item_id: str, run_id: str | None
     made = []
 
     def mutate(c: Case):
-        existing = next((l for l in c.letters if l.item_id == item_id), None)
+        existing = c.item_letter(item_id)
         if existing and existing.edited:
             made.append(existing)
             return
@@ -349,24 +385,128 @@ def edit_letter(storage: Storage, case_id: str, letter_id: str, title: str | Non
     return storage.update_case(case_id, mutate).get_letter(letter_id)
 
 
-SHARE_LINK_DAYS = 30
+# --- family memories, name check, replies from institutions ------------------------------------------
+
+def _after_map_change(c: Case) -> None:
+    """The asset map changed outside a document: keep the plan and unedited letters in step."""
+    if c.plan:
+        c.plan = build_plan(c)
+    refresh_letters(c)
 
 
-def ensure_share_token(storage: Storage, case_id: str) -> Case:
-    """The read-only family link: kept while it is valid, otherwise a new one that works for SHARE_LINK_DAYS."""
-    from app.models import utc_now
+def add_memory(storage: Storage, case_id: str, *, audio: bytes | None = None, mime_type: str | None = None,
+               text: str | None = None, client=None) -> Memory:
+    """Gemini listens to (or reads) what the family remembers; code matches it to the statements and merges it in.
+    The recording itself is never stored. Raises memories.MemoryReadError."""
+    case = storage.get_case(case_id)
+    saved = demo.recorded("memory", audio) if audio and case.is_demo and demo.replay_enabled() else None
+    try:
+        if saved:
+            reading, model = memories.parse_memory(saved["raw_response"]), f"{saved['model']} (recorded)"
+        else:
+            reading, _, model = memories.read_memory(case, audio=audio, mime_type=mime_type, text=text, client=client)
+    except (memories.MemoryReadError, GeminiNotConfigured) as exc:
+        record(storage, case_id, "add_memory", "Couldn't listen to the memory just now", "अभी याद सुनी नहीं जा सकी",
+               ok=False, error=str(exc))
+        raise memories.MemoryReadError(str(exc)) from exc
+    made = []
 
     def mutate(c: Case):
-        if not (c.share_token and c.share_expires_at and c.share_expires_at > utc_now()):
-            c.share_token, c.share_expires_at = new_id(), utc_now() + timedelta(days=SHARE_LINK_DAYS)
+        memory = memories.apply_memory(c, reading, model, "voice" if audio else "typed")
+        _after_map_change(c)
+        en, hi = memories.summary(memory)
+        log(c, "add_memory", en + (" (saved reading of the sample recording)" if saved else ""), hi,
+            memory_id=memory.id, clues=len(memory.results),
+            matched_transactions=sum(r.matched_transactions for r in memory.results))
+        made.append(memory)
 
-    return storage.update_case(case_id, mutate)
+    storage.update_case(case_id, mutate)
+    return made[0]
 
 
-def turn_off_share_link(storage: Storage, case_id: str) -> Case:
+def check_names(storage: Storage, case_id: str, *, client=None, run_id: str | None = None) -> NameCheck:
+    """Compare the names on every document. Gemini is asked only when some name differs. Raises NameCheckError."""
+    case = storage.get_case(case_id)
+    listed = names.name_list(case)
+    if not names.needs_check(listed):
+        check, saved = NameCheck(model="none needed (every name matches)", compared=len(listed)), None
+    else:
+        prompt = names.build_prompt(listed)
+        saved = demo.recorded("names", prompt.encode()) if case.is_demo and demo.replay_enabled() else None
+        try:
+            if saved:
+                raw, model = saved["raw_response"], f"{saved['model']} (recorded)"
+            else:
+                raw, model = names.ask_gemini(case, listed, client=client)
+            check = names.verify(listed, names.parse_result(raw), model)
+        except (names.NameCheckError, GeminiNotConfigured) as exc:
+            record(storage, case_id, "check_names", "Couldn't compare the names just now",
+                   "अभी नामों की तुलना नहीं हो सकी", ok=False, run_id=run_id, error=str(exc))
+            raise names.NameCheckError(str(exc)) from exc
+
     def mutate(c: Case):
-        c.share_token = c.share_expires_at = None
-        log(c, "share_link", "Turned off the family link", "परिवार लिंक बंद किया")
+        c.name_check = check
+        n = len(check.issues)
+        log(c, "check_names",
+            (f"Compared {check.compared} names across the papers: {n} difference{'s' if n != 1 else ''} to prepare for"
+             if n else f"Compared {check.compared} names across the papers: they match")
+            + (" (saved reading)" if saved else ""),
+            f"कागज़ों में {check.compared} नामों की तुलना की: " + (f"{n} अंतर मिले" if n else "सब मेल खाते हैं"),
+            run_id=run_id, issues=n, discarded=len(check.discarded))
+
+    storage.update_case(case_id, mutate)
+    return check
+
+
+def add_reply(storage: Storage, case_id: str, task_id: str, filename: str, mime_type: str, data: bytes, *,
+              client=None) -> InstitutionReply:
+    """Gemini reads an institution's reply; code updates the plan, the item and the letters. The file itself is not
+    stored. Raises KeyError (unknown task) or replies.ReplyError."""
+    case = storage.get_case(case_id)
+    if not case.plan or not any(t.id == task_id for t in case.plan.tasks):
+        raise KeyError(task_id)
+    saved = demo.recorded("replies", data) if case.is_demo and demo.replay_enabled() else None
+    try:
+        if saved:
+            reading, model = replies.parse_reply(saved["raw_response"]), f"{saved['model']} (recorded)"
+        else:
+            reading, _, model = replies.read_reply(data, mime_type, case, client=client)
+    except (replies.ReplyError, GeminiNotConfigured) as exc:
+        record(storage, case_id, "read_reply", f"Couldn't read the reply {filename}", f"उत्तर {filename} पढ़ा नहीं जा सका",
+               ok=False, error=str(exc))
+        raise replies.ReplyError(str(exc)) from exc
+    made = []
+
+    def mutate(c: Case):
+        reply = replies.apply_reply(c, task_id, reading, filename, model)
+        _after_map_change(c)
+        if reply.red_flags:
+            log(c, "read_reply", f"Warning: the reply {filename} looks like a scam. Nothing was changed",
+                f"चेतावनी: उत्तर {filename} धोखाधड़ी जैसा लगता है। कुछ भी बदला नहीं गया", ok=False, reply_id=reply.id,
+                red_flags=len(reply.red_flags))
+        else:
+            if reply.requirements:
+                c.letters.append(draft_reply_letter(c, reply.id))
+            n = len(reply.requirements)
+            log(c, "read_reply", f"Read the reply from {reply.institution}: {n} thing{'s' if n != 1 else ''} they ask for"
+                + (", and they confirmed the account" if reply.confirmed_item_id else "")
+                + (" (saved reading of the sample letter)" if saved else ""),
+                f"{reply.institution} का उत्तर पढ़ा: वे {n} चीज़ें माँगते हैं"
+                + (", और उन्होंने खाते की पुष्टि की" if reply.confirmed_item_id else ""),
+                reply_id=reply.id, outcome=reply.outcome, requirements=n)
+        made.append(reply)
+
+    storage.update_case(case_id, mutate)
+    return made[0]
+
+
+def set_requirement(storage: Storage, case_id: str, reply_id: str, requirement_id: str, done: bool) -> Case:
+    def mutate(c: Case):
+        reply = c.get_reply(reply_id)
+        requirement = next((r for r in reply.requirements if r.id == requirement_id), None) if reply else None
+        if requirement is None:
+            raise KeyError(requirement_id)
+        requirement.done = done
 
     return storage.update_case(case_id, mutate)
 

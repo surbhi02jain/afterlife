@@ -30,10 +30,6 @@ class Storage(ABC):
     def delete_case(self, case_id: str) -> None:
         """Delete the case record AND all of its uploaded files. Idempotent."""
 
-    @abstractmethod
-    def find_by_share_token(self, token: str) -> Case | None:
-        """The case with this read-only share token, or None."""
-
     # --- uploads -----------------------------------------------------------
     @abstractmethod
     def save_file(self, case_id: str, document_id: str, data: bytes, content_type: str) -> str:

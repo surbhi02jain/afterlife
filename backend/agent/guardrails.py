@@ -27,7 +27,8 @@ ACCESS_TERMS = re.compile(_words(
     r"mobile\s+banking", r"internet\s+banking", r"log\s*in", r"login", r"user\s*id",
     "कार्ड", "नेट बैंकिंग"), re.I)  # a UPI PIN is caught by SECRET_TERMS; "stop his UPI transfers" is fine
 USE_TERMS = re.compile("|".join([
-    _words(r"use", r"using", r"withdraw\w*",  # not "used": "he used his card" describes the past, not a request r"transfer\w*", r"swipe\w*", r"unlock\w*", r"access\w*",
+    # not "used": "he used his card" describes the past, not a request
+    _words(r"use", r"using", r"withdraw\w*", r"transfer\w*", r"swipe\w*", r"unlock\w*", r"access\w*",
            r"log\s*in", r"login", r"sign\s*in", r"get\s+into", r"break\s+into", r"pay\s+(?:with|using|by|from)",
            r"take\s+out", r"move\s+(?:the\s+)?money"),
     _stems("इस्तेमाल", "उपयोग", "निकाल", "ट्रांसफर", "खोल", "लॉग"),
@@ -83,3 +84,41 @@ def touches_legal_topic(*texts: str) -> bool:
 def with_legal_note(reply: str, language: str) -> str:
     note = LEGAL_NOTE[language]
     return reply if note in reply else f"{reply.rstrip()}\n\n{note}"
+
+
+# A secret said or written next to digits: "his PIN is 4 4 1 2", "पासवर्ड 1503 है". Never kept, whatever the model wrote.
+_SECRET_WITH_DIGITS = re.compile("(" + SECRET_TERMS.pattern + r"[^\d\n]{0,25})\d(?:[\s-]?\d){2,}", re.I)
+# Card numbers: 15 or 16 digits, possibly in groups. (Bank account numbers, often 9 to 14 digits, are masked to the
+# last 4 elsewhere, which is the rule for account numbers; a 16-digit account is removed here, which errs safe.)
+_CARD_NUMBER = re.compile(r"(?<!\d)\d(?:[\s-]?\d){14,15}(?!\d)")
+
+
+def redact_secrets(text: str) -> str:
+    return _CARD_NUMBER.sub("[removed]", _SECRET_WITH_DIGITS.sub(r"\1[removed]", text))
+
+
+# What a genuine bank or insurer never asks for in a claim. Checked in code on what Gemini read from a reply,
+# on top of the red flags Gemini itself reports.
+SCAM_SIGNALS = {
+    "fee": re.compile(_words(r"processing\s+(?:fee|charges?)", r"release\s+(?:fee|charges?)", r"clearance\s+(?:fee|charges?)",
+                             r"pay\s+(?:a\s+)?(?:fee|charges?)", r"advance\s+(?:fee|payment)", r"(?:gst|tax)\s+to\s+release",
+                             "शुल्क", "फ़ीस", "फीस"), re.I),
+    "secret": SECRET_TERMS,
+    "remote_access": re.compile(_words(r"anydesk", r"teamviewer", r"quick\s*support", r"screen\s*shar\w*",
+                                       r"remote\s+access", r"install\s+(?:the\s+)?app"), re.I),
+    "personal_payment": re.compile(_words(r"upi\s+id", r"@ok\w+", r"@ybl", r"@paytm", r"@upi", r"pay\s+to\s+this",
+                                          r"scan\s+(?:the\s+)?qr", r"gpay", r"phonepe"), re.I),
+}
+
+SCAM_LABEL = {
+    "fee": ("asks for a fee or payment to release the money", "पैसा जारी करने के लिए शुल्क या भुगतान माँगता है"),
+    "secret": ("asks for an OTP, PIN or password", "OTP, PIN या पासवर्ड माँगता है"),
+    "remote_access": ("asks to install an app or share the screen", "कोई ऐप इंस्टॉल करने या स्क्रीन शेयर करने को कहता है"),
+    "personal_payment": ("asks for payment to a UPI id or QR code", "किसी UPI आईडी या QR कोड पर भुगतान माँगता है"),
+}
+
+
+def scam_signals(*texts: str | None) -> list[str]:
+    """Keys of SCAM_SIGNALS found in any of the texts."""
+    joined = "\n".join(t for t in texts if t)
+    return [key for key, pattern in SCAM_SIGNALS.items() if pattern.search(joined)]

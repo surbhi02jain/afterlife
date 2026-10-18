@@ -4,6 +4,7 @@ import { inr, niceDate, orgName, t, typeLabel } from "../i18n";
 import { go } from "../nav";
 import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, SectionTitle } from "../components/ui";
 import { TypeIcon } from "../components/Art";
+import MemoryCard from "../components/MemoryCard";
 
 const BALANCE_TYPES = new Set(["savings_account", "mutual_fund", "demat_account", "epf", "ppf", "home_loan",
   "personal_loan", "vehicle_loan", "credit_card", "other_loan"]);
@@ -46,6 +47,7 @@ function ConfirmedCard({ lang, item }) {
 // A found item reads like a page from the family's own passbook: the clue transactions, each marked in marigold.
 function ProbableCard({ lang, item, onDecide, busy }) {
   const evidence = item.evidence.filter((e) => e.date).sort((a, b) => a.date.localeCompare(b.date));
+  const remembered = item.evidence.filter((e) => e.document_id.startsWith("memory:"));
   return (
     <article className="fade-in rounded-3xl border border-amber-line bg-white p-5 shadow-soft sm:p-7" aria-label={t(lang, "probable")}>
       <div className="flex flex-wrap items-center gap-2">
@@ -59,6 +61,14 @@ function ProbableCard({ lang, item, onDecide, busy }) {
         </h3>
       </div>
       {item.reason && <p className="mt-1 max-w-[60ch]">{item.reason}</p>}
+      {remembered.length > 0 && (
+        <div className="mt-5">
+          <p className="text-base font-semibold text-ink-soft">{t(lang, "whatYouRemember")}</p>
+          {remembered.map((e) => (
+            <blockquote key={e.document_id} className="mt-2 border-l-4 border-brand/40 pl-4 italic">“{e.description}”</blockquote>
+          ))}
+        </div>
+      )}
       {evidence.length > 0 && (
         <div className="mt-5">
           <p className="text-base font-semibold text-ink-soft">{t(lang, "whatWeNoticed")}</p>
@@ -234,7 +244,7 @@ export default function AssetMap({ c, lang, refresh, agentReply }) {
       {probable.length > 0 && (
         <section aria-labelledby="probable-h" className="mb-10">
           <h2 id="probable-h" className="font-serif text-2xl leading-tight text-amber-ink">
-            {t(lang, "discoveryTitle", { n: probable.length })}
+            {t(lang, probable.length === 1 ? "discoveryTitleOne" : "discoveryTitle", { n: probable.length })}
           </h2>
           <p className="mt-1 text-ink-soft">{t(lang, "discoveryBody")}</p>
           <div className="mt-5 space-y-5">
@@ -244,6 +254,8 @@ export default function AssetMap({ c, lang, refresh, agentReply }) {
           </div>
         </section>
       )}
+
+      <MemoryCard c={c} lang={lang} refresh={refresh} />
 
       {map.assets.confirmed.length > 0 && (
         <section aria-labelledby="confirmed-h" className="mb-10">

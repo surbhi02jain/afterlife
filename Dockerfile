@@ -22,6 +22,7 @@ RUN pip install -r backend/requirements.txt
 COPY backend/ backend/
 COPY demo/docs/ demo/docs/
 COPY demo/recorded/ demo/recorded/
+COPY demo/samples/ demo/samples/
 COPY --from=ui /ui/dist/ frontend/dist/
 
 RUN useradd --create-home --uid 10001 afterlife && chown -R afterlife /app

@@ -50,3 +50,34 @@ def premium_receipt() -> ExtractedDocument:
         amounts=[{"label": "Sum Assured", "value": 500000}, {"label": "Premium Amount Paid", "value": 24380}],
         dates=[{"label": "Receipt Date", "date": "2026-07-14"}],
     )
+
+
+def demo_case() -> Case:
+    """The sample family with all 9 documents read (recorded Gemini readings), in upload order, as the app has it."""
+    from app import demo
+    from tools.asset_map import sync_documents
+
+    case = demo.new_demo_case()
+    for path in demo.demo_documents():
+        add_doc(case, recorded(path.stem), path.name)
+    sync_documents(case, date(2026, 10, 16))
+    return case
+
+
+def recorded_raw(kind: str, stem: str) -> str:
+    """A real Gemini reply recorded by scripts/record_samples.py --record."""
+    return json.loads((RECORDED_DIR.parent / kind / f"{stem}.json").read_text())["raw_response"]
+
+
+def infer_kavach(case: Case) -> None:
+    """Apply the inference result Gemini gives for the planted Kavach premiums (all three NACH debits cited)."""
+    from app.models import InferenceResult
+    from tools.inference import apply_proposals, collect_transactions
+
+    refs = collect_transactions(case)
+    ids = [r.id for r in refs if "KAVACH" in r.description]
+    result = InferenceResult.model_validate({"items": [{
+        "kind": "asset", "type": "life_insurance", "institution": "KAVACH LIFE INS", "identifier_hint": None,
+        "reason": "Monthly premiums to Kavach Life point to a policy.", "evidence_transaction_ids": ids,
+        "confidence": "high"}]})
+    apply_proposals(case, result, refs, "test", today=date(2026, 10, 16))

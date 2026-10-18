@@ -5,20 +5,25 @@ import hmac
 import mimetypes
 import secrets
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, UploadFile
+from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+import kb
 from agent.loop import ANALYSE_MESSAGE, AgentError, run_agent
-from app import services
+from app import demo, services
 from app.config import REPO_ROOT, get_settings
-from app.models import BoardStatus, Case, CaseCreate, CaseUpdate, Document, InferenceRun, ItemStatus, Letter, utc_now
+from app.models import BoardStatus, Case, CaseCreate, CaseUpdate, Document, InferenceRun, ItemStatus, Letter
 from storage import CaseNotFound, Storage, get_storage
 from tools.asset_map import asset_map_view
 from tools.extraction import SUPPORTED_MIME_TYPES, ExtractionError
 from tools.finance import could_be_same_person
 from tools.inference import InferenceError
 from tools.letters import letter_pdf
+from tools.memories import AUDIO_MIME_TYPES, MAX_TYPED_CHARS, MemoryReadError
+from tools.names import NameCheckError
+from tools.replies import ReplyError
+from tools.pdf import WrongPassword
 from tools.questions import QuestionError
 
 app = FastAPI(title="Virasat", version="0.3.0")
@@ -73,14 +78,19 @@ def case_view(case: Case) -> dict:
     return {
         "id": case.id, "deceased_name": case.deceased_name, "date_of_death": case.date_of_death.isoformat(),
         "relationship": case.relationship, "language": case.language, "is_demo": case.is_demo,
-        "created_at": case.created_at, "updated_at": case.updated_at, "share_token": case.share_token,
-        "share_expires_at": case.share_expires_at,
+        "created_at": case.created_at, "updated_at": case.updated_at,
         "documents": [document_view(d, case.deceased_name) for d in case.documents],
         "asset_map": asset_map_view(case),
         "facts": case.facts.model_dump(),
         "questions": [q.model_dump(mode="json") for q in case.questions],
         "plan": case.plan.model_dump(mode="json") if case.plan else None,
         "letters": [l.model_dump(mode="json") for l in case.letters],
+        "memories": [m.model_dump(mode="json") for m in case.memories],
+        "name_check": case.name_check.model_dump(mode="json") if case.name_check else None,
+        "name_guidance": kb.lookup("name_mismatch", case.language) if case.name_check and case.name_check.issues else None,
+        "replies": [r.model_dump(mode="json") for r in case.replies],
+        "samples": {"memory": demo.SAMPLE_MEMORY.name, "replies": demo.sample_replies_by_task(case)}
+        if case.is_demo else None,
         "activity_summary": services.activity_summary(case),
         "activity": [a.model_dump(mode="json") for a in case.activity],
     }
@@ -188,6 +198,25 @@ def remove_document(document_id: str, case: Case = Depends(load_case), storage: 
         return case_view(services.remove_document(storage, case.id, document_id))
     except KeyError:
         raise HTTPException(404, "Document not found")
+
+
+class UnlockBody(BaseModel):
+    password: str = Field(min_length=1, max_length=200)
+
+
+@app.post("/api/cases/{case_id}/documents/{document_id}/unlock")
+def unlock_document(document_id: str, body: UnlockBody, case: Case = Depends(load_case),
+                    storage: Storage = Depends(get_storage)):
+    """Open a password-protected PDF with the password the family types. The password is never stored."""
+    try:
+        return document_view(services.unlock_document(storage, case.id, document_id, body.password), case.deceased_name)
+    except KeyError:
+        raise HTTPException(404, "Document not found")
+    except WrongPassword as exc:
+        raise HTTPException(400, str(exc))
+    except FileNotFoundError:
+        raise HTTPException(410, "This file is no longer stored (uploads are deleted after 24 hours). "
+                                 "Please upload it again.")
 
 
 @app.post("/api/cases/{case_id}/documents/{document_id}/extract")
@@ -340,34 +369,92 @@ def download_letter(letter_id: str, case: Case = Depends(load_case)):
                     headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
-# --- read-only share link ------------------------------------------------------
+# --- family memories, name check, replies from institutions ---------------------
 
-@app.post("/api/cases/{case_id}/share")
-def create_share_link(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
-    case = services.ensure_share_token(storage, case.id)
-    return {"share_token": case.share_token, "share_expires_at": case.share_expires_at}
+MAX_AUDIO_BYTES = 10 * 1024 * 1024  # about 5 minutes of the 16 kHz WAV the app records
 
 
-@app.delete("/api/cases/{case_id}/share")
-def turn_off_share_link(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
-    return case_view(services.turn_off_share_link(storage, case.id))
+def _audio_type(upload: UploadFile) -> str:
+    declared = (upload.content_type or "").split(";")[0].strip().lower()
+    return declared or (mimetypes.guess_type(upload.filename or "")[0] or "").lower()
 
 
-@app.get("/api/share/{token}")
-def shared_board(token: str, storage: Storage = Depends(get_storage)):
-    """Read-only family board: institutions, account types and step progress. No documents, letters, evidence,
-    account numbers or nominees, since a forwarded link must not give a caller details to sound convincing."""
-    case = storage.find_by_share_token(token)
-    if case is None or not case.share_expires_at or case.share_expires_at <= utc_now():
-        raise HTTPException(404, "This link is not valid any more")
-    tasks = case.plan.tasks if case.plan else []
-    return {
-        "deceased_name": case.deceased_name, "language": case.language,
-        "tasks": [{"id": t.id, "order": t.order, "institution": t.institution, "first_step": t.first_step,
-                   "board_status": t.board_status, "needs_confirmation": t.needs_confirmation,
-                   "items": [{"type": i.type, "status": i.status} for i in t.items]} for t in tasks],
-        "updated_at": case.updated_at,
-    }
+@app.post("/api/cases/{case_id}/memories", status_code=201)
+def add_memory(audio: UploadFile | None = None, text: str | None = Form(default=None, max_length=MAX_TYPED_CHARS),
+               case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    """What the family remembers: a voice recording, or typed text. The recording is never stored."""
+    if (audio is None) == (not text or not text.strip()):
+        raise HTTPException(400, "Please record a message or type what you remember (one of the two).")
+    data, mime = None, None
+    if audio is not None:
+        mime = _audio_type(audio)
+        if mime not in AUDIO_MIME_TYPES:
+            raise HTTPException(415, "Please record again: this kind of recording can't be read.")
+        data = audio.file.read(MAX_AUDIO_BYTES + 1)
+        if len(data) > MAX_AUDIO_BYTES:
+            raise HTTPException(413, "The recording is too long. Please keep it under 5 minutes.")
+        if not data:
+            raise HTTPException(400, "The recording is empty.")
+    try:
+        memory = services.add_memory(storage, case.id, audio=data, mime_type=mime,
+                                     text=text.strip() if text and audio is None else None)
+    except MemoryReadError as exc:
+        raise HTTPException(502, str(exc))
+    return {"memory": memory.model_dump(mode="json"), "case": case_view(storage.get_case(case.id))}
+
+
+@app.post("/api/cases/{case_id}/name-check")
+def check_names(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    try:
+        services.check_names(storage, case.id)
+    except NameCheckError as exc:
+        raise HTTPException(502, str(exc))
+    return case_view(storage.get_case(case.id))
+
+
+@app.post("/api/cases/{case_id}/plan/tasks/{task_id}/replies", status_code=201)
+def add_reply(task_id: str, file: UploadFile, case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    """A reply the institution sent back (letter, email, SMS screenshot). Read, acted on, and not stored."""
+    content_type = _content_type(file)
+    if content_type not in SUPPORTED_MIME_TYPES:
+        raise HTTPException(415, f"{file.filename}: please upload a photo (PNG/JPEG/WEBP/HEIC) or a PDF.")
+    limit = get_settings().max_upload_bytes
+    data = file.file.read(limit + 1)
+    if len(data) > limit:
+        raise HTTPException(413, f"{file.filename} is larger than {limit // (1024 * 1024)} MB.")
+    if not data:
+        raise HTTPException(400, f"{file.filename} is empty.")
+    try:
+        reply = services.add_reply(storage, case.id, task_id, file.filename or "reply", content_type, data)
+    except KeyError:
+        raise HTTPException(404, "Task not found. Please prepare the plan first.")
+    except ReplyError as exc:
+        raise HTTPException(502, str(exc))
+    return {"reply": reply.model_dump(mode="json"), "case": case_view(storage.get_case(case.id))}
+
+
+class RequirementDone(BaseModel):
+    done: bool
+
+
+@app.patch("/api/cases/{case_id}/replies/{reply_id}/requirements/{requirement_id}")
+def set_requirement(reply_id: str, requirement_id: str, body: RequirementDone, case: Case = Depends(load_case),
+                    storage: Storage = Depends(get_storage)):
+    try:
+        return case_view(services.set_requirement(storage, case.id, reply_id, requirement_id, body.done))
+    except KeyError:
+        raise HTTPException(404, "Not found")
+
+
+@app.get("/api/demo/samples/{name}")
+def demo_sample(name: str):
+    """The sample family's recording and reply letters, so the demo can be tried without your own files."""
+    allowed = {demo.SAMPLE_MEMORY.name: demo.SAMPLE_MEMORY,
+               **{n: demo.SAMPLES_DIR / n for n in demo.SAMPLE_REPLIES}}
+    path = allowed.get(name)
+    if path is None or not path.exists():
+        raise HTTPException(404, "Not found")
+    return FileResponse(path)
 
 
 # --- frontend (built by `npm run build` into frontend/dist) -------------------

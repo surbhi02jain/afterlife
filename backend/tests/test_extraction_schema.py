@@ -5,12 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from app.demo import DEMO_DOCS_DIR, RECORDED_DIR
+from app.demo import RECORDED_DIR, demo_documents
 from app.models import DocumentType, ExtractedDocument
 from tools.extraction import ExtractionError, parse_extraction
 
 FIXTURES = RECORDED_DIR
-DEMO_DOCS = DEMO_DOCS_DIR
 
 EXPECTED_TYPE = {
     "01_bank_statement_p1": DocumentType.bank_statement,
@@ -34,7 +33,7 @@ def load(path: Path) -> ExtractedDocument:
 
 
 def test_every_demo_doc_has_a_recorded_fixture():
-    missing = {p.stem for p in DEMO_DOCS.glob("*.png")} - {p.stem for p in recorded()}
+    missing = {p.stem for p in demo_documents()} - {p.stem for p in recorded()}
     assert not missing, f"record with: .venv/bin/python scripts/run_extraction.py --record  (missing {sorted(missing)})"
 
 

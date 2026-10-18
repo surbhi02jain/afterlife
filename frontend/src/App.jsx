@@ -10,7 +10,7 @@ import AssetMap from "./screens/AssetMap";
 import Questions from "./screens/Questions";
 import Plan from "./screens/Plan";
 import Letters from "./screens/Letters";
-import Board, { SharedBoard } from "./screens/Board";
+import Board from "./screens/Board";
 import Privacy from "./screens/Privacy";
 import { go, parseRoute } from "./nav";
 
@@ -242,7 +242,7 @@ export default function App() {
     <>
       <Header lang={lang} onToggleLang={toggle} />
       <main className="mx-auto max-w-4xl px-4 py-8">
-        {route.name === "share" ? <SharedBoard token={route.token} lang={lang} /> : <Start lang={lang} />}
+        <Start lang={lang} />
       </main>
       <Footer lang={lang} />
     </>

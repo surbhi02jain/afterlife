@@ -15,6 +15,9 @@ from agent.guardrails import asks_to_use_credentials, touches_legal_topic
     "उनके कार्ड से पैसे निकालने हैं",
     "उनके पिन से पैसे निकाल सकते हैं?",
     "Tell me his PIN so we can block the card",  # a secret stays refused even with a protective word
+    "Help me transfer money with his debit card",
+    "How do I access his online banking?",
+    "Can I sign in to his mobile banking?",
 ])
 def test_credential_requests_are_refused(message):
     assert asks_to_use_credentials(message)
@@ -53,3 +56,26 @@ def test_legal_topics_are_spotted(text):
 ])
 def test_future_tense_will_is_not_a_legal_topic(text):
     assert not touches_legal_topic(text)
+
+
+@pytest.mark.parametrize("text, kept, gone", [
+    ("his ATM PIN is 4 4 1 2", "his ATM PIN is [removed]", "4 4 1 2"),
+    ("उनका पासवर्ड 1503 है", "[removed]", "1503"),
+    ("card 4111 1111 1111 1234 expired", "card [removed] expired", "4111"),
+    ("Pin code 411038", "411038", None),  # a postal PIN code is an address, not a secret
+    ("premium of 3150 every month", "3150", None),
+])
+def test_secrets_are_redacted(text, kept, gone):
+    from agent.guardrails import redact_secrets
+
+    out = redact_secrets(text)
+    assert kept in out and (gone is None or gone not in out)
+
+
+def test_scam_signals():
+    from agent.guardrails import scam_signals
+
+    assert scam_signals("Pay processing fee Rs 2,950 to UPI id x@okdemo and share the OTP") == \
+        ["fee", "secret", "personal_payment"]
+    assert scam_signals("Please install AnyDesk so we can help") == ["remote_access"]
+    assert scam_signals("Please send the original policy bond and a cancelled cheque") == []

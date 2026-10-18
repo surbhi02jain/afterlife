@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 from agent.loop import AgentError, run_agent  # noqa: E402
-from app import services  # noqa: E402
+from app import demo, services  # noqa: E402
 from app.config import get_settings  # noqa: E402
 from storage import get_storage  # noqa: E402
 
@@ -28,6 +28,9 @@ def main() -> int:
 
     storage = get_storage()
     case = services.create_demo_case(storage)
+    for doc in case.documents:
+        if doc.status == "locked":  # the family types the PDF password on the Documents screen
+            services.unlock_document(storage, case.id, doc.id, demo.DEMO_PDF_PASSWORD)
     if args.hi:
         storage.update_case(case.id, lambda c: setattr(c, "language", "hi"))
     print(f"Demo case {case.id}; agent model {get_settings().reasoning_model}\n")

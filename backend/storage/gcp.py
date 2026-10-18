@@ -65,14 +65,6 @@ class GcpStorage(Storage):
         with self._lock_for(case_id):
             return run(self.db.transaction(max_attempts=10))
 
-    def find_by_share_token(self, token: str) -> Case | None:
-        if not token:
-            return None
-        query = self.db.collection(COLLECTION).where(filter=firestore.FieldFilter("share_token", "==", token)).limit(1)
-        for snap in query.stream():
-            return Case.model_validate(snap.to_dict())
-        return None
-
     def delete_case(self, case_id: str) -> None:
         self._ref(case_id).delete()
         blobs = list(self.bucket.list_blobs(prefix=f"{case_id}/"))

@@ -47,13 +47,6 @@ def test_concurrent_updates_are_not_lost(gcp):
     assert sorted(d.filename for d in gcp.get_case(case.id).documents) == sorted(f"f{n}.png" for n in range(12))
 
 
-def test_share_token_lookup(gcp):
-    case = gcp.create_case(new_case())
-    gcp.update_case(case.id, lambda c: setattr(c, "share_token", f"tok{case.id}"))
-    assert gcp.find_by_share_token(f"tok{case.id}").id == case.id
-    assert gcp.find_by_share_token("nope") is None
-
-
 def test_files_and_delete_my_data(gcp):
     case = gcp.create_case(new_case())
     key = gcp.save_file(case.id, "doc1", b"\x89PNG data", "image/png")

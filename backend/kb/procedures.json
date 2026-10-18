@@ -223,5 +223,48 @@
     "typical_timeline": {"en": "Often 2 to 4 weeks.", "hi": "अक्सर 2 से 4 सप्ताह।"},
     "source_name": "Virasat placeholder based on general small-savings practice (unverified)",
     "verified": false
+  },
+  "name_mismatch": {
+    "applies_to": [
+      "name_mismatch"
+    ],
+    "priority": 0,
+    "title": {
+      "en": "When a name is written differently on different papers",
+      "hi": "जब अलग-अलग कागज़ों पर नाम अलग लिखा हो"
+    },
+    "steps": {
+      "en": [
+        "Keep together every paper where the name is written differently. Institutions usually want to see them side by side.",
+        "Ask each institution what proof they accept that the names belong to the same person, before you prepare anything. Requirements differ.",
+        "Many accept an identity document that shows the full name. Some ask for a signed declaration on stamp paper, often called a \"one and the same person\" affidavit.",
+        "If a nominee's name differs, carry the nominee's ID in the name used on the policy or account, plus any paper that links the two spellings."
+      ],
+      "hi": [
+        "जिन कागज़ों पर नाम अलग लिखा है, उन सबको साथ रखें। संस्थाएँ आमतौर पर उन्हें साथ-साथ देखना चाहती हैं।",
+        "कुछ भी तैयार करने से पहले हर संस्था से पूछें कि नाम एक ही व्यक्ति के हैं, इसका कौन-सा प्रमाण वे मानती हैं। नियम अलग-अलग होते हैं।",
+        "कई संस्थाएँ पूरा नाम दिखाने वाला पहचान पत्र मान लेती हैं। कुछ स्टांप पेपर पर हस्ताक्षरित घोषणा माँगती हैं, जिसे अक्सर \"एक ही व्यक्ति\" (one and the same person) शपथ-पत्र कहते हैं।",
+        "अगर नॉमिनी का नाम अलग है, तो पॉलिसी या खाते पर लिखे नाम वाला नॉमिनी का पहचान पत्र, और दोनों वर्तनियों को जोड़ने वाला कोई कागज़ साथ ले जाएँ।"
+      ]
+    },
+    "documents_required": {
+      "en": [
+        "An ID of the deceased showing the full name (Aadhaar, PAN or passport)",
+        "Each paper where the name differs",
+        "The nominee's ID proof"
+      ],
+      "hi": [
+        "पूरा नाम दिखाने वाला दिवंगत का पहचान पत्र (आधार, पैन या पासपोर्ट)",
+        "हर वह कागज़ जिस पर नाम अलग है",
+        "नॉमिनी का पहचान प्रमाण"
+      ]
+    },
+    "typical_timeline": {
+      "en": "Usually sorted at the first visit if the right papers are carried.",
+      "hi": "सही कागज़ साथ हों तो आमतौर पर पहली मुलाक़ात में ही हल हो जाता है।"
+    },
+    "time_sensitive": null,
+    "source_name": "Virasat placeholder based on general practice for name differences (unverified)",
+    "verified": false
   }
 }

@@ -1,0 +1,6 @@
+{
+  "source": "memory_hi.wav",
+  "model": "gemini-3-flash-preview",
+  "input_sha256": "2f8f7a1512433d1c3cd8365265c6b75d1364b8317ace95fbe2bbb0c363c41e73",
+  "raw_response": "{\n  \"transcript\": \"मुझे याद है, वो हर महीने कवच लाइफ इंश्योरेंस का प्रीमियम भरते थे। और जब अर्जुन पैदा हुआ था, तब उन्होंने पोस्ट ऑफिस में एक पीपीएफ खाता खुलवाया था। उसकी पासबुक मुझे नहीं मिल रही।\",\n  \"language_detected\": \"hi\",\n  \"clues\": [\n    {\n      \"type\": \"life_insurance\",\n      \"institution\": \"Kavach Life\",\n      \"what_they_said\": \"वो हर महीने कवच लाइफ इंश्योरेंस का प्रीमियम भरते थे\",\n      \"months\": [],\n      \"amount_hint\": null\n    },\n    {\n      \"type\": \"ppf\",\n      \"institution\": \"Post Office\",\n      \"what_they_said\": \"उन्होंने पोस्ट ऑफिस में एक पीपीएफ खाता खुलवाया था\",\n      \"months\": [],\n      \"amount_hint\": null\n    }\n  ]\n}"
+}

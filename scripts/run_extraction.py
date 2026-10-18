@@ -20,10 +20,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
+from app import demo  # noqa: E402
 from app.config import get_settings  # noqa: E402
 from tools.extraction import ExtractionError, extract_document  # noqa: E402
 
-DEMO_DIR = ROOT / "demo" / "docs"
 FIXTURE_DIR = ROOT / "demo" / "recorded" / "extraction"
 
 
@@ -31,7 +31,7 @@ def run_one(path: Path):
     mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
     started = time.monotonic()
     try:
-        result = extract_document(path.read_bytes(), mime)
+        result = extract_document(demo.readable_bytes(path), mime)  # the locked demo PDF is read unlocked
         return path, result, None, time.monotonic() - started
     except ExtractionError as exc:
         return path, None, str(exc), time.monotonic() - started
@@ -45,7 +45,7 @@ def main() -> int:
     parser.add_argument("--missing", action="store_true", help="only files that have no recorded fixture yet")
     args = parser.parse_args()
 
-    files = args.files or sorted(DEMO_DIR.glob("*.png"))
+    files = args.files or demo.demo_documents()
     if args.missing:
         files = [f for f in files if not (FIXTURE_DIR / f"{f.stem}.json").exists()]
     print(f"Extracting {len(files)} file(s) with {get_settings().extraction_model}\n")

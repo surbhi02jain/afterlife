@@ -136,7 +136,7 @@ class CaseUpdate(BaseModel):
         return _not_in_future(value)
 
 
-DocumentStatus = Literal["uploaded", "extracting", "extracted", "failed"]
+DocumentStatus = Literal["locked", "uploaded", "extracting", "extracted", "failed"]  # locked: PDF needs its password
 
 
 class Document(BaseModel):
@@ -254,6 +254,151 @@ class InferenceResult(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Family memories (voice or typed): Gemini listens, code matches the clues to transactions
+# ---------------------------------------------------------------------------
+
+ItemTypeName = Literal[
+    "savings_account", "fixed_deposit", "life_insurance", "mutual_fund", "demat_account", "epf", "ppf",
+    "other_asset", "home_loan", "personal_loan", "vehicle_loan", "credit_card", "other_loan",
+]
+
+
+class MemoryClue(BaseModel):
+    type: ItemTypeName = Field(description="The kind of account, policy, investment or loan the family describes.")
+    institution: str | None = Field(description="The bank/insurer/fund/lender named, as said, or null if not named.")
+    what_they_said: str = Field(description="A short quote or close paraphrase of what the family said about it, in "
+                                            "the language they spoke.")
+    months: list[int] = Field(description="Months (1-12) they mention for payments, e.g. 'every March' -> [3]. Empty "
+                                          "if none or 'every month'.")
+    amount_hint: float | None = Field(description="An amount in rupees they mention for it, or null.")
+
+
+class MemoryReading(BaseModel):
+    transcript: str = Field(description="What was said, written out in the language spoken. Replace any PIN, OTP, "
+                                        "password or card number with [removed].")
+    language_detected: str = Field(description="ISO 639-1 code of the main language spoken, e.g. 'hi', 'en'.")
+    clues: list[MemoryClue] = Field(description="One per account, policy, investment or loan they mention. Empty if "
+                                                "they mention none.")
+
+
+class MemoryResult(BaseModel):
+    item_id: str
+    type: str
+    institution: str | None = None
+    said: str
+    matched_transactions: int = 0
+    created: bool = Field(description="True when this memory added a new probable item; False when it backed one "
+                                      "we already had.")
+
+
+class Memory(BaseModel):
+    id: str = Field(default_factory=new_id)
+    at: datetime = Field(default_factory=utc_now)
+    source: Literal["voice", "typed"]
+    transcript: str = Field(description="Numbers masked to the last 4; secrets removed.")
+    model: str
+    results: list[MemoryResult] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Name check across documents: Gemini compares names, code verifies every quote
+# ---------------------------------------------------------------------------
+
+class NameMention(BaseModel):
+    ref: str = Field(description="Where the name appears: a document ref like D3, or FAMILY for the name the family "
+                                 "typed, or CLAIMANT for the family member who will sign.")
+    role: Literal["holder", "nominee", "deceased", "claimant"] = Field(
+        description="holder/nominee for a document; deceased for FAMILY; claimant for CLAIMANT.")
+    name: str = Field(description="The name exactly as given in the list, character for character.")
+
+
+class NameFinding(BaseModel):
+    kind: Literal["deceased_name_differs", "nominee_name_differs", "not_the_deceased"]
+    mentions: list[NameMention] = Field(description="Every mention involved, including the one that differs.")
+    explanation: str = Field(description="One or two warm, plain sentences on what differs and why an institution "
+                                         "may ask about it. No legal advice.")
+
+
+class NameCheckResult(BaseModel):
+    findings: list[NameFinding]
+
+
+class NameIssue(BaseModel):
+    kind: Literal["deceased_name_differs", "nominee_name_differs", "not_the_deceased"]
+    names: list[dict] = Field(description="[{name, where: [document filenames]}], one per way it is written.")
+    explanation: str
+
+
+class NameCheck(BaseModel):
+    at: datetime = Field(default_factory=utc_now)
+    model: str
+    compared: int = Field(description="How many names were compared.")
+    issues: list[NameIssue] = Field(default_factory=list)
+    discarded: list[str] = Field(default_factory=list, description="Findings dropped because a quote didn't check out.")
+
+
+# ---------------------------------------------------------------------------
+# Replies from institutions: Gemini reads the letter, code updates the plan
+# ---------------------------------------------------------------------------
+
+ReplyOutcome = Literal["asks_for_documents", "no_record_found", "claim_settled", "other"]
+
+
+class RequirementDraft(BaseModel):
+    document: str = Field(description="One thing they ask for, in plain words, e.g. 'Original policy bond'.")
+    detail: str | None = Field(description="Any detail they give about it (copies, attested, which form), or null.")
+
+
+class ReplyReading(BaseModel):
+    institution: str | None = Field(description="Who wrote the letter or message, as printed.")
+    letter_date: str | None = Field(description="Date of the letter as YYYY-MM-DD, or null.")
+    reference_number: str | None = Field(description="Their claim/reference number as printed, or null.")
+    outcome: ReplyOutcome = Field(description="asks_for_documents = they list documents or steps for the family; "
+                                              "no_record_found = they found nothing in the deceased's name; "
+                                              "claim_settled = they paid or closed it; other.")
+    confirms_account: bool = Field(description="True if the letter states that an account, policy, investment or loan "
+                                               "of the deceased exists or was in force; else false.")
+    item_type: ItemTypeName | None = Field(description="The kind of account/policy the letter is about, or null.")
+    identifier: str | None = Field(description="The account/policy/loan number they state, as printed, or null.")
+    nominee: str | None = Field(description="The nominee they state, or null. Never guess.")
+    amount: float | None = Field(description="The main amount they state (sum assured, balance, settled amount), or "
+                                             "null.")
+    requirements: list[RequirementDraft] = Field(description="Everything they ask the family to send or do.")
+    respond_within_days: int | None = Field(description="If they give a time limit in days ('within 30 days'), that "
+                                                        "number; else null.")
+    red_flags: list[str] = Field(description="Anything a genuine institution would not ask: a fee or payment to "
+                                             "release the money, an OTP/PIN/password, remote-access apps, a personal "
+                                             "UPI id or bank account to pay into, threats or extreme urgency. Empty "
+                                             "if none.")
+    summary: str = Field(description="Two or three warm, plain sentences: what they said and what they want next.")
+
+
+class Requirement(BaseModel):
+    id: str = Field(default_factory=new_id)
+    document: str
+    detail: str | None = None
+    done: bool = False
+
+
+class InstitutionReply(BaseModel):
+    id: str = Field(default_factory=new_id)
+    task_id: str
+    institution: str
+    filename: str
+    received_at: datetime = Field(default_factory=utc_now)
+    letter_date: str | None = None
+    reference_masked: str | None = None
+    outcome: ReplyOutcome
+    summary: str
+    requirements: list[Requirement] = Field(default_factory=list)
+    respond_by: str | None = Field(default=None, description="Computed in code: letter date + days they gave.")
+    red_flags: list[str] = Field(default_factory=list, description="Plain-language warnings, in the case language.")
+    red_flag_quotes: list[str] = Field(default_factory=list, description="Their own words that raised the flags.")
+    confirmed_item_id: str | None = Field(default=None, description="The probable item this letter confirmed.")
+    model: str
+
+
+# ---------------------------------------------------------------------------
 # Agent activity, follow-up questions, action plan, letters
 # ---------------------------------------------------------------------------
 
@@ -332,7 +477,8 @@ class Letter(BaseModel):
     id: str = Field(default_factory=new_id)
     item_id: str
     institution: str
-    kind: Literal["claim_intimation", "existence_enquiry"]
+    kind: Literal["claim_intimation", "existence_enquiry", "reply_cover"]
+    reply_id: str | None = Field(default=None, description="For reply_cover: the institution's reply it answers.")
     title: str
     body: str
     language: Literal["en", "hi"]
@@ -346,8 +492,6 @@ class Case(CaseFields):
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
     is_demo: bool = False
-    share_token: str | None = None
-    share_expires_at: datetime | None = None  # the read-only family link stops working after this
     owner_key_hash: str | None = None  # sha256 of the private key held by the creating browser; never sent out
     documents: list[Document] = Field(default_factory=list)
     assets: list[Asset] = Field(default_factory=list)
@@ -357,6 +501,9 @@ class Case(CaseFields):
     questions: list[Question] = Field(default_factory=list)
     plan: ActionPlan | None = None
     letters: list[Letter] = Field(default_factory=list)
+    memories: list[Memory] = Field(default_factory=list)
+    name_check: NameCheck | None = None
+    replies: list[InstitutionReply] = Field(default_factory=list)
     activity: list[ActivityEntry] = Field(default_factory=list)
 
     def get_question(self, question_id: str) -> Question | None:
@@ -370,3 +517,10 @@ class Case(CaseFields):
 
     def get_item(self, item_id: str) -> Asset | Liability | None:
         return next((i for i in [*self.assets, *self.liabilities] if i.id == item_id), None)
+
+    def get_reply(self, reply_id: str) -> "InstitutionReply | None":
+        return next((r for r in self.replies if r.id == reply_id), None)
+
+    def item_letter(self, item_id: str) -> Letter | None:
+        """The claim or enquiry letter for an item (not a cover letter answering a reply)."""
+        return next((l for l in self.letters if l.item_id == item_id and l.reply_id is None), None)
