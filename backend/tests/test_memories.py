@@ -5,8 +5,8 @@ import json
 from app.models import MemoryReading
 from tests.helpers import demo_case, infer_kavach, recorded_raw
 from tools.finance import totals
-from tools.memories import apply_memory, matching_transactions, parse_memory
-from tools.inference import collect_transactions
+from tools.memories import apply_memory, match_memories, matching_transactions, parse_memory
+from tools.inference import build_prompt, collect_transactions
 
 
 def sample_memory() -> MemoryReading:
@@ -52,6 +52,39 @@ def test_memory_that_agrees_with_inference_merges_and_raises_confidence():
     assert not memory.results[0].created
     assert inferred.confidence == "high"
     assert "remembers" in inferred.reason
+
+
+def test_memory_given_before_the_papers_are_read_is_checked_again_at_analysis():
+    case = demo_case()
+    papers, case.documents = case.documents, []
+    memory = apply_memory(case, sample_memory(), "test", "voice")  # at upload time, before anything is read
+    kavach = by_type(case, "life_insurance")[0]
+    assert kavach.confidence == "low" and [r.matched_transactions for r in memory.results] == [0, 0]
+
+    case.documents = papers
+    match_memories(case)  # what the analysis does first
+
+    assert by_type(case, "life_insurance") == [kavach] and kavach.confidence == "high"
+    assert "3 matching payments" in kavach.reason
+    assert [r.matched_transactions for r in memory.results] == [3, 0]
+    assert all(r.created for r in memory.results)  # still the memory's own finds, not "supports"
+
+
+def test_search_sees_memories_as_hints_and_leads_with_the_transactions_when_it_agrees():
+    case = demo_case()
+    papers, case.documents = case.documents, []
+    apply_memory(case, sample_memory(), "test", "voice")
+    case.documents = papers
+
+    prompt = build_prompt(case, collect_transactions(case))
+    known, remembered = prompt.split("THE FAMILY REMEMBERS")[0], prompt.split("THE FAMILY REMEMBERS")[1]
+    assert "Kavach" not in known  # a memory alone isn't "documented": the search may still back it up
+    assert "life_insurance | Kavach Life" in remembered and "ppf" in remembered
+
+    infer_kavach(case)
+    kavach = by_type(case, "life_insurance")
+    assert len(kavach) == 1 and kavach[0].origin == "inference" and kavach[0].confidence == "high"
+    assert kavach[0].reason.startswith("Monthly premiums") and kavach[0].reason.endswith("remembers it too.")
 
 
 def test_unnamed_institution_needs_a_month_or_amount_to_match():

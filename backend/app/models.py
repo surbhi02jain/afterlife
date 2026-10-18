@@ -297,6 +297,8 @@ class Memory(BaseModel):
     source: Literal["voice", "typed"]
     transcript: str = Field(description="Numbers masked to the last 4; secrets removed.")
     model: str
+    clues: list[MemoryClue] = Field(default_factory=list, description="Kept (secrets removed) so each analysis can "
+                                                                      "check them again against every document read.")
     results: list[MemoryResult] = Field(default_factory=list)
 
 

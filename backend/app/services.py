@@ -202,6 +202,7 @@ def run_inference(storage: Storage, case_id: str, *, client=None, run_id: str | 
     runs = []
 
     def mutate(c: Case):
+        memories.match_memories(c)  # documents read since a memory was given may back it up now
         run = apply_proposals(c, result, refs, model)
         n = len(run.added)
         log(c, "infer_hidden_assets", f"Found {n} probable asset{'s' if n != 1 else ''} that may need confirming",

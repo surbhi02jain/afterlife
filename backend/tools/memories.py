@@ -18,11 +18,12 @@ from pydantic import ValidationError
 from agent.guardrails import redact_secrets
 from app.config import get_settings
 from app.gemini import GeminiUnreachable, generate, get_client
-from app.models import Case, Confidence, Evidence, Memory, MemoryReading, MemoryResult, mask_long_numbers
+from app.models import (Case, Confidence, Evidence, Memory, MemoryClue, MemoryReading, MemoryResult,
+                        mask_long_numbers)
 from tools.asset_map import Candidate, refresh_recurring, upsert
 from tools.finance import institution_tokens, parse_date
 from tools.i18n import pick
-from tools.inference import TxnRef, collect_transactions
+from tools.inference import FAMILY_TOO_EN, FAMILY_TOO_HI, RANK, TxnRef, collect_transactions
 
 AUDIO_MIME_TYPES = {"audio/wav", "audio/x-wav", "audio/webm", "audio/ogg", "audio/mpeg", "audio/mp3", "audio/mp4",
                     "audio/m4a", "audio/aac", "audio/flac"}
@@ -136,48 +137,65 @@ def _confidence(matches: int) -> Confidence:
     return "high" if matches >= 2 else "medium" if matches == 1 else "low"
 
 
-RANK = {"low": 0, "medium": 1, "high": 2}
-
-
 def apply_memory(case: Case, reading: MemoryReading, model: str, source: str) -> Memory:
-    """Merge the clues into the asset map as probable items backed by the family's words. Mutates case."""
-    memory = Memory(source=source, transcript=mask_long_numbers(redact_secrets(reading.transcript)), model=model)
+    """Keep the clues (secrets removed) and check every memory against the transactions read so far. Mutates case."""
+    clues = [c.model_copy(update={"what_they_said": said})
+             for c in reading.clues if (said := mask_long_numbers(redact_secrets(c.what_they_said)).strip())]
+    memory = Memory(source=source, transcript=mask_long_numbers(redact_secrets(reading.transcript)), model=model,
+                    clues=clues)
+    case.memories.append(memory)
+    match_memories(case)
+    return memory
+
+
+def match_memories(case: Case) -> None:
+    """Check what the family remembers against every transaction read so far. Runs when a memory arrives and again
+    at each analysis: documents read since then may back it up. Merges each clue as a PROBABLE item. Mutates case."""
     refs = collect_transactions(case)
+    for item in [*case.assets, *case.liabilities]:  # items only memories made: their confidence is re-earned below
+        if item.origin == "family" and item.status == "probable" and not item.decided_by_user:
+            item.confidence = "low"
+    for memory in case.memories:
+        if not memory.clues:
+            continue  # memories saved before clues were kept: their results stand
+        made = {r.item_id for r in memory.results if r.created}
+        memory.results = [_merge_clue(case, memory, clue, refs, made) for clue in memory.clues]
+    refresh_recurring(case, date.today())
+
+
+def _merge_clue(case: Case, memory: Memory, clue: MemoryClue, refs: list[TxnRef], made: set[str]) -> MemoryResult:
     lang = case.language
-    for clue in reading.clues:
-        said = mask_long_numbers(redact_secrets(clue.what_they_said)).strip()
-        if not said:
-            continue
-        matches = matching_transactions(clue, refs)
-        confidence = _confidence(len(matches))
-        quote = Evidence(document_id=f"memory:{memory.id}", document_name=pick(lang, "What the family remembers",
-                                                                                "परिवार की याद"), description=said)
-        found = (pick(lang, f" We found {len(matches)} matching payment{'s' if len(matches) != 1 else ''} in the "
-                            "statements.", f" बैंक रिकॉर्ड में इससे मेल खाते {len(matches)} भुगतान मिले।") if matches
-                 else pick(lang, " We found no payment for it in the papers yet, so please ask the institution.",
-                           " कागज़ों में अभी इसका कोई भुगतान नहीं मिला, इसलिए कृपया संस्था से पूछें।"))
-        cand = Candidate(
-            type=clue.type,
-            institution=clue.institution,
-            identifier=None,  # a number heard in a recording is never treated as an account number
-            confidence=confidence,
-            origin="family",
-            evidence=[quote, *(r.evidence() for r in matches)],
-            reason=pick(lang, "Your family remembers this.", "आपके परिवार को यह याद है।") + found,  # the quote shows as evidence
-        )
-        item, created = upsert(case, cand)
-        if not created and item.status == "probable" and not item.decided_by_user:
-            # a memory that agrees with what the statements already showed makes the item more likely, never less
-            if RANK[confidence] > RANK[item.confidence]:
-                item.confidence = confidence
-            also = pick(lang, "Your family remembers it too.", "परिवार को भी यह याद है।")
+    matches = matching_transactions(clue, refs)
+    confidence = _confidence(len(matches))
+    quote = Evidence(document_id=f"memory:{memory.id}", document_name=pick(lang, "What the family remembers",
+                                                                            "परिवार की याद"), description=clue.what_they_said)
+    found = (pick(lang, f" We found {len(matches)} matching payment{'s' if len(matches) != 1 else ''} in the "
+                        "statements.", f" बैंक रिकॉर्ड में इससे मेल खाते {len(matches)} भुगतान मिले।") if matches
+             else pick(lang, " We found no payment for it in the papers yet, so please ask the institution.",
+                       " कागज़ों में अभी इसका कोई भुगतान नहीं मिला, इसलिए कृपया संस्था से पूछें।"))
+    reason = pick(lang, "Your family remembers this.", "आपके परिवार को यह याद है।") + found  # the quote shows as evidence
+    cand = Candidate(
+        type=clue.type,
+        institution=clue.institution,
+        identifier=None,  # a number heard in a recording is never treated as an account number
+        confidence=confidence,
+        origin="family",
+        evidence=[quote, *(r.evidence() for r in matches)],
+        reason=reason,
+    )
+    item, created = upsert(case, cand)
+    if not created and item.status == "probable" and not item.decided_by_user:
+        # more evidence makes the item more likely, never less
+        if RANK[confidence] > RANK[item.confidence]:
+            item.confidence = confidence
+        if item.origin == "family":
+            item.reason = reason  # only memories back it: say what the papers show now
+        else:
+            also = pick(lang, FAMILY_TOO_EN, FAMILY_TOO_HI)
             if also not in (item.reason or ""):
                 item.reason = f"{item.reason or ''} {also}".strip()
-        memory.results.append(MemoryResult(item_id=item.id, type=item.type, institution=item.institution, said=said,
-                                           matched_transactions=len(matches), created=created))
-    refresh_recurring(case, date.today())
-    case.memories.append(memory)
-    return memory
+    return MemoryResult(item_id=item.id, type=item.type, institution=item.institution, said=clue.what_they_said,
+                        matched_transactions=len(matches), created=created or item.id in made)
 
 
 def summary(memory: Memory) -> tuple[str, str]:

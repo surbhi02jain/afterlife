@@ -22,7 +22,7 @@ the hackathon asks for. Part C maps every feature to the step that shows it.
    terminal for errors and note how long "Find what might be missing" takes. Then **Privacy → Delete my data** and
    start clean for the real recording.
 4. **Browser:** a fresh Chrome profile or window, 1440×900 or larger, zoom 100%, bookmarks bar and extensions hidden.
-   Allow the microphone for `localhost` when asked (step 9). Keep a second **incognito** window ready for step 14.
+   Allow the microphone for `localhost` when asked (step 6). Keep a second **incognito** window ready for step 17.
 5. **Files**, in two folders:
    - `afterlife/demo/docs/` – the family's 9 documents (01 to 09).
    - `afterlife/demo/video/` – `10_bank_statement_sep.png` (money keeps leaving after the death) and
@@ -85,33 +85,9 @@ Times are rough; "Find what might be missing" depends on Gemini.
 - *Say:* "Statements arrive locked. The family types the password once; Virasat opens the file and never stores the
   password."
 
-### 6. Find what might be missing (the ADK agent)
-- Click **Find what might be missing**. The panel **"Virasat is looking through everything…"** fills in live:
-  read documents, look for hidden assets, check names, look up procedures, prepare questions, build the plan, draft
-  letters.
-- Optional: open **✦ What Virasat did** (top right) to show the full activity log, in English and Hindi.
-- *Say:* "This is a Gemini agent on Google's Agent Development Kit. It decides the order of work; every step it takes
-  is logged, and code checks everything it proposes."
-
-### 7. What we found (the key moment)
-The app moves to **What we found**. Show, top to bottom:
-1. **Red alert – "Money left an account after Suresh Narayan Rao passed away":** **5 payments, ₹61,600 in total**:
-   EMI on 5 Sep, Kavach premium on 7 Sep, **₹20,000 ATM withdrawal at Hadapsar on 9 Sep**, SIP on 10 Sep, **₹15,000
-   wallet top-up on 11 Sep**. "It is first in your plan."
-   *Say:* "He died on the 2nd. Someone withdrew twenty thousand rupees a week later. That goes straight to the top."
-2. **Confirmed so far** – the total, the coloured bar and the legend (savings, FD, life insurance, mutual fund, EPF).
-3. **"We may have found 2 more things"** – marigold cards: **Kavach Life** (life insurance) and **Anand Stockbroking**
-   (demat). Open one: the ledger rows are the exact debits or dividends that point to it.
-   *Say:* "Nobody had papers for these. Gemini spotted the pattern; code checked that every transaction it cited is
-   real. They stay 'probable' until confirmed, and never count in the total."
-4. **Confirmed** cards with pastel icons; **Loans and dues** (the home loan, next EMI date).
-
-### 8. Confirm or reject a probable item
-- On **Anand Stockbroking**, click **Yes, this is right**. It moves to Confirmed and the total updates.
-- (Leave **Kavach Life** probable – step 12 confirms it from the insurer's letter.)
-
-### 9. Tell us what you remember (voice memory + secret redaction)
-Still on **What we found**, the card **"Tell us what you remember"**:
+### 6. Tell us what you remember (voice memory + secret redaction)
+Still on **Documents**, below the list, the card **"Tell us what you remember"**. It comes *before* the search on
+purpose: the agent uses what the family remembers as hints while it reads the transactions.
 - Click **Record a memory**, allow the microphone, and say (Hindi, or the English after it):
   > "मुझे याद है, वो हर महीने कवच लाइफ़ इंश्योरेंस का प्रीमियम भरते थे। और जब अर्जुन पैदा हुआ था, तब उन्होंने पोस्ट
   > ऑफ़िस में एक पीपीएफ़ खाता खुलवाया था। उनका ATM पिन 4412 था।"
@@ -119,13 +95,40 @@ Still on **What we found**, the card **"Tell us what you remember"**:
   > *(English: "He paid a Kavach Life insurance premium every month. When Arjun was born he opened a PPF account at the
   > post office. His ATM PIN was 4412.")*
 - Click **Stop and send**. Under **What we heard**:
-  - **Kavach Life** – *backed by payments in the statements* (it was already found; now it is more certain).
-  - **PPF at the Post Office** – *no payment found in the papers yet, so it is marked "not very sure"* – a new probable
-    item.
+  - **Kavach Life** – *backed by 3 payments in the statements*.
+  - **PPF at the Post Office** – *no payment found in the papers yet, so it is marked "not very sure"*.
   - **What you said** shows the PIN as **[removed]**.
-- *Say:* "A grieving mother can just talk, in Hindi. Code matches what she remembers against the statements – and the
-  PIN she mentioned is never stored."
+- *Say:* "A grieving mother can just talk, in Hindi. Code matches what she remembers against the statements, the agent
+  will use it as a hint, and the PIN she mentioned is never stored."
 - (Fallback if the mic fails: type the English text under **Or type it** and click **Add this memory**.)
+
+### 7. Find what might be missing (the ADK agent)
+- Click **Find what might be missing**. The panel **"Virasat is looking through everything…"** fills in live:
+  read documents, look for hidden assets, check names, look up procedures, prepare questions, build the plan, draft
+  letters.
+- Optional: open **✦ What Virasat did** (top right) to show the full activity log, in English and Hindi.
+- *Say:* "This is a Gemini agent on Google's Agent Development Kit. It decides the order of work; every step it takes
+  is logged, and code checks everything it proposes."
+
+### 8. What we found (the key moment)
+The app moves to **What we found**. Show, top to bottom:
+1. **Red alert – "Money left an account after Suresh Narayan Rao passed away":** **5 payments, ₹61,600 in total**:
+   EMI on 5 Sep, Kavach premium on 7 Sep, **₹20,000 ATM withdrawal at Hadapsar on 9 Sep**, SIP on 10 Sep, **₹15,000
+   wallet top-up on 11 Sep**. "It is first in your plan."
+   *Say:* "He died on the 2nd. Someone withdrew twenty thousand rupees a week later. That goes straight to the top."
+2. **Confirmed so far** – the total, the coloured bar and the legend (savings, FD, life insurance, mutual fund, EPF).
+3. **"We may have found 3 more things"** – marigold cards: **Kavach Life** (life insurance), **Anand Stockbroking**
+   (demat) and the **PPF** from the memory. Open Kavach: its ledger rows are the three premium debits, and its reason
+   ends "Your family remembers it too." The PPF has only the family's words, so it is "not very sure".
+   *Say:* "Nobody had papers for these. Gemini spotted the pattern, using what the family remembered as a hint; code
+   checked that every transaction it cited is real. They stay 'probable' until confirmed, and never count in the
+   total."
+4. **Confirmed** cards with pastel icons; **Loans and dues** (the home loan, next EMI date).
+
+### 9. Confirm or reject a probable item
+- On **Anand Stockbroking**, click **Yes, this is right**. It moves to Confirmed and the total updates.
+- (Leave **Kavach Life** probable – step 12 confirms it from the insurer's letter.)
+- Later, **Remember something else? Tell us** (below the cards) adds another memory; it is checked at once.
 
 ### 10. Questions
 - Click **Next: a few questions**. The agent picks 2 to 4 real gaps, so the set can vary; answer whichever appear:
@@ -203,16 +206,16 @@ Click **See your plan**. Show:
 
 ## Part B — the 3-minute video
 
-Record Part A in pieces (pre-run steps 3–6 so you are not filming waits), then edit to this. Speak over it, or add
+Record Part A in pieces (pre-run steps 3–7 so you are not filming waits), then edit to this. Speak over it, or add
 captions.
 
 | Time | Show | Say (about 25 words per 10 seconds) |
 |---|---|---|
 | 0:00–0:15 | Start screen, then the form being filled | "When someone dies in India, families often don't know what accounts or policies existed. Close to ₹1 lakh crore sits unclaimed. Virasat helps them find it." |
 | 0:15–0:40 | Step 3 sped up: 11 files uploading, **Read …** appearing; the **someone else's name** flag; **Remove**; the **locked PDF** opened with the password | "A family uploads whatever they have – photos, passbooks, SMS. Gemini reads them live. A paper in someone else's name is flagged; a locked statement is opened, the password never stored." |
-| 0:40–0:55 | Step 6: **Find what might be missing**, the live activity panel (sped up) | "Then a Gemini agent, built on Google's Agent Development Kit, works through the case – every step logged, everything it proposes checked by code." |
-| 0:55–1:25 | Step 7: the **red after-death alert**, the total and bar, the two **marigold "probably" cards** with their ledger rows | "Money is still leaving his account after he died, including a twenty-thousand rupee ATM withdrawal. And two things nobody had papers for: a life policy and a demat account, found from the transactions themselves. Never presented as fact." |
-| 1:25–1:45 | Step 9: recording the Hindi memory; **What we heard**, PIN shown as **[removed]** | "His wife can simply speak, in Hindi. What she remembers is matched against the statements – and the PIN she mentioned is never stored." |
+| 0:40–1:00 | Step 6: recording the Hindi memory on **Documents**; **What we heard**, PIN shown as **[removed]** | "His wife can simply speak, in Hindi. What she remembers is matched against the statements and handed to the agent as a hint – and the PIN she mentioned is never stored." |
+| 1:00–1:15 | Step 7: **Find what might be missing**, the live activity panel (sped up) | "Then a Gemini agent, built on Google's Agent Development Kit, works through the case – every step logged, everything it proposes checked by code." |
+| 1:15–1:45 | Step 8: the **red after-death alert**, the total and bar, the **marigold "probably" cards** with their ledger rows (Kavach: "Your family remembers it too.") | "Money is still leaving his account after he died, including a twenty-thousand rupee ATM withdrawal. And things nobody had papers for: a life policy and a demat account, found in the transactions, with her memory as a hint. Never presented as fact." |
 | 1:45–2:10 | Step 11: the plan (step 1 Sahyadri with ₹61,600, the scam notice), the **name check** | "The plan is ordered by urgency and warns about name mismatches – S N Rao on one paper, Suresh Narayan Rao on another – before a bank delays the claim." |
 | 2:10–2:35 | Steps 12–13: the **Kavach reply** confirming the policy and the checklist; the enquiry letter **rewritten as a claim**; the **scam message** warning | "When the insurer replies, the policy is confirmed and the enquiry becomes a claim letter with their policy number and nominee. When a fraudster asks for a release fee, Virasat refuses to act." |
 | 2:35–2:50 | Step 14–15: a letter, **Download PDF**, switch to **हिन्दी** and the Hindi PDF | "Letters are drafted, editable, and in English or Hindi." |
@@ -232,12 +235,12 @@ moments judges remember. Keep the cursor still while talking.
 | One-file-per-request upload, live Gemini extraction (photos, passbook, SMS, UPI, PDF) | Step 3 |
 | Name flag on a document in someone else's name; Remove a document | Steps 3–4 |
 | Password-protected PDF unlock (password never stored) | Step 5 |
-| ADK agent, live activity log in English and Hindi | Step 6 |
-| Money-after-death alert | Step 7 |
-| Asset mix total, bar and legend; confirmed and loan cards | Step 7 |
-| Hidden-asset inference with cited transaction evidence; probable never counted | Step 7 |
-| Confirm / not applicable | Step 8 |
-| Voice memory in Hindi, matched to statements; secret redaction | Step 9 |
+| ADK agent, live activity log in English and Hindi | Step 7 |
+| Money-after-death alert | Step 8 |
+| Asset mix total, bar and legend; confirmed and loan cards | Step 8 |
+| Hidden-asset inference with cited transaction evidence; probable never counted | Step 8 |
+| Confirm / not applicable | Step 9 |
+| Voice memory in Hindi before the search: hints for the agent, matched to statements, re-checked at each analysis; secret redaction | Step 6 |
 | Gap-driven questions; answers flow into letters | Step 10 |
 | Urgency-ordered plan, knowledge-base steps with sources, progress bar, scam notice | Step 11 |
 | Name check across papers (Gemini + verified in code) with guidance | Step 11 |

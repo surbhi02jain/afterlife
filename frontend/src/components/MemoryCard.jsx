@@ -32,13 +32,14 @@ function Result({ lang, memory }) {
 }
 
 // "Tell us what you remember": the family speaks (or types); Gemini listens; code checks it against the statements.
-export default function MemoryCard({ c, lang, refresh }) {
+// Asked on the documents screen, so the hidden-asset search can use it; `later` tucks it away on the asset map.
+export default function MemoryCard({ c, lang, refresh, later = false }) {
   const [recording, setRecording] = useState(null); // { stop } while the microphone is on
   const [seconds, setSeconds] = useState(0);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
-  const [memory, setMemory] = useState(null);
+  const memory = c.memories?.at(-1); // re-checked at each analysis, so read it from the case
 
   useEffect(() => {
     if (!recording) return;
@@ -50,8 +51,7 @@ export default function MemoryCard({ c, lang, refresh }) {
     setBusy(label);
     setError(null);
     try {
-      const result = await api.addMemory(c.id, input);
-      setMemory(result.memory);
+      await api.addMemory(c.id, input);
       setText("");
       await refresh();
     } catch (e) {
@@ -93,9 +93,8 @@ export default function MemoryCard({ c, lang, refresh }) {
 
   const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
-  return (
-    <Card className="mb-10">
-      <h2 className="font-serif text-xl">{t(lang, "memoryTitle")}</h2>
+  const body = (
+    <>
       <p className="mt-1 max-w-[60ch] text-ink-soft">{t(lang, "memoryBody")}</p>
 
       {c.samples?.memory && (
@@ -134,6 +133,20 @@ export default function MemoryCard({ c, lang, refresh }) {
       {busy && <p className="mt-3 text-ink-soft" role="status">{t(lang, "memoryWorking")}</p>}
       {memory && <Result lang={lang} memory={memory} />}
       <p className="mt-4 text-sm text-ink-soft">{t(lang, "memoryPrivacy")}</p>
+    </>
+  );
+
+  if (later)
+    return (
+      <details className="mb-10 rounded-2xl border border-sand-200 bg-white px-5 py-4">
+        <summary className="cursor-pointer font-semibold text-brand">{t(lang, "memoryMore")}</summary>
+        <div className="mt-2">{body}</div>
+      </details>
+    );
+  return (
+    <Card className="mt-6">
+      <h2 className="font-serif text-xl">{t(lang, "memoryTitle")}</h2>
+      {body}
     </Card>
   );
 }

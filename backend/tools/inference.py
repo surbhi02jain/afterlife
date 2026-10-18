@@ -18,6 +18,7 @@ from app.config import get_settings
 from app.gemini import GeminiUnreachable, generate, get_client
 from app.models import Case, Evidence, InferenceResult, InferenceRun
 from tools.asset_map import Candidate, refresh_recurring, upsert
+from tools.i18n import pick
 
 INFERENCE_PROMPT = """\
 You help a grieving family in India find financial assets and loans of a person who has died.
@@ -47,11 +48,18 @@ Rules:
   transaction or a less direct clue; low = a weak hint.
 - reason: one or two short, warm, plain sentences for a family member who is not a finance expert. Say
   "probably" or "looks like"; never state it as a fact. Write it in {language}.
+- THE FAMILY REMEMBERS lists what the family told us, in their words. Use it as a hint for reading the
+  narrations (e.g. "he had shares with some broker" makes a DP charge easier to place), never as proof: propose
+  something only when transactions point to it, exactly as above. If no transaction does, leave it out; the
+  family's memory is already on their list.
 - If nothing is hidden, return an empty list.
 """
 
 
 # Transactions that by themselves prove part of the case for an inferred type; added to the model's citations.
+RANK = {"low": 0, "medium": 1, "high": 2}
+FAMILY_TOO_EN, FAMILY_TOO_HI = "Your family remembers it too.", "परिवार को भी यह याद है।"
+
 SUPPORTING_EVIDENCE = {"demat_account": re.compile(r"\bDIV(IDEND)?\b", re.I)}
 
 
@@ -86,8 +94,13 @@ def collect_transactions(case: Case) -> list[TxnRef]:
 
 
 def build_prompt(case: Case, refs: list[TxnRef]) -> str:
+    # items only a memory backs are hints, not documented: listing them here would stop the search confirming them
     known = [f"- {i.type} | {i.institution or 'unknown'} | {i.identifier_masked or 'no number'} | {i.status}"
-             for i in [*case.assets, *case.liabilities] if i.status != "rejected"]
+             for i in [*case.assets, *case.liabilities] if i.status != "rejected" and i.origin != "family"]
+    remembered = [f"- {c.type} | {c.institution or 'institution not named'}"
+                  + (f" | months {', '.join(map(str, c.months))}" if c.months else "")
+                  + (f" | about Rs {c.amount_hint:.0f}" if c.amount_hint else "") + f" | they said: {c.what_they_said}"
+                  for m in case.memories for c in m.clues]
     docs = {d.id: d for d in case.documents}
     lines = []
     for r in refs:
@@ -96,6 +109,7 @@ def build_prompt(case: Case, refs: list[TxnRef]) -> str:
                      f"in {source.document_type.value} from {source.institution or 'unknown'}")
     return (f"Date of death: {case.date_of_death.isoformat()}\n\n"
             "ALREADY DOCUMENTED:\n" + ("\n".join(known) or "- nothing yet") +
+            "\n\nTHE FAMILY REMEMBERS (hints, not proof):\n" + ("\n".join(remembered) or "- nothing") +
             "\n\nTRANSACTIONS:\n" + "\n".join(lines))
 
 
@@ -165,6 +179,11 @@ def apply_proposals(case: Case, result: InferenceResult, refs: list[TxnRef], mod
             reason=p.reason,
         )
         item, created = upsert(case, cand)
+        if not created and item.origin == "family" and item.status == "probable" and not item.decided_by_user:
+            # the family remembered it and the transactions show it: lead with what the papers show
+            item.origin, item.reason = "inference", f"{p.reason} {pick(case.language, FAMILY_TOO_EN, FAMILY_TOO_HI)}"
+            if RANK[confidence] > RANK[item.confidence]:
+                item.confidence = confidence
         (run.added if created else run.merged).append(item.id)
     refresh_recurring(case, today or date.today())
     case.inference_runs.append(run)

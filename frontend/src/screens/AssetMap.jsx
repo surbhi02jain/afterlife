@@ -255,7 +255,7 @@ export default function AssetMap({ c, lang, refresh, agentReply }) {
         </section>
       )}
 
-      <MemoryCard c={c} lang={lang} refresh={refresh} />
+      <MemoryCard c={c} lang={lang} refresh={refresh} later />
 
       {map.assets.confirmed.length > 0 && (
         <section aria-labelledby="confirmed-h" className="mb-10">

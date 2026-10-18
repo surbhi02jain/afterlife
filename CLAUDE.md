@@ -106,7 +106,9 @@ GEMINI_API_KEY=... ./scripts/deploy.sh                     # Cloud Run deploy (u
   voice memo, the two sample replies (`demo/samples/`) and the demo name check: `demo.recorded(kind, input_bytes)`
   replays `demo/recorded/{memory,replies,names}/*.json`, written by `scripts/record_samples.py --record`.
 - Memories (`tools/memories.py`), name check (`tools/names.py`), institution replies (`tools/replies.py`): Gemini
-  reads/listens/compares; code decides. Memory confidence comes from matched transactions (none = low); name findings
+  reads/listens/compares; code decides. Memories are asked on Documents, before the search: their clues are kept
+  (secrets removed), re-matched at every analysis (`memories.match_memories`) and given to inference as hints that
+  never count as evidence. Memory confidence comes from matched transactions (none = low); name findings
   must quote names exactly as on the cited document; a reply with any scam signal (`guardrails.scam_signals`, plus
   Gemini's red flags) changes nothing in the case. Recordings and reply files are read once and never stored.
 - Evidence descriptions mask any 6+ digit run to the last 4 (`Evidence.mask_numbers`).

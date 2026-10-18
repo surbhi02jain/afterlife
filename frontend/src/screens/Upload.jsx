@@ -4,6 +4,7 @@ import { docTypeLabel, orgName, t } from "../i18n";
 import { go } from "../nav";
 import { ActivityList, ActivitySummary } from "../components/ActivityPanel";
 import { PapersArt, TypeIcon } from "../components/Art";
+import MemoryCard from "../components/MemoryCard";
 import { Badge, Button, Card, ErrorNote, PageTitle, PrimaryBar, Spinner, field } from "../components/ui";
 
 const READ_AT_ONCE = 2;
@@ -92,8 +93,10 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
   const locked = c.documents.filter((d) => d.status === "locked");
   const pending = c.documents.filter((d) => d.status !== "extracted" && d.status !== "locked");
   const allRead = c.documents.length > 0 && pending.length === 0 && locked.length === 0;
-  // Analysed = the hidden-asset search ran after the documents last changed (a file read or removed).
-  const lastChange = c.activity.findLastIndex((a) => a.tool === "remove_document" || (a.tool === "extract_document" && a.ok));
+  // Analysed = the hidden-asset search ran after the documents or memories last changed.
+  const lastChange = c.activity.findLastIndex(
+    (a) => a.tool === "remove_document" || (["extract_document", "add_memory"].includes(a.tool) && a.ok),
+  );
   const analysed = c.activity.findLastIndex((a) => a.tool === "infer_hidden_assets" && a.ok) > lastChange;
 
   async function removeDocument(id) {
@@ -285,6 +288,8 @@ export default function Upload({ c, lang, refresh, setCase, analysing, setAnalys
           ))}
         </ul>
       )}
+
+      {!analysing && <MemoryCard c={c} lang={lang} refresh={refresh} />}
 
       {analysing && (
         <Card className="fade-in mt-6 border-brand/30 bg-brand-soft/50">

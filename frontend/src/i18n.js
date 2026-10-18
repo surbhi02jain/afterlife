@@ -143,11 +143,12 @@ const en = {
   nothingFound: "Nothing found yet. Add documents and Virasat will look through them.",
   nextQuestions: "Next: a few questions",
 
-  // memories (asset map)
+  // memories (documents screen; again on the asset map)
   whatYouRemember: "What your family remembers",
   memoryTitle: "Tell us what you remember",
   memoryBody:
-    "Speak in Hindi or English, the way you would tell a relative. For example: \"He paid something to an insurance company every March.\" We check what you say against the statements, and anything new stays marked as not confirmed.",
+    "Optional. Speak in Hindi or English, the way you would tell a relative. For example: \"He paid something to an insurance company every March.\" Virasat uses it while looking through the papers and checks it against the statements. Anything new stays marked as not confirmed.",
+  memoryMore: "Remember something else? Tell us",
   memorySample: "Sample family: Kamala remembers, in Hindi",
   memoryUseSample: "Use this recording",
   memoryRecord: "Record a memory",
@@ -404,11 +405,12 @@ const hi = {
   nothingFound: "अभी कुछ नहीं मिला। दस्तावेज़ जोड़ें, विरासत ऐप उन्हें देखेगा।",
   nextQuestions: "आगे: कुछ प्रश्न",
 
-  // memories (asset map)
+  // memories (documents screen; again on the asset map)
   whatYouRemember: "परिवार को क्या याद है",
   memoryTitle: "जो याद है, हमें बताइए",
   memoryBody:
-    "हिंदी या अंग्रेज़ी में बोलिए, जैसे किसी रिश्तेदार को बताते। जैसे: \"वो हर मार्च में किसी बीमा कंपनी को पैसे भरते थे।\" आपकी बात हम स्टेटमेंट से मिलाते हैं, और कोई भी नई चीज़ \"पक्की नहीं\" के रूप में ही दिखती है।",
+    "ज़रूरी नहीं। हिंदी या अंग्रेज़ी में बोलिए, जैसे किसी रिश्तेदार को बताते। जैसे: \"वो हर मार्च में किसी बीमा कंपनी को पैसे भरते थे।\" विरासत कागज़ देखते समय इसका इस्तेमाल करता है और इसे स्टेटमेंट से मिलाता है। कोई भी नई चीज़ \"पक्की नहीं\" के रूप में ही दिखती है।",
+  memoryMore: "कुछ और याद आया? हमें बताइए",
   memorySample: "नमूना परिवार: कमला जी को याद है (हिंदी में)",
   memoryUseSample: "यह रिकॉर्डिंग इस्तेमाल करें",
   memoryRecord: "याद रिकॉर्ड करें",
