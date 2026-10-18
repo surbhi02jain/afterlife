@@ -76,6 +76,12 @@ These run **in code**, not just in prompts:
 - **Masking.** Only the last 4 digits of any account or policy number are shown or stored on asset items.
 - **Privacy.** On Cloud Storage, uploads delete themselves after 24 hours (bucket lifecycle rule). The family can
   delete the whole case at any time.
+- **A case opens only on the device that started it.** The creating browser gets a random private key (an HttpOnly,
+  SameSite=strict cookie scoped to that case's API routes); only its SHA-256 hash is stored. A forwarded link alone
+  gets the same 404 as a missing case. Relatives follow progress through the read-only family link.
+- **Scam protection.** A money-after-death alert puts an account first in the plan when debits continue after the
+  death; documents in someone else's name are flagged; every letter asks the institution to verify the sender
+  against its nominee records; Plan and Letters warn that banks never ask for OTPs or fees.
 
 ## Screens
 

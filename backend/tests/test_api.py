@@ -359,3 +359,34 @@ def test_document_removed_while_being_read_is_a_clear_error(storage):
     with pytest.raises(extraction.ExtractionError, match="removed"):
         services.extract_case_document(storage, case.id, doc.id, client=RemovesItself())
     assert storage.get_case(case.id).documents == []
+
+
+def test_case_opens_only_in_the_browser_that_created_it(api):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    created = api.post("/api/cases", json=CASE)
+    case_id = created.json()["id"]
+    cookie = created.headers["set-cookie"]
+    assert "HttpOnly" in cookie and "SameSite=strict" in cookie and f"Path=/api/cases/{case_id}" in cookie
+    assert "owner_key_hash" not in created.json()
+
+    stranger = TestClient(app)  # someone who only has the link
+    forger = TestClient(app, cookies={f"afterlife_case_{case_id}": "guessed-key"})
+    for client in (stranger, forger):
+        for method, path, body in (("get", "", None), ("patch", "", {"language": "hi"}), ("get", "/documents", None),
+                                   ("post", "/plan", None), ("post", "/share", None), ("delete", "", None)):
+            response = client.request(method, f"/api/cases/{case_id}{path}", json=body)
+            assert response.status_code == 404, (method, path)
+
+    assert api.get(f"/api/cases/{case_id}").status_code == 200  # nothing was deleted, and the owner still gets in
+    token = api.post(f"/api/cases/{case_id}/share").json()["share_token"]
+    assert stranger.get(f"/api/share/{token}").status_code == 200  # the read-only family link still works
+
+
+def test_cases_from_before_keys_still_open(api, storage):
+    from tests.helpers import new_case
+
+    case = storage.create_case(new_case())
+    assert api.get(f"/api/cases/{case.id}").status_code == 200

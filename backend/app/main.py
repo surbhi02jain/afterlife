@@ -1,8 +1,11 @@
 """Afterlife API. Also serves the built frontend (frontend/dist) so the app ships as one container."""
 
+import hashlib
+import hmac
 import mimetypes
+import secrets
 
-from fastapi import Depends, FastAPI, HTTPException, Response, UploadFile
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -21,11 +24,37 @@ from tools.questions import QuestionError
 app = FastAPI(title="Afterlife", version="0.3.0")
 
 
-def load_case(case_id: str, storage: Storage = Depends(get_storage)) -> Case:
+def _key_cookie(case_id: str) -> str:
+    return f"afterlife_case_{case_id}"
+
+
+def _key_hash(key: str) -> str:
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+def load_case(case_id: str, request: Request, storage: Storage = Depends(get_storage)) -> Case:
+    """A case opens only in the browser that created it, so a copied or forwarded link shows nothing.
+    A wrong or missing key gets the same 404 as a case that doesn't exist: no hint that it does.
+    Cases from before keys existed (no hash) stay open."""
     try:
-        return storage.get_case(case_id)
+        case = storage.get_case(case_id)
     except CaseNotFound:
         raise HTTPException(404, "Case not found")
+    key = request.cookies.get(_key_cookie(case.id), "")
+    if case.owner_key_hash and not hmac.compare_digest(_key_hash(key), case.owner_key_hash):
+        raise HTTPException(404, "Case not found")
+    return case
+
+
+def _give_key(storage: Storage, case: Case, request: Request, response: Response) -> Case:
+    """Issue the case's private key to this browser: a cookie page scripts can't read, sent only to this case's
+    own API routes and only from this site. Only its hash is stored."""
+    key = secrets.token_urlsafe(32)
+    case = storage.update_case(case.id, lambda c: setattr(c, "owner_key_hash", _key_hash(key)))
+    https = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"  # Cloud Run terminates TLS
+    response.set_cookie(_key_cookie(case.id), key, max_age=365 * 24 * 3600, path=f"/api/cases/{case.id}",
+                        httponly=True, samesite="strict", secure=https)
+    return case
 
 
 def document_view(d: Document, deceased_name: str) -> dict:
@@ -71,14 +100,15 @@ def health():
 # --- cases -----------------------------------------------------------------
 
 @app.post("/api/cases", status_code=201)
-def create_case(body: CaseCreate, storage: Storage = Depends(get_storage)):
-    return case_view(storage.create_case(Case(**body.model_dump())))
+def create_case(body: CaseCreate, request: Request, response: Response, storage: Storage = Depends(get_storage)):
+    case = storage.create_case(Case(**body.model_dump()))
+    return case_view(_give_key(storage, case, request, response))
 
 
 @app.post("/api/demo", status_code=201)
-def create_demo_case(storage: Storage = Depends(get_storage)):
+def create_demo_case(request: Request, response: Response, storage: Storage = Depends(get_storage)):
     """The 'Try with a demo family' button: a synthetic case with the 9 demo documents uploaded."""
-    return case_view(services.create_demo_case(storage))
+    return case_view(_give_key(storage, services.create_demo_case(storage), request, response))
 
 
 @app.get("/api/cases/{case_id}")
@@ -93,9 +123,9 @@ def update_case(body: CaseUpdate, case: Case = Depends(load_case), storage: Stor
 
 
 @app.delete("/api/cases/{case_id}", status_code=204)
-def delete_case(case_id: str, storage: Storage = Depends(get_storage)):
-    """'Delete my data': removes the case record and every uploaded file."""
-    storage.delete_case(case_id)
+def delete_case(case: Case = Depends(load_case), storage: Storage = Depends(get_storage)):
+    """'Delete my data': removes the case record and every uploaded file. Only the case's own browser can."""
+    storage.delete_case(case.id)
     return Response(status_code=204)
 
 

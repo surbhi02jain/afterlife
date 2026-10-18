@@ -43,6 +43,8 @@ const en = {
   demoHint: "See how Afterlife works with a made-up family. No real data.",
   continueCase: "Continue where you left off",
   deletedNotice: "Everything has been deleted.",
+  unavailableNotice:
+    "That case can't be opened here. For privacy, a case opens only on the device where it was started. Family members can follow progress through the read-only link the family shares.",
 
   // upload
   uploadTitle: "Add whatever documents you have",
@@ -197,6 +199,7 @@ const en = {
     "Your documents are read by Google Gemini to find accounts and policies. They are not used for anything else.",
     "On our cloud storage, uploaded files are set to delete themselves 24 hours after upload. The case notes stay until you delete them.",
     "We only ever show the last 4 digits of account and policy numbers.",
+    "Your case opens only on this device. Anyone else, even with the link, sees nothing. Family members see progress only through a read-only link you choose to share.",
     "Afterlife will never ask for passwords, PINs, OTPs or card numbers.",
   ],
   deleteData: "Delete my data",
@@ -248,6 +251,8 @@ const hi = {
   demoHint: "एक काल्पनिक परिवार के साथ देखें कि आफ्टरलाइफ़ कैसे काम करता है। कोई असली जानकारी नहीं।",
   continueCase: "जहाँ छोड़ा था वहीं से जारी रखें",
   deletedNotice: "सब कुछ हटा दिया गया है।",
+  unavailableNotice:
+    "यह मामला यहाँ नहीं खुल सकता। गोपनीयता के लिए, मामला केवल उसी डिवाइस पर खुलता है जहाँ उसे शुरू किया गया था। परिवार के लोग परिवार द्वारा साझा किए गए केवल-देखने वाले लिंक से प्रगति देख सकते हैं।",
 
   uploadTitle: "जो भी दस्तावेज़ हैं, जोड़ें",
   uploadBody:
@@ -395,6 +400,7 @@ const hi = {
     "खाते और पॉलिसी खोजने के लिए आपके दस्तावेज़ Google Gemini पढ़ता है। इनका किसी और काम में उपयोग नहीं होता।",
     "हमारे क्लाउड स्टोरेज पर अपलोड की गई फ़ाइलें अपलोड के 24 घंटे बाद अपने आप हटने के लिए सेट हैं। मामले के नोट्स तब तक रहते हैं जब तक आप उन्हें न हटाएँ।",
     "हम खाते और पॉलिसी नंबर के केवल आख़िरी 4 अंक दिखाते हैं।",
+    "आपका मामला केवल इसी डिवाइस पर खुलता है। कोई और, लिंक होने पर भी, कुछ नहीं देख सकता। परिवार के लोग केवल उस केवल-देखने वाले लिंक से प्रगति देखते हैं जिसे आप साझा करना चुनें।",
     "आफ्टरलाइफ़ कभी पासवर्ड, PIN, OTP या कार्ड नंबर नहीं माँगेगा।",
   ],
   deleteData: "मेरा डेटा हटाएँ",

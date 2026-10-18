@@ -116,7 +116,7 @@ function CaseShell({ id, screen, lang, setLang }) {
         try {
           localStorage.removeItem("afterlife.case");
         } catch {}
-        go("/");
+        go("/unavailable"); // missing, deleted, or started on another device: the start screen explains
       } else setError(e);
     }
   }, [id]);

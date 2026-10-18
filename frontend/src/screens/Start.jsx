@@ -22,6 +22,7 @@ export default function Start({ lang }) {
   const [error, setError] = useState(null);
   const previous = lastCase();
   const deleted = window.location.hash.includes("deleted");
+  const unavailable = window.location.hash.includes("unavailable");
   const today = new Date().toISOString().slice(0, 10);
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
@@ -61,6 +62,11 @@ export default function Start({ lang }) {
         {deleted && (
           <p role="status" className="mb-4 rounded-2xl bg-sage-soft px-4 py-3 text-sage-ink">
             {t(lang, "deletedNotice")}
+          </p>
+        )}
+        {unavailable && (
+          <p role="status" className="mb-4 rounded-2xl bg-brand-soft px-4 py-3 text-brand-dark">
+            {t(lang, "unavailableNotice")}
           </p>
         )}
         <h1 className="font-serif text-[2rem] leading-tight text-balance sm:text-[2.25rem]">{t(lang, "startTitle")}</h1>
