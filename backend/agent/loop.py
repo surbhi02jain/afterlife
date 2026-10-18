@@ -20,14 +20,14 @@ from google.genai import errors, types
 
 from agent.guardrails import REFUSAL, asks_to_use_credentials, touches_legal_topic, with_legal_note
 from agent.tools import DECLARATIONS, ToolContext, dispatch, gap_summary
-from app import services
+from app import gemini, services
 from app.config import get_settings
-from app.gemini import GeminiNotConfigured, get_rate_limiter
+from app.gemini import GeminiNotConfigured
 from app.models import Case, new_id
 from storage import Storage
 from tools.i18n import inr, nice_date
 
-log = logging.getLogger("saath.agent")
+log = logging.getLogger("afterlife.agent")
 
 MAX_STEPS = 10
 ANALYSE_MESSAGE = "Please go through everything we uploaded and tell us what to do next."
@@ -90,8 +90,8 @@ def case_context(case: Case) -> str:
             f"\nLETTERS: {len(case.letters)} drafted")
 
 
-class SaathTool(BaseTool):
-    """One ADK tool per Saath tool: the declaration Gemini sees, and a run that goes through dispatch()."""
+class AfterlifeTool(BaseTool):
+    """One ADK tool per Afterlife tool: the declaration Gemini sees, and a run that goes through dispatch()."""
 
     def __init__(self, declaration: types.FunctionDeclaration, ctx: ToolContext, result: "AgentResult",
                  lock: asyncio.Lock):
@@ -122,8 +122,8 @@ def _gemini(model: str) -> Gemini:
 
 
 async def _run(agent: LlmAgent, case_id: str, text: str, max_steps: int, result: "AgentResult") -> str:
-    runner = InMemoryRunner(agent=agent, app_name="saath")
-    session = await runner.session_service.create_session(app_name="saath", user_id=case_id)
+    runner = InMemoryRunner(agent=agent, app_name="afterlife")
+    session = await runner.session_service.create_session(app_name="afterlife", user_id=case_id)
     message = types.Content(role="user", parts=[types.Part.from_text(text=text)])
     reply = ""
     try:
@@ -161,7 +161,7 @@ def run_agent(storage: Storage, case_id: str, message: str = ANALYSE_MESSAGE, *,
 
     async def before_model(callback_context, llm_request):
         result.steps += 1
-        await asyncio.to_thread(get_rate_limiter().acquire, llm_request.model or "agent")
+        await asyncio.to_thread(gemini.get_rate_limiter().acquire, llm_request.model or "agent")  # via the module, so tests can swap it
 
     def unknown_tool(tool, args, tool_context):
         # ADK lets a before-tool callback answer a call to a tool that doesn't exist; send the error back to Gemini.
@@ -173,10 +173,10 @@ def run_agent(storage: Storage, case_id: str, message: str = ANALYSE_MESSAGE, *,
 
     try:
         agent = LlmAgent(
-            name="saath",
+            name="afterlife",
             model=model if isinstance(model, BaseLlm) else _gemini(model or get_settings().reasoning_model),
             instruction=SYSTEM_PROMPT.format(language="Hindi (Devanagari script)" if lang == "hi" else "English"),
-            tools=[SaathTool(d, ctx, result, lock) for d in DECLARATIONS],
+            tools=[AfterlifeTool(d, ctx, result, lock) for d in DECLARATIONS],
             generate_content_config=types.GenerateContentConfig(
                 thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MEDIUM)),
             before_model_callback=before_model,

@@ -27,7 +27,7 @@ ACCESS_TERMS = re.compile(_words(
     r"mobile\s+banking", r"internet\s+banking", r"log\s*in", r"login", r"user\s*id",
     "कार्ड", "नेट बैंकिंग"), re.I)  # a UPI PIN is caught by SECRET_TERMS; "stop his UPI transfers" is fine
 USE_TERMS = re.compile("|".join([
-    _words(r"use", r"using", r"used", r"withdraw\w*", r"transfer\w*", r"swipe\w*", r"unlock\w*", r"access\w*",
+    _words(r"use", r"using", r"withdraw\w*",  # not "used": "he used his card" describes the past, not a request r"transfer\w*", r"swipe\w*", r"unlock\w*", r"access\w*",
            r"log\s*in", r"login", r"sign\s*in", r"get\s+into", r"break\s+into", r"pay\s+(?:with|using|by|from)",
            r"take\s+out", r"move\s+(?:the\s+)?money"),
     _stems("इस्तेमाल", "उपयोग", "निकाल", "ट्रांसफर", "खोल", "लॉग"),
@@ -36,6 +36,13 @@ ASK_TERMS = re.compile("|".join([
     _words(r"what(?:'s|\s+is|\s+was)", r"tell", r"know", r"find", r"get", r"give", r"share", r"recover\w*",
            r"reset\w*", r"remember", r"guess\w*", r"crack\w*", r"bypass\w*", r"enter", r"type", r"need"),
     _stems("बता", "चाहिए", "पता", "डाल"),
+]), re.I)
+
+# Shutting an account down is exactly what the family should do: "how do we stop someone using his net banking?"
+PROTECT_TERMS = re.compile("|".join([
+    _words(r"close\w*", r"block\w*", r"cancel\w*", r"stop\w*", r"freez\w*", r"report\w*", r"deactivat\w*",
+           r"disabl\w*", r"surrender\w*", r"misus\w*", r"fraud\w*"),
+    _stems("बंद", "ब्लॉक", "रोक", "रद्द"),
 ]), re.I)
 
 LEGAL_TERMS = re.compile("|".join([
@@ -65,7 +72,8 @@ LEGAL_NOTE = {
 def asks_to_use_credentials(message: str) -> bool:
     if SECRET_TERMS.search(message) and (ASK_TERMS.search(message) or USE_TERMS.search(message)):
         return True
-    return bool(ACCESS_TERMS.search(message) and USE_TERMS.search(message))
+    # Secrets above are refused whatever the wording; cards and banking only when it isn't about shutting them down.
+    return bool(ACCESS_TERMS.search(message) and USE_TERMS.search(message) and not PROTECT_TERMS.search(message))
 
 
 def touches_legal_topic(*texts: str) -> bool:

@@ -14,6 +14,7 @@ from agent.guardrails import asks_to_use_credentials, touches_legal_topic
     "उनका पासवर्ड बताओ",
     "उनके कार्ड से पैसे निकालने हैं",
     "उनके पिन से पैसे निकाल सकते हैं?",
+    "Tell me his PIN so we can block the card",  # a secret stays refused even with a protective word
 ])
 def test_credential_requests_are_refused(message):
     assert asks_to_use_credentials(message)
@@ -27,6 +28,13 @@ def test_credential_requests_are_refused(message):
     "The bank sent me an OTP message, is it safe to ignore?",
     "Is the claim useful if the passbook is old?",
     "उनका क्रेडिट कार्ड बंद कैसे करें?",
+    # asking how to shut an account down, or describing the past, is what a family should do
+    "He used his credit card a lot. How do we close it?",
+    "Papa used his debit card for groceries, will the bank block it?",
+    "Should we cancel the card he used for his insurance premium?",
+    "How do we stop his net banking from being used by someone else?",
+    "How do we stop someone using his net banking?",
+    "उनका कार्ड इस्तेमाल न हो, इसके लिए उसे ब्लॉक कैसे करें?",
 ])
 def test_ordinary_questions_are_not_refused(message):
     assert not asks_to_use_credentials(message)

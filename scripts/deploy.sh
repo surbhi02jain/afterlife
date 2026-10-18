@@ -17,9 +17,11 @@ FIRESTORE_DATABASE="(default)"
 SECRET_NAME="GEMINI_API_KEY"
 RUNTIME_SA="afterlife-run"
 EXTRACTION_MODEL="${EXTRACTION_MODEL:-gemini-3.8-flash}"
-# Free-tier defaults (same as .env.example). Once billing is on: REASONING_MODEL=gemini-4-argon GEMINI_RPM=0
-REASONING_MODEL="${REASONING_MODEL:-gemini-3.6-flash}"  # gemini-4-argon has a free-tier quota of 0
-GEMINI_RPM="${GEMINI_RPM:-5}"                           # free tier allows ~5/min; 0 = no client-side throttle
+# Defaults assume a billed Gemini key (the public demo). Free tier, for testing only:
+#   REASONING_MODEL=gemini-3.6-flash GEMINI_RPM=5 MAX_INSTANCES=1 ./scripts/deploy.sh
+# (one instance, because the throttle counts per instance while the free quota is per key)
+REASONING_MODEL="${REASONING_MODEL:-gemini-4-argon}"   # free-tier quota is 0: needs billing
+GEMINI_RPM="${GEMINI_RPM:-0}"                          # 0 = no client-side throttle (paid tier)
 MIN_INSTANCES="${MIN_INSTANCES:-1}"                    # 1 avoids a cold start during the live demo
 MAX_INSTANCES="${MAX_INSTANCES:-3}"
 

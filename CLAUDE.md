@@ -51,7 +51,7 @@ Built for the Google Cloud AI Builder Cup. ~36 hours total; the 3-minute demo pa
 backend/
   app/        FastAPI app (main.py), config.py, models.py (all Pydantic models), gemini.py (client)
   tools/      model-backed + deterministic tools (extraction.py, ...)
-  agent/      Saath agent on Google ADK (Agent Development Kit), tools, guardrails
+  agent/      Afterlife agent on Google ADK (Agent Development Kit), tools, guardrails
   kb/         procedures.json knowledge base (Phase 3)
   storage/    base.py interface, local.py, gcp.py
   tests/      pytest (no network)

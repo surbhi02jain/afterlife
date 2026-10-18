@@ -1,4 +1,4 @@
-"""Saath's ADK agent with a scripted model: real ADK runner and SDK types, no network."""
+"""Afterlife's ADK agent with a scripted model: real ADK runner and SDK types, no network."""
 
 import json
 from types import SimpleNamespace

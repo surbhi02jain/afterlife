@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* "Lavender and marigold": a calm lavender page, deep violet ink for text and actions, and marigold used only
-   for things Saath found. "sand" names are kept so every screen picks this up. Text meets WCAG AA+. */
+   for things Afterlife found. "sand" names are kept so every screen picks this up. Text meets WCAG AA+. */
 @theme {
   --color-sand-50: #f5f3fa; /* lavender paper: page background */
   --color-sand-100: #ece8f4;
@@ -27,7 +27,7 @@
 /* 1rem = 18px, so all body text is at least 18px. */
 html {
   font-size: 18px;
-  accent-color: var(--color-brand); /* radios and checkboxes in Saath violet, not browser blue */
+  accent-color: var(--color-brand); /* radios and checkboxes in Afterlife violet, not browser blue */
 }
 
 body {

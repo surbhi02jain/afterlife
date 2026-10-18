@@ -1,4 +1,4 @@
-// Saath's drawings: simple geometric line art in the logo's style (violet lines, marigold accents).
+// Afterlife's drawings: simple geometric line art in the logo's style (violet lines, marigold accents).
 // All decorative, so hidden from screen readers; the text next to them carries the meaning.
 
 const ICONS = {

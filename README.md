@@ -156,9 +156,10 @@ GEMINI_API_KEY=... ./scripts/deploy.sh
 
 [scripts/deploy.sh](scripts/deploy.sh) is safe to re-run. It enables the APIs, creates the Firestore database, the
 upload bucket (with the 24-hour delete rule), a runtime service account and a Secret Manager secret for the key,
-then deploys to `asia-south1` (Mumbai) with `min-instances=1` to avoid cold starts. It defaults to the free-tier
-settings (`gemini-3.6-flash`, `GEMINI_RPM=5`); once billing is enabled, run
-`REASONING_MODEL=gemini-4-argon GEMINI_RPM=0 ./scripts/deploy.sh`.
+then deploys to `asia-south1` (Mumbai) with `min-instances=1` to avoid cold starts. It defaults to a billed key
+(`gemini-4-argon`, no throttle). To test on the free tier, run
+`REASONING_MODEL=gemini-3.6-flash GEMINI_RPM=5 MAX_INSTANCES=1 ./scripts/deploy.sh`; free-tier data may be used by
+Google to improve its products, so use it only with the synthetic demo family.
 
 ## Tech stack
 

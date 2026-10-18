@@ -97,7 +97,7 @@ def extract_case_document(storage: Storage, case_id: str, document_id: str, *, c
         elif isinstance(exc, FileNotFoundError):
             message = "This file is no longer stored (uploads are deleted after 24 hours). Please upload it again."
         else:
-            logging.getLogger("saath.services").exception("extraction of %s failed", document_id)
+            logging.getLogger("afterlife.services").exception("extraction of %s failed", document_id)
             message = f"Couldn't read this file just now ({type(exc).__name__}). Please try again."
         finish(status="failed", error=message)
         raise ExtractionError(message) from exc
